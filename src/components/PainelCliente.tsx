@@ -71,6 +71,69 @@ export default function PainelCliente() {
         
         // Definir as mensagens no estado
         setMensagens(historico);
+
+        // Configurar assinatura em tempo real para novas mensagens
+        const mensagensSubscription = supabase
+          .channel('mensagens-changes')
+          .on('postgres_changes', 
+            { 
+              event: 'INSERT', 
+              schema: 'public', 
+              table: 'mensagens_enviadas',
+              filter: `cliente_id=eq.${clienteData.id}`
+            }, 
+            async (payload: { new: Cliente | null; }) => {
+              console.log('Nova mensagem recebida:', payload);
+              
+              // Adicionar a nova mensagem ao estado
+              setMensagens(mensagensAtuais => [payload.new as unknown as Mensagem, ...mensagensAtuais]);
+              
+              // Buscar contagem atualizada de mensagens
+              const mensagensAtualizadas = await contarMensagensMes(clienteData.id);
+              
+              // Atualizar o cliente com a contagem atualizada
+              setCliente(clienteAtual => {
+                if (!clienteAtual) return null;
+                return {
+                  ...clienteAtual,
+                  mensagens_usadas: mensagensAtualizadas
+                };
+              });
+              
+              toast.info("Nova mensagem recebida!");
+            }
+          )
+          .subscribe();
+
+        // Configurar assinatura para atualizações do cliente
+        const clienteSubscription = supabase
+          .channel('cliente-changes')
+          .on('postgres_changes', 
+            { 
+              event: 'UPDATE', 
+              schema: 'public', 
+              table: 'clientes',
+              filter: `id=eq.${clienteData.id}`
+            }, 
+            (payload: { new: Cliente | null; }) => {
+              console.log('Dados do cliente atualizados:', payload);
+              // Atualizar os dados do cliente
+              setCliente(clienteAtual => {
+                if (!clienteAtual) return null;
+                return {
+                  ...clienteAtual,
+                  ...payload.new
+                };
+              });
+            }
+          )
+          .subscribe();
+
+        // Limpar assinaturas quando o componente for desmontado
+        return () => {
+          mensagensSubscription.unsubscribe();
+          clienteSubscription.unsubscribe();
+        };
       } catch (error) {
         console.error("Erro:", error);
         setErro("Ocorreu um erro ao buscar os dados");
@@ -87,6 +150,16 @@ export default function PainelCliente() {
     try {
       const historico = await buscarHistoricoMensagens(clienteId);
       setMensagens(historico);
+      
+      // Atualizar também a contagem de mensagens
+      const mensagensAtualizadas = await contarMensagensMes(clienteId);
+      setCliente(clienteAtual => {
+        if (!clienteAtual) return null;
+        return {
+          ...clienteAtual,
+          mensagens_usadas: mensagensAtualizadas
+        };
+      });
     } catch (error) {
       console.error("Erro ao buscar histórico:", error);
     } finally {
@@ -258,175 +331,164 @@ export default function PainelCliente() {
       
       {/* Cabeçalho */}
       <div className="mb-6">
-        <h1 className="text-3xl font-bold">Painel do Cliente - {cliente?.nome}</h1>
-      </div>
-      
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* Coluna 1: Informações da Conta */}
-        <div className="md:col-span-1">
-          <Card>
-            <CardContent className="pt-6">
-              <h2 className="text-xl font-semibold mb-4">Informações da Conta</h2>
-              
-              {editando ? (
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Nome</label>
-                    <Input 
-                      value={dadosEditados.nome} 
-                      onChange={(e) => setDadosEditados({...dadosEditados, nome: e.target.value})}
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-1">WhatsApp</label>
-                    <Input 
-                      value={dadosEditados.whatsapp} 
-                      onChange={(e) => setDadosEditados({...dadosEditados, whatsapp: e.target.value})}
-                    />
-                  </div>
-                  <div className="flex space-x-2">
-                    <Button onClick={handleSalvarDados} className="bg-green-600 hover:bg-green-700">
-                      Salvar
-                    </Button>
-                    <Button onClick={() => setEditando(false)} className="border border-gray-300 bg-transparent text-gray-800 hover:bg-gray-100">
-                      Cancelar
-                    </Button>
-                  </div>
-                </div>
-              ) : (
-                <>
-                  <div className="space-y-3">
-                    <div>
-                      <p className="text-sm text-gray-500">Nome</p>
-                      <p className="font-medium">{cliente?.nome}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-500">Plano Atual</p>
-                      <p className="font-medium capitalize">{cliente?.plano}</p>
-                    </div>
-                    {cliente?.whatsapp && (
-                      <div>
-                        <p className="text-sm text-gray-500">WhatsApp</p>
-                        <p className="font-medium">{cliente.whatsapp}</p>
-                      </div>
-                    )}
-                    <div>
-                      <p className="text-sm text-gray-500">Data de Cadastro</p>
-                      <p className="font-medium">{cliente?.data_cadastro ? formatDate(cliente.data_cadastro) : "N/A"}</p>
-                    </div>
-                  </div>
-                  <Button 
-                    onClick={() => setEditando(true)} 
-                    className="mt-4 w-full border border-gray-300 bg-transparent text-gray-800 hover:bg-gray-100"
-                  >
-                    Editar Dados
-                  </Button>
-                </>
-              )}
-              
-              {renderPlanoDetalhes()}
-            </CardContent>
-          </Card>
-        </div>
+        <h1 className="text-2xl font-bold mb-2">
+          {editando ? (
+            <Input 
+              value={dadosEditados.nome} 
+              onChange={(e) => setDadosEditados({...dadosEditados, nome: e.target.value})}
+              placeholder="Nome do cliente"
+              className="text-xl font-bold"
+            />
+          ) : (
+            <>Olá, {cliente?.nome || "Cliente"}!</>
+          )}
+        </h1>
+        <p className="text-gray-600">
+          {editando ? (
+            <Input 
+              value={dadosEditados.whatsapp} 
+              onChange={(e) => setDadosEditados({...dadosEditados, whatsapp: e.target.value})}
+              placeholder="Número do WhatsApp"
+              className="mt-2"
+            />
+          ) : (
+            <>WhatsApp: {cliente?.whatsapp || "Não informado"}</>
+          )}
+        </p>
         
-        {/* Coluna 2-3: Uso do Assistente e Histórico */}
-        <div className="md:col-span-2">
-          {/* Uso do Assistente */}
-          <Card className="mb-6">
-            <CardContent className="pt-6">
-              <h2 className="text-xl font-semibold mb-4">Uso do Assistente</h2>
-              
-              {cliente ? (
-                <>
-                  <div className="flex justify-between mb-2">
-                    <span>Mensagens usadas no mês</span>
-                    <span className="font-medium">{cliente.mensagens_usadas || 0} de {cliente.mensagens_limite || 100}</span>
-                  </div>
-                  
-                  <div className="w-full bg-gray-200 rounded-full h-2.5 mb-2">
-                    <div 
-                      className={`${getProgressBarColor()} h-2.5 rounded-full`}
-                      style={{ width: `${Math.min(100, (((cliente.mensagens_usadas || 0) / (cliente.mensagens_limite || 100)) * 100))}%` }}
-                    ></div>
-                  </div>
-                  
-                  {(cliente.mensagens_usadas || 0) >= (cliente.mensagens_limite || 100) ? (
-                    <p className="text-sm text-red-600 mt-2">
-                      Você atingiu o limite de mensagens do seu plano. Considere fazer um upgrade.
-                    </p>
-                  ) : (cliente.mensagens_usadas || 0) >= (cliente.mensagens_limite || 100) * 0.75 ? (
-                    <p className="text-sm text-yellow-600 mt-2">
-                      Você está se aproximando do limite de mensagens do seu plano.
-                    </p>
-                  ) : (
-                    <p className="text-sm text-green-600 mt-2">
-                      Você tem {(cliente.mensagens_limite || 100) - (cliente.mensagens_usadas || 0)} mensagens disponíveis neste mês.
-                    </p>
-                  )}
-                </>
-              ) : (
-                <p>Informações de uso não disponíveis</p>
-              )}
-            </CardContent>
-          </Card>
-          
-          {/* Histórico de Conversas */}
-          <Card>
-            <CardContent className="pt-6">
-              <h2 className="text-xl font-semibold mb-4">Histórico de Conversas</h2>
-              
-              {carregandoHistorico ? (
-                <p className="text-center py-4">Carregando histórico...</p>
-              ) : mensagens && mensagens.length > 0 ? (
-                <div className="space-y-4">
-                  {mensagens.map((mensagem) => (
-                    <div key={String(mensagem.id)} className="border rounded-lg p-3">
-                      <div className="flex justify-between items-center mb-2">
-                        <span className="text-sm text-gray-500">{formatDate(mensagem.timestamp)}</span>
-                        <Button 
-                          className="bg-transparent text-gray-800 hover:bg-gray-100 px-2 py-1 text-sm"
-                          onClick={() => {
-                            console.log("Clicou em expandir/ocultar. ID atual:", mensagem.id, "Tipo:", typeof mensagem.id);
-                            setExpandedMessage(expandedMessage === String(mensagem.id) ? null : String(mensagem.id));
-                          }}
-                        >
-                          {expandedMessage === String(mensagem.id) ? "Ocultar" : "Expandir"}
-                        </Button>
-                      </div>
-                      
-                      <div>
-                        <p className="font-medium">🗣️ Você: {mensagem.pergunta || "Pergunta não disponível"}</p>
-                        
-                        {expandedMessage === String(mensagem.id) && (
-                          <p className="mt-2 text-gray-700">🤖 IA: {mensagem.resposta || "Resposta não disponível"}</p>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-4">
-                  <p>Nenhuma conversa encontrada</p>
-                  {cliente && cliente.user_id && (
-                    <p className="text-sm text-gray-500 mt-2">
-                      ID do usuário: {cliente.user_id}
-                    </p>
-                  )}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
+        {editando ? (
+          <div className="mt-4 flex gap-2">
+            <Button onClick={handleSalvarDados}>Salvar</Button>
+            <Button variant="outline" onClick={() => setEditando(false)}>Cancelar</Button>
+          </div>
+        ) : (
+          <Button 
+            variant="outline" 
+            className="mt-2" 
+            onClick={() => setEditando(true)}
+          >
+            Editar dados
+          </Button>
+        )}
       </div>
       
-      <div className="mt-6 text-center">
-        <Button 
-          className="border border-gray-300 bg-transparent text-gray-800 hover:bg-gray-100"
-          onClick={() => window.history.back()}
-        >
-          Sair
-        </Button>
-      </div>
+      {/* Informações do plano */}
+      <Card className="mb-6">
+        <CardContent className="pt-6">
+          <h2 className="text-xl font-bold mb-4">Seu Plano: {cliente?.plano || "Básico"}</h2>
+          
+          {/* Barra de progresso */}
+          <div className="mb-4">
+            <div className="flex justify-between mb-1">
+              <span>Uso de mensagens este mês</span>
+              <span className="font-medium">
+                {cliente?.mensagens_usadas || 0} / {cliente?.mensagens_limite || 100}
+              </span>
+            </div>
+            <div className="w-full bg-gray-200 rounded-full h-2.5">
+              <div 
+                className={`${getProgressBarColor()} h-2.5 rounded-full`} 
+                style={{ 
+                  width: `${Math.min(
+                    ((cliente?.mensagens_usadas || 0) / (cliente?.mensagens_limite || 100)) * 100, 
+                    100
+                  )}%` 
+                }}
+              ></div>
+            </div>
+          </div>
+          
+          {renderPlanoDetalhes()}
+        </CardContent>
+      </Card>
+      
+      {/* Histórico de mensagens */}
+      <Card>
+        <CardContent className="pt-6">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-xl font-bold">Histórico de Mensagens</h2>
+            <Button 
+              variant="outline" 
+              onClick={() => cliente && atualizarHistorico(cliente.id as number)}
+              disabled={carregandoHistorico}
+            >
+              {carregandoHistorico ? "Atualizando..." : "Atualizar"}
+            </Button>
+          </div>
+          
+          {mensagens.length === 0 ? (
+            <p className="text-gray-500 text-center py-4">Nenhuma mensagem encontrada</p>
+          ) : (
+            <div className="space-y-4">
+              {mensagens.map((msg) => (
+                <div key={msg.id} className="border rounded-lg p-4">
+                  <div className="flex justify-between items-start mb-2">
+                    <h3 className="font-medium">
+                      {msg.pergunta ? (
+                        msg.pergunta.length > 50 && expandedMessage !== msg.id.toString() ? (
+                          <>
+                            {msg.pergunta.substring(0, 50)}...
+                            <button 
+                              className="text-blue-500 ml-2 text-sm"
+                              onClick={() => setExpandedMessage(msg.id.toString())}
+                            >
+                              Ver mais
+                            </button>
+                          </>
+                        ) : (
+                          <>
+                            {msg.pergunta}
+                            {expandedMessage === msg.id.toString() && (
+                              <button 
+                                className="text-blue-500 ml-2 text-sm"
+                                onClick={() => setExpandedMessage(null)}
+                              >
+                                Ver menos
+                              </button>
+                            )}
+                          </>
+                        )
+                      ) : (
+                        "Mensagem enviada"
+                      )}
+                    </h3>
+                    <span className="text-xs text-gray-500">
+                      {formatDate(msg.timestamp)}
+                    </span>
+                  </div>
+                  {msg.resposta && (
+                    <div className="mt-2 text-gray-700 bg-gray-50 p-2 rounded">
+                      {msg.resposta.length > 100 && expandedMessage !== `${msg.id}-resp` ? (
+                        <>
+                          {msg.resposta.substring(0, 100)}...
+                          <button 
+                            className="text-blue-500 ml-2 text-sm"
+                            onClick={() => setExpandedMessage(`${msg.id}-resp`)}
+                          >
+                            Ver mais
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          {msg.resposta}
+                          {expandedMessage === `${msg.id}-resp` && (
+                            <button 
+                              className="text-blue-500 ml-2 text-sm"
+                              onClick={() => setExpandedMessage(null)}
+                            >
+                              Ver menos
+                            </button>
+                          )}
+                        </>
+                      )}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }
