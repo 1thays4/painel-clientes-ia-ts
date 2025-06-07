@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import PainelClientesIA from './components/painel-clientes-ia';
 import PainelClientePublico from './components/painel-cliente-publico';
+import PainelCliente from './components/PainelCliente';
 import Login from './components/Login';
 import ProtectedRoute from './components/ProtectedRoute';
 import { AuthProvider } from './contexts/AuthContext';
@@ -42,7 +43,7 @@ const AppRoutes = () => {
             </ProtectedRoute>
           } 
         />
-        <Route path="/cliente/:token" element={<PainelClientePublico />} />
+        <Route path="/cliente/:token" element={<PainelCliente />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </>
