@@ -33,13 +33,6 @@ export default function PainelCliente() {
       try {
         console.log("Carregando dados para token:", token);
         
-        // Verificar estrutura das tabelas para debug
-        await verificarEstruturaMensagens();
-        await verificarEstruturaClientes();
-        
-        // Buscar todas as mensagens para debug
-        await buscarTodasMensagens();
-        
         // Buscar cliente pelo token
         const clienteData = await buscarClientePorToken(token);
         
@@ -72,32 +65,12 @@ export default function PainelCliente() {
           whatsapp: clienteData.whatsapp || ""
         });
 
-        // Buscar histórico de mensagens
-        let historico = await buscarHistoricoMensagens(clienteData.id);
-        console.log("Histórico de mensagens:", historico);
+        // Buscar histórico de mensagens específicas deste cliente
+        const historico = await buscarHistoricoMensagens(clienteData.id);
+        console.log("Histórico de mensagens do cliente:", historico);
         
-        // Se não encontrou mensagens, buscar diretamente da tabela
-        if (!historico || historico.length === 0) {
-          console.log("Tentando buscar todas as mensagens da tabela");
-          const { data } = await supabase
-            .from('mensagens_enviadas')
-            .select('*')
-            .order('timestamp', { ascending: false })
-            .limit(20);
-            
-          if (data && data.length > 0) {
-            console.log("Encontradas mensagens na tabela:", data);
-            historico = data;
-          }
-        }
-        
+        // Definir as mensagens no estado
         setMensagens(historico);
-        
-        // Se o cliente tem user_id, buscar mensagens diretamente por user_id para debug
-        if (clienteData.user_id) {
-          console.log("Buscando mensagens diretamente por user_id para debug");
-          await buscarMensagensPorUserId(clienteData.user_id);
-        }
       } catch (error) {
         console.error("Erro:", error);
         setErro("Ocorreu um erro ao buscar os dados");

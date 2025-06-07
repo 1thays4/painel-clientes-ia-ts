@@ -109,10 +109,11 @@ export async function buscarHistoricoMensagens(clienteId: string | number): Prom
   try {
     console.log('Buscando histórico para cliente ID:', clienteId);
     
-    // Buscar todas as mensagens da tabela
+    // Agora podemos buscar diretamente pelo cliente_id
     const { data, error } = await supabase
       .from('mensagens_enviadas')
       .select('*')
+      .eq('cliente_id', clienteId)
       .order('timestamp', { ascending: false })
       .limit(20);
     
@@ -128,4 +129,5 @@ export async function buscarHistoricoMensagens(clienteId: string | number): Prom
     console.error('Erro ao buscar histórico:', error);
     return [];
   }
+
 }

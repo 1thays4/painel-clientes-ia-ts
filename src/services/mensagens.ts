@@ -68,17 +68,15 @@ export async function contarMensagensMes(clienteId: string | number): Promise<nu
     const firstDay = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
     const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString();
 
-    // Não vamos tentar buscar o cliente, vamos direto para a contagem de mensagens
-    // Isso evita o erro 400 Bad Request
-    
-    // Contar todas as mensagens na tabela para este mês
+    // Contar mensagens pelo cliente_id
     const { count, error } = await supabase
       .from('mensagens_enviadas')
       .select('id', { count: 'exact' })
+      .eq('cliente_id', clienteId)
       .gte('timestamp', firstDay)
       .lte('timestamp', lastDay);
     
-    console.log('Total de mensagens do mês:', count);
+    console.log('Mensagens do cliente neste mês:', count);
     
     if (error) {
       console.error('Erro ao contar mensagens:', error);
