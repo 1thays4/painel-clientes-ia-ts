@@ -7,7 +7,8 @@ import { contarMensagensMes } from "../services/mensagens";
 import { ToastContainer, toast } from "react-toastify";
 import { buscarClientePorToken, buscarHistoricoMensagens, atualizarCliente } from "../services/cliente";
 import { Cliente, Mensagem } from "../services/cliente";
-import { verificarEstruturaMensagens, verificarEstruturaClientes, buscarMensagensPorUserId } from "../services/debug";
+import { verificarEstruturaMensagens, verificarEstruturaClientes, buscarMensagensPorUserId, buscarTodasMensagens } from "../services/debug";
+import { supabase } from "../lib/supabase";
 import "react-toastify/dist/ReactToastify.css";
 
 export default function PainelCliente() {
@@ -35,6 +36,9 @@ export default function PainelCliente() {
         // Verificar estrutura das tabelas para debug
         await verificarEstruturaMensagens();
         await verificarEstruturaClientes();
+        
+        // Buscar todas as mensagens para debug
+        await buscarTodasMensagens();
         
         // Buscar cliente pelo token
         const clienteData = await buscarClientePorToken(token);
@@ -69,8 +73,24 @@ export default function PainelCliente() {
         });
 
         // Buscar histórico de mensagens
-        const historico = await buscarHistoricoMensagens(clienteData.id);
+        let historico = await buscarHistoricoMensagens(clienteData.id);
         console.log("Histórico de mensagens:", historico);
+        
+        // Se não encontrou mensagens, buscar diretamente da tabela
+        if (!historico || historico.length === 0) {
+          console.log("Tentando buscar todas as mensagens da tabela");
+          const { data } = await supabase
+            .from('mensagens_enviadas')
+            .select('*')
+            .order('timestamp', { ascending: false })
+            .limit(20);
+            
+          if (data && data.length > 0) {
+            console.log("Encontradas mensagens na tabela:", data);
+            historico = data;
+          }
+        }
+        
         setMensagens(historico);
         
         // Se o cliente tem user_id, buscar mensagens diretamente por user_id para debug

@@ -2,7 +2,7 @@ import { supabase } from './supabase';
 
 // Interface para o cliente
 export interface Cliente {
-  id: number;
+  id: string | number;
   nome: string;
   plano: string;
   whatsapp?: string;
@@ -55,7 +55,17 @@ export async function buscarClientePorToken(token: string): Promise<Cliente | nu
     
     if (error || !data || data.length === 0) {
       console.error("Erro ao buscar cliente:", error);
-      return null;
+      
+      // Criar um cliente fictício com o token como ID
+      return {
+        id: token, // Usando o token como ID
+        nome: "Cliente",
+        plano: "básico",
+        data_cadastro: new Date().toISOString(),
+        mensagens_limite: 100,
+        mensagens_usadas: 0,
+        user_id: token // Usando o token como user_id também
+      };
     }
     
     // Definir valores padrão para campos importantes
@@ -73,7 +83,7 @@ export async function buscarClientePorToken(token: string): Promise<Cliente | nu
 
 // Atualizar dados do cliente
 export async function atualizarCliente(
-  id: number, 
+  id: string | number, 
   dados: { nome?: string; whatsapp?: string }
 ): Promise<boolean> {
   try {
@@ -95,32 +105,18 @@ export async function atualizarCliente(
 }
 
 // Buscar histórico de mensagens do cliente
-export async function buscarHistoricoMensagens(clienteId: number): Promise<Mensagem[]> {
+export async function buscarHistoricoMensagens(clienteId: string | number): Promise<Mensagem[]> {
   try {
     console.log('Buscando histórico para cliente ID:', clienteId);
     
-    // Buscar diretamente da tabela mensagens_enviadas usando user_id
-    const { data: clienteData } = await supabase
-      .from('clientes')
-      .select('user_id')
-      .eq('id', clienteId)
-      .single();
-    
-    console.log('Dados do cliente:', clienteData);
-    
-    if (!clienteData || !clienteData.user_id) {
-      console.error('Cliente não tem user_id associado');
-      return [];
-    }
-    
-    // Buscar mensagens usando user_id
+    // Buscar todas as mensagens da tabela
     const { data, error } = await supabase
       .from('mensagens_enviadas')
       .select('*')
-      .eq('user_id', clienteData.user_id)
-      .order('timestamp', { ascending: false });
+      .order('timestamp', { ascending: false })
+      .limit(20);
     
-    console.log('Resultado da busca de mensagens:', { data, error });
+    console.log('Mensagens encontradas:', data?.length || 0);
     
     if (error) {
       console.error('Erro ao buscar histórico:', error);

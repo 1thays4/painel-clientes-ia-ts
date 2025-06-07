@@ -79,3 +79,26 @@ export async function buscarMensagensPorUserId(userId: string) {
     return null;
   }
 }
+
+// Função para buscar todas as mensagens
+export async function buscarTodasMensagens() {
+  try {
+    const { data, error } = await supabase
+      .from('mensagens_enviadas')
+      .select('*')
+      .order('timestamp', { ascending: false })
+      .limit(50);
+    
+    console.log('Todas as mensagens (até 50):', data);
+    
+    if (error) {
+      console.error('Erro ao buscar todas as mensagens:', error);
+      return null;
+    }
+    
+    return data;
+  } catch (error) {
+    console.error('Erro ao buscar todas as mensagens:', error);
+    return null;
+  }
+}

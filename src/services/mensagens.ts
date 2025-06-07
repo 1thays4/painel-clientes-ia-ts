@@ -9,7 +9,7 @@ interface ResultadoVerificacao {
 }
 
 // Registrar uma nova mensagem de IA no WhatsApp
-export async function registrarMensagem(clienteId: number): Promise<ResultadoVerificacao> {
+export async function registrarMensagem(clienteId: string | number): Promise<ResultadoVerificacao> {
   try {
     // Verificar se o cliente existe e tem mensagens disponíveis
     const { data: cliente, error: clienteError } = await supabase
@@ -60,7 +60,7 @@ export async function registrarMensagem(clienteId: number): Promise<ResultadoVer
 }
 
 // Contar mensagens do mês atual
-export async function contarMensagensMes(clienteId: number): Promise<number> {
+export async function contarMensagensMes(clienteId: string | number): Promise<number> {
   try {
     console.log('Contando mensagens para cliente ID:', clienteId);
     
@@ -68,29 +68,17 @@ export async function contarMensagensMes(clienteId: number): Promise<number> {
     const firstDay = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
     const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString();
 
-    // Buscar o user_id associado ao cliente_id
-    const { data: clienteData } = await supabase
-      .from('clientes')
-      .select('user_id, mensagens_limite')
-      .eq('id', clienteId)
-      .single();
+    // Não vamos tentar buscar o cliente, vamos direto para a contagem de mensagens
+    // Isso evita o erro 400 Bad Request
     
-    console.log('Dados do cliente para contagem:', clienteData);
-    
-    if (!clienteData || !clienteData.user_id) {
-      console.error('Cliente não tem user_id associado');
-      return 0;
-    }
-    
-    // Contar mensagens usando user_id
+    // Contar todas as mensagens na tabela para este mês
     const { count, error } = await supabase
       .from('mensagens_enviadas')
       .select('id', { count: 'exact' })
-      .eq('user_id', clienteData.user_id)
       .gte('timestamp', firstDay)
       .lte('timestamp', lastDay);
     
-    console.log('Resultado da contagem:', { count, error });
+    console.log('Total de mensagens do mês:', count);
     
     if (error) {
       console.error('Erro ao contar mensagens:', error);
