@@ -1,15 +1,13 @@
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { Card, CardContent } from "./ui/card";
-import { createClient } from "@supabase/supabase-js";
-import TestarIA from "./EnviarMensagem";
-import { contarMensagensMes } from "../lib/mensagens";
+import TestarIA from "./TestarIA";
+import { contarMensagensMes } from "../services/mensagens";
 import { ToastContainer } from "react-toastify";
+import { supabase } from "../lib/supabase";
 import "react-toastify/dist/ReactToastify.css";
 
-const supabaseUrl = "https://sqcedymaeazvrrgrokpv.supabase.co";
-const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNxY2VkeW1hZWF6dnJyZ3Jva3B2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg5OTc3NTUsImV4cCI6MjA2NDU3Mzc1NX0.D65rBFBiVE1F9mVI15QgJeDepEhQtPj3eS2kXxRCfB8";
-const supabase = createClient(supabaseUrl, supabaseKey);
+// Usando o cliente supabase importado de lib/supabase
 
 interface Cliente {
   id: number;

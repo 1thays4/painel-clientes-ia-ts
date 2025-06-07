@@ -1,41 +1,77 @@
-# painel-clientes-ia-ts
+# Painel de Clientes IA - WhatsApp
 
-Este projeto é uma aplicação React simples que exibe uma mensagem "Hello World". Abaixo estão as informações sobre a estrutura do projeto e como executá-lo.
+Sistema de gerenciamento de clientes para serviço de IA no WhatsApp com controle de uso e limites por plano.
+
+## Configuração
+
+1. Clone o repositório
+2. Instale as dependências:
+   ```
+   npm install
+   ```
+3. Crie um arquivo `.env` baseado no `.env.example`:
+   ```
+   cp .env.example .env
+   ```
+4. Preencha as variáveis de ambiente no arquivo `.env`:
+   ```
+   SUPABASE_URL=sua_url_do_supabase
+   SUPABASE_KEY=sua_chave_do_supabase
+   ```
 
 ## Estrutura do Projeto
 
-```
-painel-clientes-ia-ts
-├── public
-│   └── index.html          # Arquivo HTML principal
-├── src
-│   ├── components
-│   │   └── HelloWorld.tsx  # Componente que exibe "Hello World"
-│   ├── App.tsx             # Componente principal da aplicação
-│   └── index.tsx           # Ponto de entrada da aplicação React
-├── package.json             # Configuração do npm
-├── tsconfig.json           # Configuração do TypeScript
-└── README.md                # Documentação do projeto
-```
+- `/src/components` - Componentes React para o frontend
+- `/src/api` - Endpoints da API para integração com WhatsApp
+- `/src/lib` - Bibliotecas e utilitários compartilhados
+- `/src/contexts` - Contextos React (autenticação, etc.)
 
-## Instalação
+## Executando o Projeto
 
-Para instalar as dependências do projeto, execute o seguinte comando:
-
-```
-npm install
-```
-
-## Execução
-
-Para iniciar a aplicação, use o comando:
-
+### Frontend
 ```
 npm start
 ```
 
-A aplicação estará disponível em `http://localhost:3000`.
+### API
+```
+npm run start:api
+```
 
-## Contribuição
+## Endpoints da API
 
-Sinta-se à vontade para contribuir com melhorias ou correções. Para isso, faça um fork do repositório e envie suas alterações.
+### Webhook do WhatsApp
+```
+POST /api/webhook/whatsapp
+```
+Recebe mensagens do WhatsApp e processa com IA.
+
+### Registrar Mensagem
+```
+POST /api/registrar-mensagem
+```
+Registra o uso de IA e atualiza o contador de mensagens do cliente.
+
+### Buscar Cliente por WhatsApp
+```
+GET /api/cliente/whatsapp?whatsapp=5511999999999
+```
+Busca um cliente pelo número de WhatsApp.
+
+## Banco de Dados
+
+### Tabela `clientes`
+- `id` - ID do cliente
+- `nome` - Nome do cliente
+- `whatsapp` - Número de WhatsApp
+- `plano` - Plano contratado (básico, intermediário, avançado)
+- `mensagens_usadas` - Contador de mensagens usadas no mês
+- `mensagens_limite` - Limite de mensagens do plano
+- `status_pagamento` - Status do pagamento (em_dia, pendente)
+- `token_publico` - Token para acesso ao painel do cliente
+
+### Tabela `mensagens_enviadas`
+- `id` - ID da mensagem
+- `cliente_id` - ID do cliente
+- `timestamp` - Data e hora do envio
+- `conteudo` - Conteúdo ou descrição da mensagem

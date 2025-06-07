@@ -3,10 +3,10 @@ import { Card, CardContent } from "./ui/card";
 import { Input } from "./ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { Button } from "./ui/button";
-import { createClient } from "@supabase/supabase-js";
 import { ToastContainer, toast } from "react-toastify";
 import { useAuth } from "../contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "../lib/supabase";
 import "react-toastify/dist/ReactToastify.css";
 
 interface Cliente {
@@ -20,10 +20,7 @@ interface Cliente {
   mensagens_limite?: number;
 }
 
-// Substitua pelos seus dados reais do Supabase
-const supabaseUrl = "https://sqcedymaeazvrrgrokpv.supabase.co";
-const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNxY2VkeW1hZWF6dnJyZ3Jva3B2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg5OTc3NTUsImV4cCI6MjA2NDU3Mzc1NX0.D65rBFBiVE1F9mVI15QgJeDepEhQtPj3eS2kXxRCfB8";
-const supabase = createClient(supabaseUrl, supabaseKey);
+// Usando o cliente supabase importado de lib/supabase
 
 export default function PainelClientesIA() {
   const [clientes, setClientes] = useState<Cliente[]>([]);
