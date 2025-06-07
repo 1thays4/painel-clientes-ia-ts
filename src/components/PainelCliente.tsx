@@ -7,6 +7,7 @@ import { contarMensagensMes } from "../services/mensagens";
 import { ToastContainer, toast } from "react-toastify";
 import { buscarClientePorToken, buscarHistoricoMensagens, atualizarCliente } from "../services/cliente";
 import { Cliente, Mensagem } from "../services/cliente";
+import { verificarEstruturaMensagens, verificarEstruturaClientes, buscarMensagensPorUserId } from "../services/debug";
 import "react-toastify/dist/ReactToastify.css";
 
 export default function PainelCliente() {
@@ -29,6 +30,12 @@ export default function PainelCliente() {
       }
 
       try {
+        console.log("Carregando dados para token:", token);
+        
+        // Verificar estrutura das tabelas para debug
+        await verificarEstruturaMensagens();
+        await verificarEstruturaClientes();
+        
         // Buscar cliente pelo token
         const clienteData = await buscarClientePorToken(token);
         
@@ -38,8 +45,16 @@ export default function PainelCliente() {
           return;
         }
 
+        console.log("Cliente encontrado:", clienteData);
+        
+        // Definir valores padrão para mensagens_limite se não existir
+        if (!clienteData.mensagens_limite) {
+          clienteData.mensagens_limite = 100; // Valor padrão
+        }
+        
         // Buscar contagem de mensagens do mês atual
         const mensagensUsadas = await contarMensagensMes(clienteData.id);
+        console.log("Mensagens usadas:", mensagensUsadas);
           
         // Atualizar o cliente com a contagem de mensagens
         setCliente({
@@ -55,7 +70,14 @@ export default function PainelCliente() {
 
         // Buscar histórico de mensagens
         const historico = await buscarHistoricoMensagens(clienteData.id);
+        console.log("Histórico de mensagens:", historico);
         setMensagens(historico);
+        
+        // Se o cliente tem user_id, buscar mensagens diretamente por user_id para debug
+        if (clienteData.user_id) {
+          console.log("Buscando mensagens diretamente por user_id para debug");
+          await buscarMensagensPorUserId(clienteData.user_id);
+        }
       } catch (error) {
         console.error("Erro:", error);
         setErro("Ocorreu um erro ao buscar os dados");
@@ -191,11 +213,14 @@ export default function PainelCliente() {
   };
 
   const getProgressBarColor = () => {
-    if (!cliente || cliente.mensagens_limite === undefined || cliente.mensagens_usadas === undefined) {
+    if (!cliente) {
       return "bg-blue-600";
     }
     
-    const percentUsed = (cliente.mensagens_usadas / cliente.mensagens_limite) * 100;
+    const mensagensUsadas = cliente.mensagens_usadas || 0;
+    const mensagensLimite = cliente.mensagens_limite || 100;
+    
+    const percentUsed = (mensagensUsadas / mensagensLimite) * 100;
     
     if (percentUsed >= 100) return "bg-red-600";
     if (percentUsed >= 75) return "bg-yellow-500";
@@ -318,31 +343,31 @@ export default function PainelCliente() {
             <CardContent className="pt-6">
               <h2 className="text-xl font-semibold mb-4">Uso do Assistente</h2>
               
-              {cliente?.mensagens_usadas !== undefined && cliente?.mensagens_limite !== undefined ? (
+              {cliente ? (
                 <>
                   <div className="flex justify-between mb-2">
                     <span>Mensagens usadas no mês</span>
-                    <span className="font-medium">{cliente.mensagens_usadas} de {cliente.mensagens_limite}</span>
+                    <span className="font-medium">{cliente.mensagens_usadas || 0} de {cliente.mensagens_limite || 100}</span>
                   </div>
                   
                   <div className="w-full bg-gray-200 rounded-full h-2.5 mb-2">
                     <div 
                       className={`${getProgressBarColor()} h-2.5 rounded-full`}
-                      style={{ width: `${Math.min(100, (cliente.mensagens_usadas / cliente.mensagens_limite) * 100)}%` }}
+                      style={{ width: `${Math.min(100, (((cliente.mensagens_usadas || 0) / (cliente.mensagens_limite || 100)) * 100))}%` }}
                     ></div>
                   </div>
                   
-                  {cliente.mensagens_usadas >= cliente.mensagens_limite ? (
+                  {(cliente.mensagens_usadas || 0) >= (cliente.mensagens_limite || 100) ? (
                     <p className="text-sm text-red-600 mt-2">
                       Você atingiu o limite de mensagens do seu plano. Considere fazer um upgrade.
                     </p>
-                  ) : cliente.mensagens_usadas >= cliente.mensagens_limite * 0.75 ? (
+                  ) : (cliente.mensagens_usadas || 0) >= (cliente.mensagens_limite || 100) * 0.75 ? (
                     <p className="text-sm text-yellow-600 mt-2">
                       Você está se aproximando do limite de mensagens do seu plano.
                     </p>
                   ) : (
                     <p className="text-sm text-green-600 mt-2">
-                      Você tem {cliente.mensagens_limite - cliente.mensagens_usadas} mensagens disponíveis neste mês.
+                      Você tem {(cliente.mensagens_limite || 100) - (cliente.mensagens_usadas || 0)} mensagens disponíveis neste mês.
                     </p>
                   )}
                 </>
@@ -359,7 +384,7 @@ export default function PainelCliente() {
               
               {carregandoHistorico ? (
                 <p className="text-center py-4">Carregando histórico...</p>
-              ) : mensagens.length > 0 ? (
+              ) : mensagens && mensagens.length > 0 ? (
                 <div className="space-y-4">
                   {mensagens.map((mensagem) => (
                     <div key={mensagem.id} className="border rounded-lg p-3">
@@ -367,24 +392,31 @@ export default function PainelCliente() {
                         <span className="text-sm text-gray-500">{formatDate(mensagem.timestamp)}</span>
                         <Button 
                           className="bg-transparent text-gray-800 hover:bg-gray-100 px-2 py-1 text-sm"
-                          onClick={() => setExpandedMessage(expandedMessage === mensagem.id ? null : mensagem.id)}
+                          onClick={() => setExpandedMessage(expandedMessage === Number(mensagem.id) ? null : Number(mensagem.id))}
                         >
-                          {expandedMessage === mensagem.id ? "Ocultar" : "Expandir"}
+                          {expandedMessage === Number(mensagem.id) ? "Ocultar" : "Expandir"}
                         </Button>
                       </div>
                       
                       <div>
-                        <p className="font-medium">🗣️ Você: {mensagem.pergunta}</p>
+                        <p className="font-medium">🗣️ Você: {mensagem.pergunta || "Pergunta não disponível"}</p>
                         
-                        {expandedMessage === mensagem.id && (
-                          <p className="mt-2 text-gray-700">🤖 IA: {mensagem.resposta}</p>
+                        {expandedMessage === Number(mensagem.id) && (
+                          <p className="mt-2 text-gray-700">🤖 IA: {mensagem.resposta || "Resposta não disponível"}</p>
                         )}
                       </div>
                     </div>
                   ))}
                 </div>
               ) : (
-                <p className="text-center py-4">Nenhuma conversa encontrada</p>
+                <div className="text-center py-4">
+                  <p>Nenhuma conversa encontrada</p>
+                  {cliente && cliente.user_id && (
+                    <p className="text-sm text-gray-500 mt-2">
+                      ID do usuário: {cliente.user_id}
+                    </p>
+                  )}
+                </div>
               )}
             </CardContent>
           </Card>
