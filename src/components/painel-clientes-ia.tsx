@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom';
 import { Button } from './ui/button';
 import { Card, CardContent } from './ui/card';
 import { ToastContainer, toast } from 'react-toastify';
+import AdicionarCliente from './AdicionarCliente';
 import 'react-toastify/dist/ReactToastify.css';
 
 interface Cliente {
@@ -23,35 +24,37 @@ interface Cliente {
 export default function PainelClientesIA() {
   const [clientes, setClientes] = useState<Cliente[]>([]);
   const [carregando, setCarregando] = useState(true);
+  const [mostrarFormulario, setMostrarFormulario] = useState(false);
   const { user, signOut, isAdmin } = useAuth();
 
-  useEffect(() => {
-    const buscarClientes = async () => {
-      try {
-        let query = supabase.from('clientes').select('*');
-        
-        // Se não for admin, filtrar apenas os clientes do usuário atual
-        if (!isAdmin && user) {
-          query = query.eq('user_id', user.id);
-        }
-        
-        const { data, error } = await query.order('data_cadastro', { ascending: false });
-        
-        if (error) {
-          console.error('Erro ao buscar clientes:', error);
-          toast.error('Erro ao carregar clientes');
-          return;
-        }
-        
-        setClientes(data || []);
-      } catch (error) {
-        console.error('Erro:', error);
-        toast.error('Ocorreu um erro ao buscar os dados');
-      } finally {
-        setCarregando(false);
+  const buscarClientes = async () => {
+    try {
+      setCarregando(true);
+      let query = supabase.from('clientes').select('*');
+      
+      // Se não for admin, filtrar apenas os clientes do usuário atual
+      if (!isAdmin && user) {
+        query = query.eq('user_id', user.id);
       }
-    };
+      
+      const { data, error } = await query.order('data_cadastro', { ascending: false });
+      
+      if (error) {
+        console.error('Erro ao buscar clientes:', error);
+        toast.error('Erro ao carregar clientes');
+        return;
+      }
+      
+      setClientes(data || []);
+    } catch (error) {
+      console.error('Erro:', error);
+      toast.error('Ocorreu um erro ao buscar os dados');
+    } finally {
+      setCarregando(false);
+    }
+  };
 
+  useEffect(() => {
     buscarClientes();
   }, [user, isAdmin]);
 
@@ -63,6 +66,11 @@ export default function PainelClientesIA() {
     const link = `${window.location.origin}/cliente/${token}`;
     navigator.clipboard.writeText(link);
     toast.success('Link copiado para a área de transferência!');
+  };
+
+  const handleClienteAdicionado = () => {
+    buscarClientes();
+    setMostrarFormulario(false);
   };
 
   return (
@@ -92,12 +100,19 @@ export default function PainelClientesIA() {
             </p>
             <Button 
               className="bg-green-600 hover:bg-green-700"
-              onClick={() => toast.info('Funcionalidade de adicionar cliente em desenvolvimento')}
+              onClick={() => setMostrarFormulario(!mostrarFormulario)}
             >
-              Adicionar Novo Cliente
+              {mostrarFormulario ? "Cancelar" : "Adicionar Novo Cliente"}
             </Button>
           </CardContent>
         </Card>
+      )}
+      
+      {/* Formulário de adicionar cliente */}
+      {mostrarFormulario && (
+        <div className="mb-6">
+          <AdicionarCliente onClienteAdicionado={handleClienteAdicionado} />
+        </div>
       )}
       
       <h2 className="text-xl font-semibold mb-4">

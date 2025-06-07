@@ -34,11 +34,11 @@ export async function buscarClientePorToken(token: string): Promise<Cliente | nu
     
     let query;
     if (isUUID) {
-      // Se o token parece um UUID, tente buscar por user_id também
+      // Se o token parece um UUID, tente buscar por token_publico
       query = supabase
         .from("clientes")
         .select("*")
-        .or(`token_publico.eq.${token},user_id.eq.${token}`)
+        .eq("token_publico", token)
         .limit(1);
     } else {
       // Caso contrário, busque apenas por token_publico
@@ -82,27 +82,6 @@ export async function buscarClientePorToken(token: string): Promise<Cliente | nu
     return cliente;
   } catch (error) {
     console.error("Erro ao buscar cliente:", error);
-    return null;
-  }
-}
-
-// Buscar cliente pelo ID do usuário autenticado
-export async function buscarClientePorUserId(userId: string): Promise<Cliente | null> {
-  try {
-    const { data, error } = await supabase
-      .from("clientes")
-      .select("*")
-      .eq("user_id", userId)
-      .single();
-    
-    if (error) {
-      console.error("Erro ao buscar cliente por user_id:", error);
-      return null;
-    }
-    
-    return data;
-  } catch (error) {
-    console.error("Erro ao buscar cliente por user_id:", error);
     return null;
   }
 }
@@ -186,8 +165,6 @@ export async function buscarHistoricoMensagens(clienteId: string | number): Prom
 export async function criarCliente(
   userData: { 
     nome: string; 
-    email: string; 
-    user_id: string;
     plano?: string;
     whatsapp?: string;
   }
@@ -197,17 +174,13 @@ export async function criarCliente(
     const tokenPublico = Math.random().toString(36).substring(2, 15) + 
                          Math.random().toString(36).substring(2, 15);
     
+    // Incluir apenas os campos que existem na tabela
     const novoCliente = {
       nome: userData.nome,
-      email: userData.email,
-      user_id: userData.user_id,
       plano: userData.plano || "basico",
       whatsapp: userData.whatsapp || "",
       data_cadastro: new Date().toISOString(),
-      mensagens_usadas: 0,
-      mensagens_limite: 100,
-      token_publico: tokenPublico,
-      status_pagamento: "em_dia" as const
+      token_publico: tokenPublico
     };
     
     const { data, error } = await supabase

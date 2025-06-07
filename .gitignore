@@ -1,5 +1,5 @@
 # Dependências
-node_modules/
+node_modules\
 npm-debug.log
 yarn-error.log
 yarn-debug.log
@@ -32,6 +32,7 @@ logs
 *.swo
 
 # Arquivos de cache
-.cache/
+.cache\
 .npm/
 .eslintcache
+node_modules

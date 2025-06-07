@@ -54,8 +54,6 @@ export default function Registro() {
       // 2. Criar o cliente associado ao usuário
       const cliente = await criarCliente({
         nome,
-        email,
-        user_id: authData.user.id,
         whatsapp
       });
       
