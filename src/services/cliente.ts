@@ -53,18 +53,23 @@ export async function buscarClientePorToken(token: string): Promise<Cliente | nu
     
     console.log("Resultado da busca de cliente:", { data, error });
     
-    if (error || !data || data.length === 0) {
+    if (error) {
       console.error("Erro ao buscar cliente:", error);
+      return null;
+    }
+    
+    if (!data || data.length === 0) {
+      console.log("Cliente não encontrado para o token:", token);
       
-      // Criar um cliente fictício com o token como ID
+      // Criar um cliente fictício para demonstração
       return {
-        id: token, // Usando o token como ID
-        nome: "Cliente",
-        plano: "básico",
+        id: "demo-" + Date.now(),
+        nome: "Cliente Demonstração",
+        plano: "basico",
         data_cadastro: new Date().toISOString(),
         mensagens_limite: 100,
         mensagens_usadas: 0,
-        user_id: token // Usando o token como user_id também
+        token_publico: token
       };
     }
     
@@ -81,12 +86,38 @@ export async function buscarClientePorToken(token: string): Promise<Cliente | nu
   }
 }
 
+// Buscar cliente pelo ID do usuário autenticado
+export async function buscarClientePorUserId(userId: string): Promise<Cliente | null> {
+  try {
+    const { data, error } = await supabase
+      .from("clientes")
+      .select("*")
+      .eq("user_id", userId)
+      .single();
+    
+    if (error) {
+      console.error("Erro ao buscar cliente por user_id:", error);
+      return null;
+    }
+    
+    return data;
+  } catch (error) {
+    console.error("Erro ao buscar cliente por user_id:", error);
+    return null;
+  }
+}
+
 // Atualizar dados do cliente
 export async function atualizarCliente(
   id: string | number, 
   dados: { nome?: string; whatsapp?: string }
 ): Promise<boolean> {
   try {
+    // Se for um cliente de demonstração, simular sucesso
+    if (typeof id === 'string' && id.startsWith('demo-')) {
+      return true;
+    }
+    
     const { error } = await supabase
       .from("clientes")
       .update(dados)
@@ -109,7 +140,27 @@ export async function buscarHistoricoMensagens(clienteId: string | number): Prom
   try {
     console.log('Buscando histórico para cliente ID:', clienteId);
     
-    // Agora podemos buscar diretamente pelo cliente_id
+    // Se for um cliente de demonstração, retornar mensagens fictícias
+    if (typeof clienteId === 'string' && clienteId.startsWith('demo-')) {
+      return [
+        {
+          id: 'demo-1',
+          cliente_id: 1,
+          pergunta: 'Como posso usar a IA no meu WhatsApp?',
+          resposta: 'Para usar a IA no WhatsApp, basta enviar uma mensagem para o número cadastrado com o prefixo "IA:".',
+          timestamp: new Date().toISOString()
+        },
+        {
+          id: 'demo-2',
+          cliente_id: 1,
+          pergunta: 'Quantas mensagens posso enviar por mês?',
+          resposta: 'No plano básico, você tem direito a 100 mensagens por mês. Para mais mensagens, considere fazer upgrade para um plano superior.',
+          timestamp: new Date(Date.now() - 86400000).toISOString() // 1 dia atrás
+        }
+      ];
+    }
+    
+    // Buscar diretamente pelo cliente_id
     const { data, error } = await supabase
       .from('mensagens_enviadas')
       .select('*')
@@ -129,5 +180,50 @@ export async function buscarHistoricoMensagens(clienteId: string | number): Prom
     console.error('Erro ao buscar histórico:', error);
     return [];
   }
+}
 
+// Criar um novo cliente associado a um usuário
+export async function criarCliente(
+  userData: { 
+    nome: string; 
+    email: string; 
+    user_id: string;
+    plano?: string;
+    whatsapp?: string;
+  }
+): Promise<Cliente | null> {
+  try {
+    // Gerar um token público aleatório
+    const tokenPublico = Math.random().toString(36).substring(2, 15) + 
+                         Math.random().toString(36).substring(2, 15);
+    
+    const novoCliente = {
+      nome: userData.nome,
+      email: userData.email,
+      user_id: userData.user_id,
+      plano: userData.plano || "basico",
+      whatsapp: userData.whatsapp || "",
+      data_cadastro: new Date().toISOString(),
+      mensagens_usadas: 0,
+      mensagens_limite: 100,
+      token_publico: tokenPublico,
+      status_pagamento: "em_dia" as const
+    };
+    
+    const { data, error } = await supabase
+      .from("clientes")
+      .insert([novoCliente])
+      .select()
+      .single();
+    
+    if (error) {
+      console.error("Erro ao criar cliente:", error);
+      return null;
+    }
+    
+    return data;
+  } catch (error) {
+    console.error("Erro ao criar cliente:", error);
+    return null;
+  }
 }

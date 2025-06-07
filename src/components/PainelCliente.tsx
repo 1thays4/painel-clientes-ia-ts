@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { useState, useEffect, useRef } from "react";
+import { useParams, Navigate } from "react-router-dom";
 import { Card, CardContent } from "./ui/card";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
@@ -9,7 +9,9 @@ import { buscarClientePorToken, buscarHistoricoMensagens, atualizarCliente } fro
 import { Cliente, Mensagem } from "../services/cliente";
 import { verificarEstruturaMensagens, verificarEstruturaClientes, buscarMensagensPorUserId, buscarTodasMensagens } from "../services/debug";
 import { supabase } from "../lib/supabase";
+import { useAuth } from "../contexts/AuthContext";
 import "react-toastify/dist/ReactToastify.css";
+import React from "react";
 
 export default function PainelCliente() {
   const { token } = useParams<{ token: string }>();
@@ -21,8 +23,28 @@ export default function PainelCliente() {
   const [editando, setEditando] = useState(false);
   const [dadosEditados, setDadosEditados] = useState({ nome: "", whatsapp: "" });
   const [expandedMessage, setExpandedMessage] = useState<string | null>(null);
+  const { user } = useAuth();
+
+  // Referências para os canais de assinatura
+  const mensagensChannelRef = React.useRef<any>(null);
+  const clienteChannelRef = React.useRef<any>(null);
+
+  // Função para limpar assinaturas existentes
+  const limparAssinaturas = () => {
+    if (mensagensChannelRef.current) {
+      mensagensChannelRef.current.unsubscribe();
+      mensagensChannelRef.current = null;
+    }
+    if (clienteChannelRef.current) {
+      clienteChannelRef.current.unsubscribe();
+      clienteChannelRef.current = null;
+    }
+  };
 
   useEffect(() => {
+    // Limpar assinaturas anteriores
+    limparAssinaturas();
+
     const carregarDados = async () => {
       if (!token) {
         setErro("Token inválido");
@@ -73,8 +95,9 @@ export default function PainelCliente() {
         setMensagens(historico);
 
         // Configurar assinatura em tempo real para novas mensagens
-        const mensagensSubscription = supabase
-          .channel('mensagens-changes')
+        const channelId = `mensagens-${clienteData.id}-${Date.now()}`;
+        mensagensChannelRef.current = supabase
+          .channel(channelId)
           .on('postgres_changes', 
             { 
               event: 'INSERT', 
@@ -82,11 +105,11 @@ export default function PainelCliente() {
               table: 'mensagens_enviadas',
               filter: `cliente_id=eq.${clienteData.id}`
             }, 
-            async (payload: { new: Cliente | null; }) => {
+            async (payload: { new: Mensagem; }) => {
               console.log('Nova mensagem recebida:', payload);
               
               // Adicionar a nova mensagem ao estado
-              setMensagens(mensagensAtuais => [payload.new as unknown as Mensagem, ...mensagensAtuais]);
+              setMensagens(mensagensAtuais => [payload.new as Mensagem, ...mensagensAtuais]);
               
               // Buscar contagem atualizada de mensagens
               const mensagensAtualizadas = await contarMensagensMes(clienteData.id);
@@ -106,8 +129,9 @@ export default function PainelCliente() {
           .subscribe();
 
         // Configurar assinatura para atualizações do cliente
-        const clienteSubscription = supabase
-          .channel('cliente-changes')
+        const clienteChannelId = `cliente-${clienteData.id}-${Date.now()}`;
+        clienteChannelRef.current = supabase
+          .channel(clienteChannelId)
           .on('postgres_changes', 
             { 
               event: 'UPDATE', 
@@ -128,12 +152,6 @@ export default function PainelCliente() {
             }
           )
           .subscribe();
-
-        // Limpar assinaturas quando o componente for desmontado
-        return () => {
-          mensagensSubscription.unsubscribe();
-          clienteSubscription.unsubscribe();
-        };
       } catch (error) {
         console.error("Erro:", error);
         setErro("Ocorreu um erro ao buscar os dados");
@@ -143,6 +161,9 @@ export default function PainelCliente() {
     };
 
     carregarDados();
+
+    // Limpar assinaturas quando o componente for desmontado
+    return limparAssinaturas;
   }, [token]);
 
   const atualizarHistorico = async (clienteId: number) => {
