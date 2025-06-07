@@ -20,7 +20,7 @@ export default function PainelCliente() {
   const [erro, setErro] = useState<string | null>(null);
   const [editando, setEditando] = useState(false);
   const [dadosEditados, setDadosEditados] = useState({ nome: "", whatsapp: "" });
-  const [expandedMessage, setExpandedMessage] = useState<number | null>(null);
+  const [expandedMessage, setExpandedMessage] = useState<string | null>(null);
 
   useEffect(() => {
     const carregarDados = async () => {
@@ -407,21 +407,24 @@ export default function PainelCliente() {
               ) : mensagens && mensagens.length > 0 ? (
                 <div className="space-y-4">
                   {mensagens.map((mensagem) => (
-                    <div key={mensagem.id} className="border rounded-lg p-3">
+                    <div key={String(mensagem.id)} className="border rounded-lg p-3">
                       <div className="flex justify-between items-center mb-2">
                         <span className="text-sm text-gray-500">{formatDate(mensagem.timestamp)}</span>
                         <Button 
                           className="bg-transparent text-gray-800 hover:bg-gray-100 px-2 py-1 text-sm"
-                          onClick={() => setExpandedMessage(expandedMessage === Number(mensagem.id) ? null : Number(mensagem.id))}
+                          onClick={() => {
+                            console.log("Clicou em expandir/ocultar. ID atual:", mensagem.id, "Tipo:", typeof mensagem.id);
+                            setExpandedMessage(expandedMessage === String(mensagem.id) ? null : String(mensagem.id));
+                          }}
                         >
-                          {expandedMessage === Number(mensagem.id) ? "Ocultar" : "Expandir"}
+                          {expandedMessage === String(mensagem.id) ? "Ocultar" : "Expandir"}
                         </Button>
                       </div>
                       
                       <div>
                         <p className="font-medium">🗣️ Você: {mensagem.pergunta || "Pergunta não disponível"}</p>
                         
-                        {expandedMessage === Number(mensagem.id) && (
+                        {expandedMessage === String(mensagem.id) && (
                           <p className="mt-2 text-gray-700">🤖 IA: {mensagem.resposta || "Resposta não disponível"}</p>
                         )}
                       </div>
