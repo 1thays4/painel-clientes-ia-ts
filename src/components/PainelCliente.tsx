@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { useParams, Navigate } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { Card, CardContent } from "./ui/card";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
@@ -7,11 +7,8 @@ import { contarMensagensMes } from "../services/mensagens";
 import { ToastContainer, toast } from "react-toastify";
 import { buscarClientePorToken, buscarHistoricoMensagens, atualizarCliente } from "../services/cliente";
 import { Cliente, Mensagem } from "../services/cliente";
-import { verificarEstruturaMensagens, verificarEstruturaClientes, buscarMensagensPorUserId, buscarTodasMensagens } from "../services/debug";
 import { supabase } from "../lib/supabase";
-import { useAuth } from "../contexts/AuthContext";
 import "react-toastify/dist/ReactToastify.css";
-import React from "react";
 
 export default function PainelCliente() {
   const { token } = useParams<{ token: string }>();
@@ -23,11 +20,10 @@ export default function PainelCliente() {
   const [editando, setEditando] = useState(false);
   const [dadosEditados, setDadosEditados] = useState({ nome: "", whatsapp: "" });
   const [expandedMessage, setExpandedMessage] = useState<string | null>(null);
-  const { user } = useAuth();
 
   // Referências para os canais de assinatura
-  const mensagensChannelRef = React.useRef<any>(null);
-  const clienteChannelRef = React.useRef<any>(null);
+  const mensagensChannelRef = useRef<any>(null);
+  const clienteChannelRef = useRef<any>(null);
 
   // Função para limpar assinaturas existentes
   const limparAssinaturas = () => {
@@ -340,6 +336,12 @@ export default function PainelCliente() {
           <CardContent className="pt-6">
             <h2 className="text-xl font-bold text-red-600 mb-2">Erro</h2>
             <p>{erro}</p>
+            <Button 
+              className="mt-4"
+              onClick={() => window.location.href = '/'}
+            >
+              Voltar ao Painel Principal
+            </Button>
           </CardContent>
         </Card>
       </div>

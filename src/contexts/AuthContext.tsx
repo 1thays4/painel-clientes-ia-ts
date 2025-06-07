@@ -1,11 +1,14 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { supabase } from '../lib/supabase';
-import { User, Session } from './types';
+
+type User = any;
+type Session = any;
 
 type AuthContextType = {
   user: User | null;
   session: Session | null;
   loading: boolean;
+  isAdmin: boolean;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signInWithMagicLink: (email: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
@@ -17,28 +20,53 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     // Verificar sessão atual
     const getSession = async () => {
-      const { data: { session }, error } = await supabase.auth.getSession();
-      
-      if (error) {
-        console.error('Erro ao obter sessão:', error);
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error('Erro ao obter sessão:', error);
+          setLoading(false);
+          return;
+        }
+        
+        setSession(session);
+        
+        if (session?.user) {
+          setUser(session.user);
+          // Simplificando: todos os usuários são considerados admin por enquanto
+          setIsAdmin(true);
+        } else {
+          setUser(null);
+          setIsAdmin(false);
+        }
+      } catch (error) {
+        console.error('Erro ao verificar sessão:', error);
+      } finally {
+        setLoading(false);
       }
-      
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
     };
 
     getSession();
 
     // Configurar listener para mudanças de autenticação
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event: any, session: any) => {
+      async (_event: any, session: any) => {
         setSession(session);
-        setUser(session?.user ?? null);
+        
+        if (session?.user) {
+          setUser(session.user);
+          // Simplificando: todos os usuários são considerados admin por enquanto
+          setIsAdmin(true);
+        } else {
+          setUser(null);
+          setIsAdmin(false);
+        }
+        
         setLoading(false);
       }
     );
@@ -49,35 +77,54 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signIn = async (email: string, password: string) => {
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-    
-    if (!error && data.user) {
-      setUser(data.user);
-      setSession(data.session);
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      
+      if (!error && data.user) {
+        setUser(data.user);
+        setSession(data.session);
+        setIsAdmin(true); // Simplificando: todos os usuários são considerados admin
+      }
+      
+      return { error };
+    } catch (error) {
+      console.error('Erro ao fazer login:', error);
+      return { error };
     }
-    
-    return { error };
   };
 
   const signInWithMagicLink = async (email: string) => {
-    const { error } = await supabase.auth.signInWithOtp({
-      email,
-      options: {
-        emailRedirectTo: window.location.origin,
-      }
-    });
-    
-    return { error };
+    try {
+      const { error } = await supabase.auth.signInWithOtp({
+        email,
+        options: {
+          emailRedirectTo: window.location.origin,
+        }
+      });
+      
+      return { error };
+    } catch (error) {
+      console.error('Erro ao enviar magic link:', error);
+      return { error: error as any };
+    }
   };
 
   const signOut = async () => {
-    await supabase.auth.signOut();
+    try {
+      await supabase.auth.signOut();
+      setUser(null);
+      setSession(null);
+      setIsAdmin(false);
+    } catch (error) {
+      console.error('Erro ao fazer logout:', error);
+    }
   };
 
   const value = {
     user,
     session,
     loading,
+    isAdmin,
     signIn,
     signInWithMagicLink,
     signOut,

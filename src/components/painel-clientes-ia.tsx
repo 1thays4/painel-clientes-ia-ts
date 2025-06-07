@@ -1,385 +1,150 @@
-import { useState, useEffect } from "react";
-import { Card, CardContent } from "./ui/card";
-import { Input } from "./ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
-import { Button } from "./ui/button";
-import { ToastContainer, toast } from "react-toastify";
-import { useAuth } from "../contexts/AuthContext";
-import { useNavigate } from "react-router-dom";
-import { supabase } from "../lib/supabase";
-import "react-toastify/dist/ReactToastify.css";
+import React, { useState, useEffect } from 'react';
+import { supabase } from '../lib/supabase';
+import { useAuth } from '../contexts/AuthContext';
+import { Link } from 'react-router-dom';
+import { Button } from './ui/button';
+import { Card, CardContent } from './ui/card';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 interface Cliente {
-  id: number;
+  id: string;
   nome: string;
-  whatsapp: string;
   plano: string;
-  token_publico?: string;
-  status_pagamento?: "em_dia" | "pendente";
+  whatsapp?: string;
+  email?: string;
+  data_cadastro: string;
   mensagens_usadas?: number;
   mensagens_limite?: number;
+  token_publico?: string;
+  user_id?: string;
 }
-
-// Usando o cliente supabase importado de lib/supabase
 
 export default function PainelClientesIA() {
   const [clientes, setClientes] = useState<Cliente[]>([]);
-  const [nome, setNome] = useState<string>("");
-  const [whatsapp, setWhatsapp] = useState<string>("");
-  const [plano, setPlano] = useState<string>("basico");
-  const [editandoId, setEditandoId] = useState<number | null>(null);
-  const [erros, setErros] = useState<{nome?: string; whatsapp?: string}>({});
+  const [carregando, setCarregando] = useState(true);
+  const { user, signOut, isAdmin } = useAuth();
 
-    const carregarClientes = async () => {
-    const { data, error } = await supabase.from("clientes").select("*");
-    if (error) {
-      console.error("Erro ao buscar clientes:", error);
-      toast.error("Erro ao carregar clientes");
-    } else {
-      setClientes(data as Cliente[]);
-    }
-  };
-  
-  // Carregar clientes ao iniciar
   useEffect(() => {
-    carregarClientes();
-  }, []);
-
-  const validarFormulario = () => {
-    const novosErros: {nome?: string; whatsapp?: string} = {};
-    let valido = true;
-    
-    // Verifica se os campos estão vazios
-    if (!nome.trim()) {
-      novosErros.nome = "O nome do cliente é obrigatório";
-      valido = false;
-    }
-    
-    if (!whatsapp.trim()) {
-      novosErros.whatsapp = "O número de WhatsApp é obrigatório";
-      valido = false;
-    } else {
-      // Validação do formato do WhatsApp (apenas números, com DDD, entre 10 e 11 dígitos)
-      const whatsappLimpo = whatsapp.replace(/\D/g, '');
-      const whatsappRegex = /^[0-9]{10,11}$/;
-      if (!whatsappRegex.test(whatsappLimpo)) {
-        novosErros.whatsapp = "Formato de WhatsApp inválido. Use apenas números com DDD (10 a 11 dígitos)";
-        valido = false;
+    const buscarClientes = async () => {
+      try {
+        let query = supabase.from('clientes').select('*');
+        
+        // Se não for admin, filtrar apenas os clientes do usuário atual
+        if (!isAdmin && user) {
+          query = query.eq('user_id', user.id);
+        }
+        
+        const { data, error } = await query.order('data_cadastro', { ascending: false });
+        
+        if (error) {
+          console.error('Erro ao buscar clientes:', error);
+          toast.error('Erro ao carregar clientes');
+          return;
+        }
+        
+        setClientes(data || []);
+      } catch (error) {
+        console.error('Erro:', error);
+        toast.error('Ocorreu um erro ao buscar os dados');
+      } finally {
+        setCarregando(false);
       }
-    }
-    
-    setErros(novosErros);
-    
-    if (!valido) {
-      toast.error("Verifique os campos destacados");
-    }
-    
-    return valido;
-  };
-
-  // Função para gerar token único
-  const gerarTokenPublico = () => {
-    // Gerando um token mais simples e previsível para facilitar depuração
-    const timestamp = new Date().getTime();
-    const randomPart = Math.floor(Math.random() * 10000);
-    const token = `token_${timestamp}_${randomPart}`;
-    return token;
-  };
-  
-  // Função para regenerar token de um cliente existente
-  const regenerarToken = async (clienteId: number) => {
-    const token_publico = gerarTokenPublico();
-    console.log("Novo token gerado:", token_publico);
-    
-    const { error } = await supabase
-      .from("clientes")
-      .update({ token_publico })
-      .eq("id", clienteId);
-    
-    if (error) {
-      console.error("Erro ao regenerar token:", error);
-      toast.error("Erro ao regenerar token");
-    } else {
-      console.log("Token atualizado com sucesso para cliente ID:", clienteId);
-      toast.success("Token regenerado com sucesso");
-      carregarClientes();
-    }
-  };
-
-  const adicionarOuAtualizarCliente = async () => {
-    // Valida os dados antes de prosseguir
-    if (!validarFormulario()) {
-      return;
-    }
-    
-    // Formata o número de WhatsApp para conter apenas números
-    const whatsappFormatado = whatsapp.replace(/\D/g, '');
-    
-    // Define limites de mensagens com base no plano
-    const limitesMensagens = {
-      basico: 100,
-      intermediario: 300,
-      avancado: 1000
     };
-    
-    if (editandoId) {
-      // Ao atualizar, mantemos o token existente
-      const { error } = await supabase
-        .from("clientes")
-        .update({ nome, whatsapp: whatsappFormatado, plano })
-        .eq("id", editandoId);
-      if (error) {
-        console.error("Erro ao atualizar cliente:", error);
-        toast.error("Erro ao atualizar cliente");
-      } else {
-        toast.success("Cliente atualizado com sucesso");
-      }
-    } else {
-      // Ao criar novo cliente, geramos um token único
-      const token_publico = gerarTokenPublico();
-      const { error } = await supabase.from("clientes").insert([
-        { 
-          nome, 
-          whatsapp: whatsappFormatado, 
-          plano, 
-          token_publico,
-          status_pagamento: "em_dia",
-          mensagens_usadas: 0,
-          mensagens_limite: limitesMensagens[plano as keyof typeof limitesMensagens]
-        },
-      ]);
-      if (error) {
-        console.error("Erro ao adicionar cliente:", error);
-        toast.error("Erro ao adicionar cliente");
-      } else {
-        toast.success("Cliente adicionado com sucesso");
-      }
-    }
-    carregarClientes();
-    limparFormulario();
-  };
 
-    const editarCliente = (cliente: Cliente) => {
-    setNome(cliente.nome);
-    setWhatsapp(cliente.whatsapp);
-    setPlano(cliente.plano);
-    setEditandoId(cliente.id);
-  };
+    buscarClientes();
+  }, [user, isAdmin]);
 
-    const excluirCliente = async (id: number) => {
-    const { error } = await supabase.from("clientes").delete().eq("id", id);
-    if (error) {
-      console.error("Erro ao excluir cliente:", error);
-      toast.error("Erro ao excluir cliente");
-    } else {
-      toast.success("Cliente excluído com sucesso");
-      carregarClientes();
-    }
-  };
-
-  const limparFormulario = () => {
-    setNome("");
-    setWhatsapp("");
-    setPlano("basico");
-    setEditandoId(null);
-    setErros({});
-  };
-
-  // Função para alterar o status de pagamento de um cliente
-  const alterarStatusPagamento = async (clienteId: number, novoStatus: "em_dia" | "pendente") => {
-    const { error } = await supabase
-      .from("clientes")
-      .update({ status_pagamento: novoStatus })
-      .eq("id", clienteId);
-    
-    if (error) {
-      console.error("Erro ao alterar status de pagamento:", error);
-      toast.error("Erro ao alterar status de pagamento");
-    } else {
-      toast.success(`Status de pagamento alterado para ${novoStatus === "em_dia" ? "em dia" : "pendente"}`);
-      carregarClientes();
-    }
-  };
-
-  const { signOut, user } = useAuth();
-  const navigate = useNavigate();
-  
   const handleLogout = async () => {
     await signOut();
-    navigate("/login");
+  };
+
+  const copiarLinkCliente = (token: string) => {
+    const link = `${window.location.origin}/cliente/${token}`;
+    navigator.clipboard.writeText(link);
+    toast.success('Link copiado para a área de transferência!');
   };
 
   return (
-    <div className="p-4 sm:p-6 max-w-6xl mx-auto">
+    <div className="p-6 max-w-6xl mx-auto">
       <ToastContainer position="top-right" autoClose={3000} />
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-2 sm:gap-0">
-        <h1 className="text-xl sm:text-2xl font-bold">Painel de Clientes - Agente IA</h1>
-        <div className="flex items-center gap-2 sm:gap-4">
-          <span className="text-sm text-gray-600">{user?.email}</span>
-          <Button 
-            onClick={handleLogout}
-            className="border border-gray-300 bg-white text-gray-700 hover:bg-gray-100"
-          >
+      
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold">
+          {isAdmin ? 'Painel Administrativo' : 'Meu Painel'}
+        </h1>
+        <div className="flex items-center gap-4">
+          <span className="text-sm text-gray-600">
+            {user?.email} {isAdmin && '(Admin)'}
+          </span>
+          <Button variant="outline" onClick={handleLogout}>
             Sair
           </Button>
         </div>
       </div>
-
-      <Card className="mb-6">
-        <CardContent className="space-y-4 pt-4">
-          <div>
-            <Input
-              placeholder="Nome do cliente"
-              value={nome}
-              onChange={(e) => {
-                setNome(e.target.value);
-                if (e.target.value.trim()) {
-                  setErros(prev => ({...prev, nome: undefined}));
-                }
-              }}
-              className={erros.nome ? "border-red-500" : ""}
-            />
-            {erros.nome && <p className="text-red-500 text-sm mt-1">{erros.nome}</p>}
-          </div>
-          <div>
-            <Input
-              placeholder="Número WhatsApp (com DDD)"
-              value={whatsapp}
-              onChange={(e) => {
-                setWhatsapp(e.target.value);
-                if (e.target.value.trim()) {
-                  setErros(prev => ({...prev, whatsapp: undefined}));
-                }
-              }}
-              className={erros.whatsapp ? "border-red-500" : ""}
-            />
-            {erros.whatsapp && <p className="text-red-500 text-sm mt-1">{erros.whatsapp}</p>}
-            <p className="text-gray-500 text-xs mt-1">Formato: (00) 00000-0000</p>
-          </div>
-             <select
-            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring focus:border-blue-300"
-            value={plano}
-            onChange={(e) => setPlano(e.target.value)}
-          >
-            <option value="basico">Básico (R$ 49)</option>
-            <option value="intermediario">Intermediário (R$ 99)</option>
-            <option value="avancado">Avançado (R$ 149)</option>
-          </select>
-  
-        </CardContent>
-        <div className="flex flex-wrap gap-2 p-4">
+      
+      {isAdmin && (
+        <Card className="mb-6 bg-yellow-50 border-yellow-200">
+          <CardContent className="pt-6">
+            <h2 className="text-lg font-semibold mb-2">Modo Administrador</h2>
+            <p className="text-sm text-gray-700 mb-4">
+              Você tem acesso a todos os clientes cadastrados no sistema.
+            </p>
             <Button 
-              onClick={adicionarOuAtualizarCliente}
               className="bg-green-600 hover:bg-green-700"
+              onClick={() => toast.info('Funcionalidade de adicionar cliente em desenvolvimento')}
             >
-              {editandoId ? "Atualizar Cliente" : "Adicionar Cliente"}
+              Adicionar Novo Cliente
             </Button>
-            {editandoId && (
-              <Button 
-                onClick={limparFormulario}
-                className="border border-gray-300 text-gray-700 bg-white hover:bg-gray-100"
-              >
-                Cancelar
-              </Button>
-            )}
-          </div>
-      </Card>
-
-      <div className="grid gap-4 md:grid-cols-1 lg:grid-cols-2">
-        {clientes.map((cliente) => (
-          <Card key={cliente.id} className="overflow-hidden">
-            <CardContent className="pt-4 sm:p-6">
-              <p><strong>Nome:</strong> {cliente.nome}</p>
-              <p><strong>WhatsApp:</strong> {cliente.whatsapp}</p>
-              <p><strong>Plano:</strong> {cliente.plano}</p>
-              
-              {/* Status de pagamento */}
-              <p>
-                <strong>Status:</strong> {cliente.status_pagamento === "em_dia" ? (
-                  <span className="text-green-600">✓ Pagamento em dia</span>
-                ) : (
-                  <span className="text-amber-600 cursor-pointer" onClick={() => alterarStatusPagamento(cliente.id, "em_dia")}>
-                    ⚠️ Pagamento pendente (clique para marcar como pago)
-                  </span>
-                )}
-                {cliente.status_pagamento === "em_dia" && (
-                  <button 
-                    className="ml-2 text-xs text-gray-500 hover:text-red-500"
-                    onClick={() => alterarStatusPagamento(cliente.id, "pendente")}
-                  >
-                    (marcar como pendente)
-                  </button>
-                )}
-              </p>
-              
-              {/* Progresso de uso do plano */}
-              {cliente.mensagens_usadas !== undefined && cliente.mensagens_limite !== undefined && (
-                <div className="mt-2">
-                  <p className="text-sm mb-1">
-                    Você usou {cliente.mensagens_usadas} de {cliente.mensagens_limite} mensagens este mês.
+          </CardContent>
+        </Card>
+      )}
+      
+      <h2 className="text-xl font-semibold mb-4">
+        {isAdmin ? 'Todos os Clientes' : 'Meus Dados'}
+      </h2>
+      
+      {carregando ? (
+        <p className="text-center py-8">Carregando clientes...</p>
+      ) : clientes.length === 0 ? (
+        <Card>
+          <CardContent className="py-8 text-center">
+            <p className="text-gray-500">Nenhum cliente encontrado</p>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {clientes.map((cliente) => (
+            <Card key={cliente.id} className="overflow-hidden">
+              <CardContent className="pt-6">
+                <h3 className="font-bold text-lg mb-1">{cliente.nome}</h3>
+                <p className="text-sm text-gray-500 mb-2">
+                  Plano: <span className="font-medium">{cliente.plano}</span>
+                </p>
+                <div className="text-sm mb-4">
+                  <p>WhatsApp: {cliente.whatsapp || 'Não informado'}</p>
+                  <p>Email: {cliente.email || 'Não informado'}</p>
+                  <p>
+                    Mensagens: {cliente.mensagens_usadas || 0} / {cliente.mensagens_limite || 100}
                   </p>
-                  <div className="w-full bg-gray-200 rounded-full h-2.5">
-                    <div 
-                      className="bg-blue-600 h-2.5 rounded-full" 
-                      style={{ width: `${Math.min(100, (cliente.mensagens_usadas / cliente.mensagens_limite) * 100)}%` }}
-                    ></div>
-                  </div>
                 </div>
-              )}
-              
-              <div className="flex flex-wrap gap-2 pt-3 justify-start">
-                <Button onClick={() => editarCliente(cliente)}>Editar</Button>
-                <Button onClick={() => excluirCliente(cliente.id)} style={{ backgroundColor: "#dc2626", color: "#fff" }}>Excluir</Button>
-                
-                {/* Botão para gerenciar plano */}
-                <Button 
-                  onClick={() => toast.info("Funcionalidade de gerenciamento de plano em desenvolvimento")}
-                  className="bg-purple-600 hover:bg-purple-700"
-                >
-                  Gerenciar Plano
-                </Button>
-                
-                {/* Link para histórico */}
-                <Button 
-                  onClick={() => toast.info("Funcionalidade de histórico em desenvolvimento")}
-                  className="bg-gray-600 hover:bg-gray-700"
-                >
-                  Ver Histórico
-                </Button>
-                
-                {cliente.token_publico ? (
-                  <>
-                    <Button 
-                      onClick={() => {
-                        const url = `${window.location.origin}/cliente/${cliente.token_publico}`;
-                        navigator.clipboard.writeText(url);
-                        console.log("URL copiada:", url);
-                        toast.info("Link do painel copiado para a área de transferência");
-                      }}
-                      className="bg-blue-600 hover:bg-blue-700"
-                    >
-                      Copiar Link
-                    </Button>
-                    <Button 
-                      onClick={() => regenerarToken(cliente.id)}
-                      className="bg-yellow-600 hover:bg-yellow-700"
-                    >
-                      Novo Token
-                    </Button>
-                  </>
-                ) : (
+                <div className="flex flex-col gap-2">
+                  <Link to={`/cliente/${cliente.token_publico || cliente.id}`}>
+                    <Button className="w-full">Ver Painel</Button>
+                  </Link>
                   <Button 
-                    onClick={() => regenerarToken(cliente.id)}
-                    className="bg-blue-600 hover:bg-blue-700"
+                    variant="outline" 
+                    className="w-full"
+                    onClick={() => copiarLinkCliente(cliente.token_publico || cliente.id)}
                   >
-                    Gerar Link
+                    Copiar Link
                   </Button>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
