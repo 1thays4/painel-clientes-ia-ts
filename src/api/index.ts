@@ -1,2 +1,13 @@
-// Arquivo vazio para evitar erro de módulo
-export {};
+import { processarMensagemWhatsApp } from './whatsapp-webhook';
+import { processarWebhookN8N } from './whatsapp-n8n';
+import { consultarIA } from './consultar-ia';
+import { registrarMensagemWhatsApp } from './registrar-mensagem';
+import { registrarMensagemSimples } from './registrar-mensagem-simples';
+
+export {
+  processarMensagemWhatsApp,
+  processarWebhookN8N,
+  consultarIA,
+  registrarMensagemWhatsApp,
+  registrarMensagemSimples
+};

@@ -143,7 +143,7 @@ export async function buscarHistoricoMensagens(clienteId: string | number): Prom
     const { data, error } = await supabase
       .from('mensagens_enviadas')
       .select('*')
-      .eq('cliente_id', clienteId)
+      .eq('id', clienteId)
       .order('timestamp', { ascending: false })
       .limit(20);
     

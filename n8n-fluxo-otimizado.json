@@ -1,0 +1,143 @@
+{
+  "name": "WhatsApp com IA - Otimizado",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "whatsapp-webhook",
+        "options": {}
+      },
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        -1060,
+        20
+      ],
+      "id": "74a43bfb-bc5f-4889-850e-d3ee088e5c71"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extrair dados do webhook do WhatsApp\nlet message = \"\";\nlet from = \"\";\nlet profileName = \"\";\nlet waId = \"\";\n\n// Verificar estrutura do webhook do Twilio\nif ($input.first().json.Body) {\n  message = $input.first().json.Body || \"\";\n  from = $input.first().json.From || \"\";\n  profileName = $input.first().json.ProfileName || \"\";\n  waId = $input.first().json.WaId || \"\";\n}\n// Verificar estrutura do corpo da requisição\nelse if ($input.first().json.body && $input.first().json.body.Body) {\n  message = $input.first().json.body.Body || \"\";\n  from = $input.first().json.body.From || \"\";\n  profileName = $input.first().json.body.ProfileName || \"\";\n  waId = $input.first().json.body.WaId || \"\";\n}\n\nreturn [\n  {\n    json: {\n      message: message,\n      from: from,\n      profileName: profileName,\n      waId: waId\n    }\n  }\n];"
+      },
+      "name": "Extrair Dados",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -740,
+        40
+      ],
+      "id": "2bae86f4-5f06-4509-b8b5-247cbaed5e59"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/chat/completions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"gpt-4.5-preview\",\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"Você é uma assistente especializada em automações para Instagram e WhatsApp. Responda de forma útil, objetiva e com linguagem próxima e acessível, como se estivesse conversando com uma amiga empreendedora. Sempre que possível, oriente a próxima ação ou passo do cliente. Nunca use jargões técnicos sem explicar. Dê preferência a frases curtas. Use emojis moderadamente para tornar o tom leve (1 a 2 por resposta). Sempre proponha um caminho ou ação clara (ex: \\\"Quer que eu te mostre como?\\\", \\\"Posso te mandar um passo a passo?\\\").\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"{{$json.message.replace('IA:', '').trim()}}\"\n    }\n  ],\n  \"max_tokens\": 500\n}",
+        "options": {}
+      },
+      "name": "Consultar IA",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [
+        -340,
+        -60
+      ],
+      "id": "ace99066-3753-4d9b-9cff-3450f659a283"
+    },
+    {
+      "parameters": {
+        "from": "+14155238886",
+        "to": "={{$node[\"Extrair Dados\"].json.from}}",
+        "toWhatsapp": true,
+        "message": "={{$node[\"Consultar IA\"].json.choices[0].message.content}}",
+        "options": {}
+      },
+      "name": "Enviar Resposta",
+      "type": "n8n-nodes-base.twilio",
+      "typeVersion": 1,
+      "position": [
+        60,
+        -80
+      ],
+      "id": "01284106-43ba-443d-934a-1f481215e558"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=http://localhost:3001/api/registrar-mensagem",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"whatsappNumero\": \"{{$node[\"Extrair Dados\"].json.from}}\".replace(\"whatsapp:\", \"\"),\n  \"pergunta\": \"{{$node[\"Extrair Dados\"].json.message}}\",\n  \"resposta\": \"{{$node[\"Consultar IA\"].json.choices[0].message.content}}\"\n}",
+        "options": {}
+      },
+      "name": "Registrar Mensagem",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [
+        400,
+        -80
+      ],
+      "id": "bb63e597-fe7c-46fe-80b9-787183e9484c"
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Extrair Dados",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extrair Dados": {
+      "main": [
+        [
+          {
+            "node": "Consultar IA",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Consultar IA": {
+      "main": [
+        [
+          {
+            "node": "Enviar Resposta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enviar Resposta": {
+      "main": [
+        [
+          {
+            "node": "Registrar Mensagem",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}
