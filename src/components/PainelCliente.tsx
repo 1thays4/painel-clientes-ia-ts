@@ -8,6 +8,7 @@ import { ToastContainer, toast } from "react-toastify";
 import { buscarClientePorToken, buscarHistoricoMensagens, atualizarCliente } from "../services/cliente";
 import { Cliente, Mensagem } from "../services/cliente";
 import { supabase } from "../lib/supabase";
+import PainelRespostasCliente from "./PainelRespostasCliente";
 import "react-toastify/dist/ReactToastify.css";
 
 export default function PainelCliente() {
@@ -84,11 +85,17 @@ export default function PainelCliente() {
         });
 
         // Buscar histórico de mensagens específicas deste cliente
+        console.log("Buscando histórico para cliente ID:", clienteData.id);
         const historico = await buscarHistoricoMensagens(clienteData.id);
         console.log("Histórico de mensagens do cliente:", historico);
         
         // Definir as mensagens no estado
-        setMensagens(historico);
+        if (historico && historico.length > 0) {
+          setMensagens(historico);
+        } else {
+          console.log("Nenhuma mensagem encontrada para o cliente");
+          setMensagens([]);
+        }
 
         // Configurar assinatura em tempo real para novas mensagens
         const channelId = `mensagens-${clienteData.id}-${Date.now()}`;
@@ -162,21 +169,23 @@ export default function PainelCliente() {
     return limparAssinaturas;
   }, [token]);
 
-  const atualizarHistorico = async (clienteId: number) => {
+  const atualizarHistorico = async (clienteId: number | null = null) => {
     setCarregandoHistorico(true);
     try {
       const historico = await buscarHistoricoMensagens(clienteId);
       setMensagens(historico);
       
-      // Atualizar também a contagem de mensagens
-      const mensagensAtualizadas = await contarMensagensMes(clienteId);
-      setCliente(clienteAtual => {
-        if (!clienteAtual) return null;
-        return {
-          ...clienteAtual,
-          mensagens_usadas: mensagensAtualizadas
-        };
-      });
+      // Atualizar também a contagem de mensagens se tiver um cliente específico
+      if (clienteId) {
+        const mensagensAtualizadas = await contarMensagensMes(clienteId);
+        setCliente(clienteAtual => {
+          if (!clienteAtual) return null;
+          return {
+            ...clienteAtual,
+            mensagens_usadas: mensagensAtualizadas
+          };
+        });
+      }
     } catch (error) {
       console.error("Erro ao buscar histórico:", error);
     } finally {
@@ -425,93 +434,15 @@ export default function PainelCliente() {
         </CardContent>
       </Card>
       
-      {/* Histórico de mensagens */}
-      <Card>
-        <CardContent className="pt-6">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-bold">Histórico de Mensagens</h2>
-            <Button 
-              variant="outline" 
-              onClick={() => cliente && atualizarHistorico(cliente.id as number)}
-              disabled={carregandoHistorico}
-            >
-              {carregandoHistorico ? "Atualizando..." : "Atualizar"}
-            </Button>
-          </div>
-          
-          {mensagens.length === 0 ? (
-            <p className="text-gray-500 text-center py-4">Nenhuma mensagem encontrada</p>
-          ) : (
-            <div className="space-y-4">
-              {mensagens.map((msg) => (
-                <div key={msg.id} className="border rounded-lg p-4">
-                  <div className="flex justify-between items-start mb-2">
-                    <h3 className="font-medium">
-                      {msg.pergunta ? (
-                        msg.pergunta.length > 50 && expandedMessage !== msg.id.toString() ? (
-                          <>
-                            {msg.pergunta.substring(0, 50)}...
-                            <button 
-                              className="text-blue-500 ml-2 text-sm"
-                              onClick={() => setExpandedMessage(msg.id.toString())}
-                            >
-                              Ver mais
-                            </button>
-                          </>
-                        ) : (
-                          <>
-                            {msg.pergunta}
-                            {expandedMessage === msg.id.toString() && (
-                              <button 
-                                className="text-blue-500 ml-2 text-sm"
-                                onClick={() => setExpandedMessage(null)}
-                              >
-                                Ver menos
-                              </button>
-                            )}
-                          </>
-                        )
-                      ) : (
-                        "Mensagem enviada"
-                      )}
-                    </h3>
-                    <span className="text-xs text-gray-500">
-                      {formatDate(msg.timestamp)}
-                    </span>
-                  </div>
-                  {msg.resposta && (
-                    <div className="mt-2 text-gray-700 bg-gray-50 p-2 rounded">
-                      {msg.resposta.length > 100 && expandedMessage !== `${msg.id}-resp` ? (
-                        <>
-                          {msg.resposta.substring(0, 100)}...
-                          <button 
-                            className="text-blue-500 ml-2 text-sm"
-                            onClick={() => setExpandedMessage(`${msg.id}-resp`)}
-                          >
-                            Ver mais
-                          </button>
-                        </>
-                      ) : (
-                        <>
-                          {msg.resposta}
-                          {expandedMessage === `${msg.id}-resp` && (
-                            <button 
-                              className="text-blue-500 ml-2 text-sm"
-                              onClick={() => setExpandedMessage(null)}
-                            >
-                              Ver menos
-                            </button>
-                          )}
-                        </>
-                      )}
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      {/* Painel de respostas humanas */}
+      {cliente && (
+        <PainelRespostasCliente 
+          clienteId={cliente.id}
+          mensagens={mensagens}
+          onAtualizarHistorico={() => cliente && atualizarHistorico(cliente.id as number)}
+          isAdmin={true}
+        />
+      )}
     </div>
   );
 }

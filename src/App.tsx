@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import PainelClientesIA from './components/painel-clientes-ia';
 import PainelCliente from './components/PainelCliente';
+import DashboardHumano from './components/DashboardHumano';
 import Login from './components/Login';
 import Registro from './components/Registro';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -19,6 +20,14 @@ const App: React.FC = () => {
             element={
               <ProtectedRoute>
                 <PainelClientesIA />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/atendimento-humano" 
+            element={
+              <ProtectedRoute>
+                <DashboardHumano />
               </ProtectedRoute>
             } 
           />

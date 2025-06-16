@@ -9,7 +9,10 @@ interface ResultadoVerificacao {
 }
 
 // Registrar uma nova mensagem de IA no WhatsApp
-export async function registrarMensagem(clienteId: string | number): Promise<ResultadoVerificacao> {
+export async function registrarMensagem(
+  clienteId: string | number, 
+  pergunta?: string
+): Promise<ResultadoVerificacao> {
   try {
     // Verificar se o cliente existe e tem mensagens disponíveis
     const { data: cliente, error: clienteError } = await supabase
@@ -31,7 +34,7 @@ export async function registrarMensagem(clienteId: string | number): Promise<Res
     const { error } = await supabase.from('mensagens_enviadas').insert([
       {
         cliente_id: clienteId,
-        conteudo: 'Uso de IA no WhatsApp',
+        pergunta: pergunta || 'Uso de IA no WhatsApp',
         timestamp: new Date().toISOString(),
       },
     ]);
@@ -64,6 +67,11 @@ export async function contarMensagensMes(clienteId: string | number): Promise<nu
   try {
     console.log('Contando mensagens para cliente ID:', clienteId);
     
+    // Se for um cliente de demonstração, retornar um valor fixo
+    if (typeof clienteId === 'string' && clienteId.startsWith('demo-')) {
+      return 5; // Valor fixo para demonstração
+    }
+    
     const now = new Date();
     const firstDay = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
     const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString();
@@ -87,5 +95,55 @@ export async function contarMensagensMes(clienteId: string | number): Promise<nu
   } catch (error) {
     console.error('Erro ao contar mensagens:', error);
     return 0;
+  }
+}
+
+// Responder manualmente a uma mensagem
+export async function responderManualmente(
+  mensagemId: string | number,
+  resposta: string
+): Promise<boolean> {
+  try {
+    const { error } = await supabase
+      .from('mensagens_enviadas')
+      .update({ resposta_humana: resposta })
+      .eq('id', mensagemId);
+    
+    if (error) {
+      console.error('Erro ao responder mensagem:', error);
+      return false;
+    }
+    
+    return true;
+  } catch (error) {
+    console.error('Erro ao responder mensagem:', error);
+    return false;
+  }
+}
+
+// Buscar mensagens pendentes de resposta humana
+export async function buscarMensagensPendentes(clienteId?: string | number): Promise<any[]> {
+  try {
+    let query = supabase
+      .from('mensagens_enviadas')
+      .select('*')
+      .is('resposta_humana', null)
+      .order('timestamp', { ascending: false });
+    
+    if (clienteId) {
+      query = query.eq('cliente_id', clienteId);
+    }
+    
+    const { data, error } = await query;
+    
+    if (error) {
+      console.error('Erro ao buscar mensagens pendentes:', error);
+      return [];
+    }
+    
+    return data || [];
+  } catch (error) {
+    console.error('Erro ao buscar mensagens pendentes:', error);
+    return [];
   }
 }

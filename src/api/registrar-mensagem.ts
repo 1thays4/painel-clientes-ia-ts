@@ -1,25 +1,36 @@
 import { Request, Response } from 'express';
 import { supabase } from '../lib/supabase';
+import { config } from '../config';
 
 interface MensagemRequest {
   whatsappNumero: string;
   pergunta: string;
   resposta: string;
+  numeroDestino?: string;
 }
 
 export async function registrarMensagemWhatsApp(req: Request, res: Response) {
   try {
+    // Verificar se a configuração da API está completa
+    if (!config.IA_API_KEY || config.IA_API_KEY === 'your-openai-api-key-here') {
+      console.error('Configuração da API de IA incompleta');
+      return res.status(500).json({ error: 'Configuração do sistema incompleta' });
+    }
+
     const { whatsappNumero, pergunta, resposta }: MensagemRequest = req.body;
     
     if (!whatsappNumero || !pergunta || !resposta) {
       return res.status(400).json({ error: 'Dados incompletos' });
     }
     
+    // Limpar o número de WhatsApp (remover prefixo "whatsapp:" se existir)
+    const numeroLimpo = whatsappNumero.replace('whatsapp:', '');
+    
     // Buscar cliente pelo número de WhatsApp
     const { data: cliente, error: clienteError } = await supabase
       .from('clientes')
       .select('id, mensagens_usadas, mensagens_limite')
-      .eq('whatsapp', whatsappNumero)
+      .eq('whatsapp', numeroLimpo)
       .single();
 
     if (clienteError || !cliente) {

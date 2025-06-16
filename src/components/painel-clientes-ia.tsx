@@ -85,6 +85,11 @@ export default function PainelClientesIA() {
           <span className="text-sm text-gray-600">
             {user?.email} {isAdmin && '(Admin)'}
           </span>
+          <Link to="/atendimento-humano">
+            <Button variant="default" className="mr-2">
+              Atendimento Humano
+            </Button>
+          </Link>
           <Button variant="outline" onClick={handleLogout}>
             Sair
           </Button>
