@@ -16,28 +16,18 @@ export default function MensagemGrupo({
 }: MensagemGrupoProps) {
   const [expandedMessage, setExpandedMessage] = useState<string | null>(null);
 
-  // Agrupar mensagens por cliente e cliente final
+  // Agrupar mensagens por cliente final (whatsapp)
   const mensagensPorCliente: Record<string, Mensagem[]> = {};
   
   // Verificar se há mensagens antes de tentar agrupar
   if (mensagens && mensagens.length > 0) {
     mensagens.forEach(msg => {
-      // Se estamos filtrando por um cliente específico, agrupar por cliente final
-      if (clienteId) {
-        // Agrupar por cliente_final_id
-        const chaveClienteFinal = `final_${msg.cliente_final_id || 'desconhecido'}`;
-        if (!mensagensPorCliente[chaveClienteFinal]) {
-          mensagensPorCliente[chaveClienteFinal] = [];
-        }
-        mensagensPorCliente[chaveClienteFinal].push(msg);
-      } else {
-        // Caso contrário, agrupar primeiro por cliente_id
-        const chave = `empresa_${msg.cliente_id}`;
-        if (!mensagensPorCliente[chave]) {
-          mensagensPorCliente[chave] = [];
-        }
-        mensagensPorCliente[chave].push(msg);
+      // Agrupar por whatsapp do cliente final
+      const chaveWhatsapp = `whatsapp_${msg.whatsapp_cliente_final || 'desconhecido'}`;
+      if (!mensagensPorCliente[chaveWhatsapp]) {
+        mensagensPorCliente[chaveWhatsapp] = [];
       }
+      mensagensPorCliente[chaveWhatsapp].push(msg);
     });
   } else {
     console.log('Nenhuma mensagem para agrupar');
@@ -59,21 +49,11 @@ export default function MensagemGrupo({
     <div className="space-y-6">
       {Object.entries(mensagensPorCliente).map(([clienteKey, msgs]) => (
         <div key={clienteKey} className="border-t pt-4">
-          {/* Cabeçalho do grupo - mostra empresa ou cliente final dependendo do contexto */}
-          {clienteId ? (
-            // Se estamos filtrando por empresa, mostrar o cliente final
-            msgs[0].nome_cliente_final && (
-              <h3 className="font-bold text-green-600 mb-2">
-                Cliente: {msgs[0].nome_cliente_final} {msgs[0].whatsapp_cliente_final && `(${msgs[0].whatsapp_cliente_final})`}
-              </h3>
-            )
-          ) : (
-            // Se não estamos filtrando, mostrar a empresa
-            msgs[0].nome_cliente && (
-              <h3 className="font-bold text-blue-600 mb-2">
-                Empresa: {msgs[0].nome_cliente} {msgs[0].whatsapp_cliente && `(${msgs[0].whatsapp_cliente})`}
-              </h3>
-            )
+          {/* Cabeçalho do grupo - mostra o cliente final */}
+          {msgs[0].nome_cliente_final && (
+            <h3 className="font-bold text-green-600 mb-2">
+              Cliente: {msgs[0].nome_cliente_final} {msgs[0].whatsapp_cliente_final && `(${msgs[0].whatsapp_cliente_final})`}
+            </h3>
           )}
           
           <div className="space-y-3">
@@ -86,19 +66,7 @@ export default function MensagemGrupo({
                 onClick={() => onMensagemSelecionada(msg.id)}
               >
                 <div className="flex flex-col gap-1 mb-2">
-                  {/* Mostrar informações do cliente final se estamos vendo todas as empresas */}
-                  {!clienteId && msg.nome_cliente_final && (
-                    <div className="flex items-center">
-                      <span className="text-sm font-medium text-green-600">
-                        Cliente: {msg.nome_cliente_final}
-                      </span>
-                      {msg.whatsapp_cliente_final && (
-                        <span className="text-xs text-gray-500 ml-2">
-                          ({msg.whatsapp_cliente_final})
-                        </span>
-                      )}
-                    </div>
-                  )}
+
                   
                   <div className="flex justify-between items-start">
                     <span className="font-medium">

@@ -1,14 +1,15 @@
-import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { Card, CardContent } from './ui/card';
 import { Button } from './ui/button';
-import { Input } from './ui/input';
-import { ToastContainer, toast } from 'react-toastify';
 import { Mensagem } from '../services/cliente';
 import ClienteSelector from './ClienteSelector';
 import ClienteFinalSelector from './ClienteFinalSelector';
 import MensagemGrupo from './MensagemGrupo';
+import { config } from '../config';
+import axios from 'axios';
 import 'react-toastify/dist/ReactToastify.css';
+import { useEffect, useState } from 'react';
+import { toast } from 'react-toastify';
 
 interface PainelRespostasClienteProps {
   clienteId: string | number;
@@ -39,6 +40,14 @@ export default function PainelRespostasCliente({
     
     setEnviandoResposta(true);
     try {
+      // Obter a mensagem selecionada para ter acesso aos dados do cliente
+      const msgSelecionada = mensagens.find(m => m.id === mensagemSelecionada);
+      if (!msgSelecionada) {
+        toast.error('Mensagem não encontrada');
+        return;
+      }
+      
+      // Atualizar a mensagem no banco de dados
       const { error } = await supabase
         .from('mensagens_enviadas')
         .update({ resposta_humana: resposta.trim() })
@@ -48,6 +57,36 @@ export default function PainelRespostasCliente({
         console.error('Erro ao enviar resposta:', error);
         toast.error('Erro ao enviar resposta');
         return;
+      }
+      
+      // Enviar a resposta para o webhook do n8n
+      try {
+        // Preparar os dados para o webhook
+        const webhookData = {
+           
+            mensagem: resposta.trim(),
+            numeroDestino: msgSelecionada.whatsapp_cliente_final,
+            numeroRemetente: msgSelecionada.whatsapp_cliente || config.N8N_WEBHOOK_URL.split('/').pop(),
+            tipoMensagem: 'resposta_humana',
+            mensagemId: mensagemSelecionada
+          
+        };
+        
+        // Enviar para o webhook do n8n
+        await axios.post(config.N8N_WEBHOOK_URL, /* {
+          whatsappNumero: msgSelecionada.whatsapp_cliente_final || "5547991950615",
+          pergunta: msgSelecionada.pergunta || "Pergunta original",
+          resposta: resposta.trim()
+        } */ webhookData, {
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        });
+        console.log('Resposta enviada para o webhook do n8n');
+      } catch (webhookError) {
+        console.error('Erro ao enviar para o webhook:', webhookError);
+        // Não falhar o processo principal se o webhook falhar
+        toast.warning('Resposta salva, mas pode não ter sido enviada para o WhatsApp');
       }
       
       toast.success('Resposta enviada com sucesso!');
@@ -110,20 +149,13 @@ export default function PainelRespostasCliente({
       </div>
       
       {isAdmin && (
-        <>
+        <div className="mb-4">
+          <h3 className="text-sm font-medium mb-2">Filtrar por:</h3>
           <ClienteSelector 
             onClienteSelecionado={handleClienteSelecionado}
             clienteSelecionado={clienteSelecionado}
           />
-          
-          {clienteSelecionado && (
-            <ClienteFinalSelector
-              onClienteFinalSelecionado={handleClienteFinalSelecionado}
-              clienteFinalSelecionado={clienteFinalSelecionado}
-              clienteId={clienteSelecionado}
-            />
-          )}
-        </>
+        </div>
       )}
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

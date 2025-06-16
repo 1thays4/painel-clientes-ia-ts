@@ -65,7 +65,7 @@ export default function PainelCliente() {
         
         // Definir valores padrão para mensagens_limite se não existir
         if (!clienteData.mensagens_limite) {
-          clienteData.mensagens_limite = 100; // Valor padrão
+          clienteData.mensagens_limite = 1000; // Valor padrão
         }
         
         // Buscar contagem de mensagens do mês atual
@@ -228,13 +228,13 @@ export default function PainelCliente() {
         return (
           <div className="mt-4 p-4 bg-gray-50 rounded-lg">
             <h3 className="text-lg font-semibold mb-2">Plano Básico</h3>
-            <p className="text-2xl font-bold text-green-600 mb-4">R$ 49/mês</p>
+            <p className="text-2xl font-bold text-green-600 mb-4">R$ 197/mês</p>
             <ul className="space-y-2">
               <li className="flex items-center">
                 <span className="text-green-500 mr-2">✓</span> Acesso ao assistente IA
               </li>
               <li className="flex items-center">
-                <span className="text-green-500 mr-2">✓</span> 100 mensagens por mês
+                <span className="text-green-500 mr-2">✓</span> 1000 mensagens por mês
               </li>
               <li className="flex items-center">
                 <span className="text-green-500 mr-2">✓</span> Suporte por email
@@ -310,7 +310,7 @@ export default function PainelCliente() {
     }
     
     const mensagensUsadas = cliente.mensagens_usadas || 0;
-    const mensagensLimite = cliente.mensagens_limite || 100;
+    const mensagensLimite = cliente.mensagens_limite || 1000;
     
     const percentUsed = (mensagensUsadas / mensagensLimite) * 100;
     
@@ -414,7 +414,7 @@ export default function PainelCliente() {
             <div className="flex justify-between mb-1">
               <span>Uso de mensagens este mês</span>
               <span className="font-medium">
-                {cliente?.mensagens_usadas || 0} / {cliente?.mensagens_limite || 100}
+                {cliente?.mensagens_usadas || 0} / {cliente?.mensagens_limite || 1000}
               </span>
             </div>
             <div className="w-full bg-gray-200 rounded-full h-2.5">
