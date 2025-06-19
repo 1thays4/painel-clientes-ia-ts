@@ -6,6 +6,8 @@ import DashboardHumano from './components/DashboardHumano';
 import Login from './components/Login';
 import Registro from './components/Registro';
 import ProtectedRoute from './components/ProtectedRoute';
+import AdminRoute from './components/AdminRoute';
+import Dashboard from './components/Dashboard';
 import { AuthProvider } from './contexts/AuthContext';
 
 const App: React.FC = () => {
@@ -20,6 +22,17 @@ const App: React.FC = () => {
             element={
               <ProtectedRoute>
                 <PainelClientesIA />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/dashboard" 
+            element={
+              <ProtectedRoute>
+                <div className="p-6 max-w-6xl mx-auto">
+                  <h1 className="text-2xl font-bold mb-6">Dashboard</h1>
+                  <Dashboard isAdmin={true} />
+                </div>
               </ProtectedRoute>
             } 
           />

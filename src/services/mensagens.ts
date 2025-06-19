@@ -11,7 +11,9 @@ interface ResultadoVerificacao {
 // Registrar uma nova mensagem de IA no WhatsApp
 export async function registrarMensagem(
   clienteId: string | number, 
-  pergunta?: string
+  pergunta?: string,
+  numeroRemetente?: string,
+  numeroDestino?: string
 ): Promise<ResultadoVerificacao> {
   try {
     // Verificar se o cliente existe e tem mensagens disponíveis
@@ -26,9 +28,21 @@ export async function registrarMensagem(
     }
 
     // Verificar limite de mensagens
+    if (!cliente.mensagens_limite) {
+      // Definir limite padrão baseado no plano
+      const planoConfig = config.planos[cliente.plano as keyof typeof config.planos];
+      cliente.mensagens_limite = planoConfig?.limite || 1000;
+    }
+    
     if (cliente.mensagens_usadas >= cliente.mensagens_limite) {
       throw new Error('Limite de mensagens atingido para este mês');
     }
+
+    // Limpar e formatar números de telefone
+    const formatarNumero = (numero?: string): string => {
+      if (!numero) return '';
+      return numero.replace(/\D/g, '');
+    };
 
     // Registrar a mensagem
     const { error } = await supabase.from('mensagens_enviadas').insert([
@@ -36,6 +50,8 @@ export async function registrarMensagem(
         cliente_id: clienteId,
         pergunta: pergunta || 'Uso de IA no WhatsApp',
         timestamp: new Date().toISOString(),
+        numero_remetente: formatarNumero(numeroRemetente),
+        numero_destino: formatarNumero(numeroDestino)
       },
     ]);
 
@@ -73,8 +89,9 @@ export async function contarMensagensMes(clienteId: string | number): Promise<nu
     }
     
     const now = new Date();
-    const firstDay = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
-    const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString();
+    // Definir hora para 00:00:00 para o primeiro dia e 23:59:59 para o último dia
+    const firstDay = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0).toISOString();
+    const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59).toISOString();
 
     // Contar mensagens pelo cliente_id
     const { count, error } = await supabase

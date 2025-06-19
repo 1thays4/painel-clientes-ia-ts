@@ -7,6 +7,7 @@ interface MensagemRequest {
   pergunta: string;
   resposta: string;
   numeroDestino?: string;
+  numeroRemetente?: string;
 }
 
 export async function registrarMensagemWhatsApp(req: Request, res: Response) {
@@ -17,7 +18,7 @@ export async function registrarMensagemWhatsApp(req: Request, res: Response) {
       return res.status(500).json({ error: 'Configuração do sistema incompleta' });
     }
 
-    const { whatsappNumero, pergunta, resposta }: MensagemRequest = req.body;
+    const { whatsappNumero, pergunta, resposta, numeroRemetente, numeroDestino }: MensagemRequest = req.body;
     
     if (!whatsappNumero || !pergunta || !resposta) {
       return res.status(400).json({ error: 'Dados incompletos' });
@@ -37,6 +38,12 @@ export async function registrarMensagemWhatsApp(req: Request, res: Response) {
       return res.status(404).json({ error: 'Cliente não encontrado' });
     }
 
+    // Formatar números de telefone
+    const formatarNumero = (numero?: string): string => {
+      if (!numero) return '';
+      return numero.replace(/\D/g, '');
+    };
+
     // Registrar a mensagem
     const { error } = await supabase.from('mensagens_enviadas').insert([
       {
@@ -44,6 +51,8 @@ export async function registrarMensagemWhatsApp(req: Request, res: Response) {
         pergunta: pergunta,
         resposta: resposta,
         timestamp: new Date().toISOString(),
+        numero_remetente: formatarNumero(numeroRemetente || ''),
+        numero_destino: formatarNumero(numeroDestino || numeroLimpo)
       },
     ]);
 

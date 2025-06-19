@@ -16,18 +16,38 @@ export default function MensagemGrupo({
 }: MensagemGrupoProps) {
   const [expandedMessage, setExpandedMessage] = useState<string | null>(null);
 
-  // Agrupar mensagens por cliente final (whatsapp)
+  // Agrupar mensagens por cliente final (whatsapp ou id)
   const mensagensPorCliente: Record<string, Mensagem[]> = {};
   
   // Verificar se há mensagens antes de tentar agrupar
   if (mensagens && mensagens.length > 0) {
-    mensagens.forEach(msg => {
-      // Agrupar por whatsapp do cliente final
-      const chaveWhatsapp = `whatsapp_${msg.whatsapp_cliente_final || 'desconhecido'}`;
-      if (!mensagensPorCliente[chaveWhatsapp]) {
-        mensagensPorCliente[chaveWhatsapp] = [];
+    // Ordenar mensagens por data (mais recentes primeiro)
+    const mensagensOrdenadas = [...mensagens].sort((a, b) => {
+      if (!a.timestamp) return 1;
+      if (!b.timestamp) return -1;
+      return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime();
+    });
+    
+    mensagensOrdenadas.forEach(msg => {
+      if (!msg) return; // Ignorar mensagens inválidas
+      
+      // Criar chave de agrupamento mais robusta
+      let chave;
+      // Priorizar o número de destino se disponível
+      if (msg.numero_destino) {
+        chave = `destino_${msg.numero_destino}`;
+      } else if (msg.cliente_final_id) {
+        chave = `cliente_${msg.cliente_final_id}`;
+      } else if (msg.whatsapp_cliente_final) {
+        chave = `whatsapp_${msg.whatsapp_cliente_final}`;
+      } else {
+        chave = `msg_${msg.id || Date.now()}`;
       }
-      mensagensPorCliente[chaveWhatsapp].push(msg);
+      
+      if (!mensagensPorCliente[chave]) {
+        mensagensPorCliente[chave] = [];
+      }
+      mensagensPorCliente[chave].push(msg);
     });
   } else {
     console.log('Nenhuma mensagem para agrupar');
@@ -50,9 +70,24 @@ export default function MensagemGrupo({
       {Object.entries(mensagensPorCliente).map(([clienteKey, msgs]) => (
         <div key={clienteKey} className="border-t pt-4">
           {/* Cabeçalho do grupo - mostra o cliente final */}
-          {msgs[0].nome_cliente_final && (
+          {msgs[0] && (
             <h3 className="font-bold text-green-600 mb-2">
-              Cliente: {msgs[0].nome_cliente_final} {msgs[0].whatsapp_cliente_final && `(${msgs[0].whatsapp_cliente_final})`}
+              {msgs[0].nome_cliente_final && msgs[0].nome_cliente_final !== 'Usuário final' ? (
+                <>
+                  Cliente: {msgs[0].nome_cliente_final} 
+                  {/* Mostrar número de destino se disponível, senão mostrar whatsapp_cliente_final */}
+                  {(msgs[0].numero_destino || msgs[0].whatsapp_cliente_final) ? 
+                    ` (${msgs[0].numero_destino || msgs[0].whatsapp_cliente_final})` : ''}
+                </>
+              ) : (
+                <>
+                  Cliente: {msgs[0].numero_destino ? 
+                    `${msgs[0].numero_destino}` : 
+                    (msgs[0].whatsapp_cliente_final ? 
+                      `${msgs[0].whatsapp_cliente_final}` : 
+                      'Desconhecido')}
+                </>
+              )}
             </h3>
           )}
           

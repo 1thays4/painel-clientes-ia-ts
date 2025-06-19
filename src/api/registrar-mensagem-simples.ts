@@ -27,6 +27,8 @@ export async function registrarMensagemSimples(req: Request, res: Response) {
         pergunta,
         resposta,
         timestamp: new Date().toISOString(),
+        numero_remetente: whatsappNumero.replace(/\D/g, ''),
+        numero_destino: req.body.numeroDestino ? req.body.numeroDestino.replace(/\D/g, '') : ''
       },
     ]);
 

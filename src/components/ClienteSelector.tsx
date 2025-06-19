@@ -95,7 +95,7 @@ export default function ClienteSelector({
               onClick={() => onClienteSelecionado(cliente.id)}
               className="mb-2"
             >
-              {cliente.nome} {cliente.whatsapp && `(${cliente.whatsapp})`}
+              {cliente.nome}
             </Button>
           ))
         )}

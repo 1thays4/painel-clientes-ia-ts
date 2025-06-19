@@ -1,4 +1,5 @@
 import { supabase } from './supabase';
+import { config } from '../config';
 
 // Interface para o cliente
 export interface Cliente {
@@ -28,6 +29,8 @@ export interface Mensagem {
   cliente_final_id?: number;
   nome_cliente_final?: string;
   whatsapp_cliente_final?: string;
+  numero_remetente?: string;
+  numero_destino?: string;
 }
 
 // Buscar cliente pelo token público
@@ -100,7 +103,7 @@ export async function buscarClientePorToken(token: string): Promise<Cliente | nu
         nome: "Cliente Novo",
         plano: "basico",
         data_cadastro: new Date().toISOString(),
-        mensagens_limite: 100,
+        mensagens_limite: config.planos.basico.limite,
         mensagens_usadas: 0,
         token_publico: novoToken
       };
@@ -120,7 +123,7 @@ export async function buscarClientePorToken(token: string): Promise<Cliente | nu
           nome: "Cliente Demonstração",
           plano: "basico",
           data_cadastro: new Date().toISOString(),
-          mensagens_limite: 100,
+          mensagens_limite: config.planos.basico.limite,
           mensagens_usadas: 0,
           token_publico: token
         };
@@ -133,7 +136,9 @@ export async function buscarClientePorToken(token: string): Promise<Cliente | nu
     // Definir valores padrão para campos importantes
     const cliente = data[0];
     if (!cliente.mensagens_limite) {
-      cliente.mensagens_limite = 100; // Valor padrão
+      // Usar o limite do plano conforme configuração
+      const planoConfig = config.planos[cliente.plano as keyof typeof config.planos];
+      cliente.mensagens_limite = planoConfig?.limite || 1000;
     }
     
     return cliente;
@@ -172,9 +177,9 @@ export async function atualizarCliente(
 }
 
 // Buscar histórico de mensagens do cliente
-export async function buscarHistoricoMensagens(clienteId: string | number | null): Promise<Mensagem[]> {
+export async function buscarHistoricoMensagens(clienteId: string | number | null, limite: number = 200, offset: number = 0): Promise<Mensagem[]> {
   try {
-    console.log('Buscando histórico para cliente ID:', clienteId);
+    console.log('Buscando histórico para cliente ID:', clienteId, 'limite:', limite, 'offset:', offset);
     
     // Se for um cliente de demonstração, retornar mensagens fictícias
     if (typeof clienteId === 'string' && clienteId?.startsWith('demo-')) {
@@ -210,13 +215,15 @@ export async function buscarHistoricoMensagens(clienteId: string | number | null
     let query = supabase
       .from('mensagens_enviadas')
       .select('*')
-      .order('timestamp', { ascending: false })
-      .limit(50);
+      .order('timestamp', { ascending: false });
     
     // Filtrar por cliente_id se fornecido
     if (clienteId) {
       query = query.eq('cliente_id', clienteId);
     }
+    
+    // Aplicar paginação
+    query = query.range(offset, offset + limite - 1);
     
     const { data, error } = await query;
     
@@ -266,16 +273,48 @@ export async function buscarHistoricoMensagens(clienteId: string | number | null
       }
       
       // Formatar os dados para corresponder à interface Mensagem
-      const mensagensFormatadas = data.map((msg: { cliente_id: any; cliente_final_id: any; }) => {
+      const mensagensFormatadas = data.map((msg: { 
+        cliente_id: any; 
+        cliente_final_id: any;
+        numero_remetente?: string;
+        numero_destino?: string;
+      }) => {
         const cliente = clientesMap[String(msg.cliente_id)] || {};
         const clienteFinal: { nome?: string; whatsapp?: string } = msg.cliente_final_id ? clientesFinaisMap[String(msg.cliente_final_id)] || {} : {};
+        
+        // Função para limpar e validar número de WhatsApp
+        const formatarNumeroWhatsApp = (numero?: string): string => {
+          if (!numero) return '';
+          
+          // Remover todos os caracteres não numéricos
+          const apenasDigitos = numero.replace(/\D/g, '');
+          
+          // Verificar se tem pelo menos 10 dígitos (código de área + número)
+          if (apenasDigitos.length >= 10) {
+            return apenasDigitos;
+          }
+          
+          return '';
+        };
+        
+        const whatsappCliente = formatarNumeroWhatsApp((cliente as { whatsapp?: string }).whatsapp);
+        const whatsappClienteFinal = formatarNumeroWhatsApp(clienteFinal.whatsapp);
+        
+        // Usar os números de remetente e destino se disponíveis
+        const numeroRemetente = (msg as any).numero_remetente || whatsappCliente;
+        const numeroDestino = (msg as any).numero_destino || whatsappClienteFinal;
+        
+        // Se o número de destino for igual ao número do cliente, usar o número de remetente como destino
+        const numeroDestinoFinal = numeroDestino === whatsappCliente ? numeroRemetente : numeroDestino;
         
         return {
           ...msg,
           nome_cliente: (cliente as { nome?: string }).nome || 'Cliente sem nome',
-          whatsapp_cliente: (cliente as { whatsapp?: string }).whatsapp || 'Sem WhatsApp',
+          whatsapp_cliente: whatsappCliente,
           nome_cliente_final: clienteFinal.nome || 'Usuário final',
-          whatsapp_cliente_final: clienteFinal.whatsapp || 'Sem WhatsApp'
+          whatsapp_cliente_final: numeroDestinoFinal || whatsappClienteFinal,
+          numero_remetente: numeroRemetente,
+          numero_destino: numeroDestinoFinal
         };
       });
       
@@ -349,6 +388,40 @@ export async function atualizarTokensNulos(): Promise<number> {
     return atualizados;
   } catch (error) {
     console.error("Erro ao atualizar tokens:", error);
+    return 0;
+  }
+}
+
+// Contar total de mensagens do cliente
+export async function contarTotalMensagens(clienteId: string | number | null): Promise<number> {
+  try {
+    console.log('Contando total de mensagens para cliente ID:', clienteId);
+    
+    // Se for um cliente de demonstração, retornar um valor fixo
+    if (typeof clienteId === 'string' && clienteId?.startsWith('demo-')) {
+      return 2;
+    }
+    
+    let query = supabase
+      .from('mensagens_enviadas')
+      .select('id', { count: 'exact' });
+    
+    // Filtrar por cliente_id se fornecido
+    if (clienteId) {
+      query = query.eq('cliente_id', clienteId);
+    }
+    
+    const { count, error } = await query;
+    
+    if (error) {
+      console.error('Erro ao contar mensagens:', error);
+      return 0;
+    }
+    
+    console.log('Total de mensagens encontradas:', count);
+    return count || 0;
+  } catch (error) {
+    console.error('Erro ao contar mensagens:', error);
     return 0;
   }
 }

@@ -6,6 +6,9 @@ import { Button } from './ui/button';
 import { Card, CardContent } from './ui/card';
 import { ToastContainer, toast } from 'react-toastify';
 import AdicionarCliente from './AdicionarCliente';
+import Dashboard from './Dashboard';
+import { formatarWhatsAppParaExibicao } from '../lib/validacao';
+import { verificarLimiteMensagens } from '../lib/validacao';
 import 'react-toastify/dist/ReactToastify.css';
 
 interface Cliente {
@@ -25,6 +28,7 @@ export default function PainelClientesIA() {
   const [clientes, setClientes] = useState<Cliente[]>([]);
   const [carregando, setCarregando] = useState(true);
   const [mostrarFormulario, setMostrarFormulario] = useState(false);
+  const [mostrarDashboard, setMostrarDashboard] = useState(true);
   const { user, signOut, isAdmin } = useAuth();
 
   const buscarClientes = async () => {
@@ -56,6 +60,27 @@ export default function PainelClientesIA() {
 
   useEffect(() => {
     buscarClientes();
+    
+    // Configurar assinatura em tempo real para atualizações de clientes
+    const channel = supabase
+      .channel('clientes-changes')
+      .on('postgres_changes', 
+        { 
+          event: '*', 
+          schema: 'public', 
+          table: 'clientes'
+        }, 
+        () => {
+          // Atualizar a lista de clientes quando houver mudanças
+          buscarClientes();
+        }
+      )
+      .subscribe();
+    
+    return () => {
+      // Limpar assinatura quando o componente for desmontado
+      channel.unsubscribe();
+    };
   }, [user, isAdmin]);
 
   const handleLogout = async () => {
@@ -71,6 +96,31 @@ export default function PainelClientesIA() {
   const handleClienteAdicionado = () => {
     buscarClientes();
     setMostrarFormulario(false);
+  };
+
+  // Função para renderizar o status de uso de mensagens
+  const renderStatusMensagens = (cliente: Cliente) => {
+    const mensagensUsadas = cliente.mensagens_usadas || 0;
+    const mensagensLimite = cliente.mensagens_limite || 1000;
+    const limiteInfo = verificarLimiteMensagens(mensagensUsadas, mensagensLimite);
+    
+    return (
+      <div className="mt-2">
+        <div className="flex justify-between text-xs mb-1">
+          <span>Uso: {mensagensUsadas}/{mensagensLimite}</span>
+          <span>{Math.round(limiteInfo.percentual)}%</span>
+        </div>
+        <div className="w-full bg-gray-200 rounded-full h-1.5">
+          <div 
+            className={`h-1.5 rounded-full ${
+              limiteInfo.status === 'critico' ? 'bg-red-600' :
+              limiteInfo.status === 'alerta' ? 'bg-yellow-500' : 'bg-green-500'
+            }`} 
+            style={{ width: `${Math.min(limiteInfo.percentual, 100)}%` }}
+          ></div>
+        </div>
+      </div>
+    );
   };
 
   return (
@@ -103,12 +153,20 @@ export default function PainelClientesIA() {
             <p className="text-sm text-gray-700 mb-4">
               Você tem acesso a todos os clientes cadastrados no sistema.
             </p>
-            <Button 
-              className="bg-green-600 hover:bg-green-700"
-              onClick={() => setMostrarFormulario(!mostrarFormulario)}
-            >
-              {mostrarFormulario ? "Cancelar" : "Adicionar Novo Cliente"}
-            </Button>
+            <div className="flex gap-2">
+              <Button 
+                className="bg-green-600 hover:bg-green-700"
+                onClick={() => setMostrarFormulario(!mostrarFormulario)}
+              >
+                {mostrarFormulario ? "Cancelar" : "Adicionar Novo Cliente"}
+              </Button>
+              <Button 
+                variant="outline"
+                onClick={() => setMostrarDashboard(!mostrarDashboard)}
+              >
+                {mostrarDashboard ? "Ver Lista de Clientes" : "Ver Dashboard"}
+              </Button>
+            </div>
           </CardContent>
         </Card>
       )}
@@ -120,50 +178,60 @@ export default function PainelClientesIA() {
         </div>
       )}
       
-      <h2 className="text-xl font-semibold mb-4">
-        {isAdmin ? 'Todos os Clientes' : 'Meus Dados'}
-      </h2>
+      {/* Dashboard para administradores */}
+      {isAdmin && mostrarDashboard && (
+        <div className="mb-6">
+          <Dashboard isAdmin={true} />
+        </div>
+      )}
       
-      {carregando ? (
-        <p className="text-center py-8">Carregando clientes...</p>
-      ) : clientes.length === 0 ? (
-        <Card>
-          <CardContent className="py-8 text-center">
-            <p className="text-gray-500">Nenhum cliente encontrado</p>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {clientes.map((cliente) => (
-            <Card key={cliente.id} className="overflow-hidden">
-              <CardContent className="pt-6">
-                <h3 className="font-bold text-lg mb-1">{cliente.nome}</h3>
-                <p className="text-sm text-gray-500 mb-2">
-                  Plano: <span className="font-medium">{cliente.plano}</span>
-                </p>
-                <div className="text-sm mb-4">
-                  <p>WhatsApp: {cliente.whatsapp || 'Não informado'}</p>
-                  <p>Email: {cliente.email || 'Não informado'}</p>
-                  <p>
-                    Mensagens: {cliente.mensagens_usadas || 0} / {cliente.mensagens_limite || 100}
-                  </p>
-                </div>
-                <div className="flex flex-col gap-2">
-                  <Link to={`/cliente/${cliente.token_publico || cliente.id}`}>
-                    <Button className="w-full">Ver Painel</Button>
-                  </Link>
-                  <Button 
-                    variant="outline" 
-                    className="w-full"
-                    onClick={() => copiarLinkCliente(cliente.token_publico || cliente.id)}
-                  >
-                    Copiar Link
-                  </Button>
-                </div>
+      {/* Lista de clientes */}
+      {(!mostrarDashboard || !isAdmin) && (
+        <>
+          <h2 className="text-xl font-semibold mb-4">
+            {isAdmin ? 'Todos os Clientes' : 'Meus Dados'}
+          </h2>
+          
+          {carregando ? (
+            <p className="text-center py-8">Carregando clientes...</p>
+          ) : clientes.length === 0 ? (
+            <Card>
+              <CardContent className="py-8 text-center">
+                <p className="text-gray-500">Nenhum cliente encontrado</p>
               </CardContent>
             </Card>
-          ))}
-        </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {clientes.map((cliente) => (
+                <Card key={cliente.id} className="overflow-hidden">
+                  <CardContent className="pt-6">
+                    <h3 className="font-bold text-lg mb-1">{cliente.nome}</h3>
+                    <p className="text-sm text-gray-500 mb-2">
+                      Plano: <span className="font-medium capitalize">{cliente.plano}</span>
+                    </p>
+                    <div className="text-sm mb-4">
+                      <p>WhatsApp: {cliente.whatsapp ? formatarWhatsAppParaExibicao(cliente.whatsapp) : 'Não informado'}</p>
+                      <p>Email: {cliente.email || 'Não informado'}</p>
+                      {renderStatusMensagens(cliente)}
+                    </div>
+                    <div className="flex flex-col gap-2">
+                      <Link to={`/cliente/${cliente.token_publico || cliente.id}`}>
+                        <Button className="w-full">Ver Painel</Button>
+                      </Link>
+                      <Button 
+                        variant="outline" 
+                        className="w-full"
+                        onClick={() => copiarLinkCliente(cliente.token_publico || cliente.id)}
+                      >
+                        Copiar Link
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </>
       )}
     </div>
   );

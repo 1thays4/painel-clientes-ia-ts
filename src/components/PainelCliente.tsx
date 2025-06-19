@@ -5,10 +5,14 @@ import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { contarMensagensMes } from "../services/mensagens";
 import { ToastContainer, toast } from "react-toastify";
-import { buscarClientePorToken, buscarHistoricoMensagens, atualizarCliente } from "../services/cliente";
+import { buscarClientePorToken, buscarHistoricoMensagens, atualizarCliente, contarTotalMensagens } from "../services/cliente";
 import { Cliente, Mensagem } from "../services/cliente";
 import { supabase } from "../lib/supabase";
 import PainelRespostasCliente from "./PainelRespostasCliente";
+import Dashboard from "./Dashboard";
+import AlertaLimiteMensagens from "./AlertaLimiteMensagens";
+import { formatarWhatsAppParaExibicao, validarWhatsApp } from "../lib/validacao";
+import { config } from "../config";
 import "react-toastify/dist/ReactToastify.css";
 
 export default function PainelCliente() {
@@ -17,10 +21,15 @@ export default function PainelCliente() {
   const [mensagens, setMensagens] = useState<Mensagem[]>([]);
   const [carregando, setCarregando] = useState(true);
   const [carregandoHistorico, setCarregandoHistorico] = useState(false);
+  const [carregandoMais, setCarregandoMais] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
   const [editando, setEditando] = useState(false);
   const [dadosEditados, setDadosEditados] = useState({ nome: "", whatsapp: "" });
   const [expandedMessage, setExpandedMessage] = useState<string | null>(null);
+  const [paginaAtual, setPaginaAtual] = useState(0);
+  const [totalMensagens, setTotalMensagens] = useState(0);
+  const [mostrarDashboard, setMostrarDashboard] = useState(true);
+  const limitePorPagina = 100;
 
   // Referências para os canais de assinatura
   const mensagensChannelRef = useRef<any>(null);
@@ -65,7 +74,9 @@ export default function PainelCliente() {
         
         // Definir valores padrão para mensagens_limite se não existir
         if (!clienteData.mensagens_limite) {
-          clienteData.mensagens_limite = 1000; // Valor padrão
+          // Usar o limite do plano conforme configuração
+          const planoConfig = config.planos[clienteData.plano as keyof typeof config.planos];
+          clienteData.mensagens_limite = planoConfig?.limite || 1000;
         }
         
         // Buscar contagem de mensagens do mês atual
@@ -86,15 +97,20 @@ export default function PainelCliente() {
 
         // Buscar histórico de mensagens específicas deste cliente
         console.log("Buscando histórico para cliente ID:", clienteData.id);
-        const historico = await buscarHistoricoMensagens(clienteData.id);
-        console.log("Histórico de mensagens do cliente:", historico);
+        const historico = await buscarHistoricoMensagens(clienteData.id, limitePorPagina, 0);
+        console.log("Histórico de mensagens do cliente:", historico.length, "mensagens encontradas");
+        
+        // Contar total de mensagens disponíveis
+        const total = await contarTotalMensagens(clienteData.id);
+        setTotalMensagens(total);
+        console.log("Total de mensagens disponíveis:", total);
         
         // Definir as mensagens no estado
-        if (historico && historico.length > 0) {
-          setMensagens(historico);
-        } else {
+        setMensagens(historico || []);
+        setPaginaAtual(0);
+        
+        if (!historico || historico.length === 0) {
           console.log("Nenhuma mensagem encontrada para o cliente");
-          setMensagens([]);
         }
 
         // Configurar assinatura em tempo real para novas mensagens
@@ -169,11 +185,29 @@ export default function PainelCliente() {
     return limparAssinaturas;
   }, [token]);
 
-  const atualizarHistorico = async (clienteId: number | null = null) => {
+  const atualizarHistorico = async (clienteId: number | null = null, resetarPaginacao: boolean = true) => {
     setCarregandoHistorico(true);
     try {
-      const historico = await buscarHistoricoMensagens(clienteId);
-      setMensagens(historico);
+      // Se resetar paginação, começar do zero
+      const novaPagina = resetarPaginacao ? 0 : paginaAtual;
+      const offset = novaPagina * limitePorPagina;
+      
+      console.log("Atualizando histórico para cliente:", clienteId, "com offset:", offset, "e limite:", limitePorPagina);
+      const historico = await buscarHistoricoMensagens(clienteId, limitePorPagina, offset);
+      console.log("Histórico carregado:", historico.length, "mensagens");
+      
+      // Contar total de mensagens disponíveis
+      const total = await contarTotalMensagens(clienteId);
+      setTotalMensagens(total);
+      console.log("Total de mensagens disponíveis:", total);
+      
+      // Atualizar mensagens
+      if (resetarPaginacao) {
+        setMensagens(historico);
+        setPaginaAtual(0);
+      } else {
+        setMensagens(mensagensAtuais => [...mensagensAtuais, ...historico]);
+      }
       
       // Atualizar também a contagem de mensagens se tiver um cliente específico
       if (clienteId) {
@@ -188,8 +222,37 @@ export default function PainelCliente() {
       }
     } catch (error) {
       console.error("Erro ao buscar histórico:", error);
+      toast.error("Erro ao carregar mensagens");
     } finally {
       setCarregandoHistorico(false);
+    }
+  };
+  
+  // Função para carregar mais mensagens (paginação)
+  const carregarMaisMensagens = async () => {
+    if (!cliente || carregandoMais) return;
+    
+    setCarregandoMais(true);
+    try {
+      const proximaPagina = paginaAtual + 1;
+      const offset = proximaPagina * limitePorPagina;
+      
+      console.log("Carregando mais mensagens com offset:", offset);
+      const novasMensagens = await buscarHistoricoMensagens(cliente.id, limitePorPagina, offset);
+      
+      if (novasMensagens && novasMensagens.length > 0) {
+        console.log("Carregadas mais", novasMensagens.length, "mensagens");
+        setMensagens(mensagensAtuais => [...mensagensAtuais, ...novasMensagens]);
+        setPaginaAtual(proximaPagina);
+      } else {
+        console.log("Não há mais mensagens para carregar");
+        toast.info("Não há mais mensagens para carregar");
+      }
+    } catch (error) {
+      console.error("Erro ao carregar mais mensagens:", error);
+      toast.error("Erro ao carregar mais mensagens");
+    } finally {
+      setCarregandoMais(false);
     }
   };
 
@@ -197,9 +260,17 @@ export default function PainelCliente() {
     if (!cliente) return;
 
     try {
+      // Validar número de WhatsApp
+      const whatsappValidado = validarWhatsApp(dadosEditados.whatsapp);
+      
+      if (dadosEditados.whatsapp && !whatsappValidado) {
+        toast.error("Número de WhatsApp inválido");
+        return;
+      }
+      
       const sucesso = await atualizarCliente(cliente.id, {
         nome: dadosEditados.nome,
-        whatsapp: dadosEditados.whatsapp
+        whatsapp: whatsappValidado
       });
 
       if (!sucesso) {
@@ -210,7 +281,7 @@ export default function PainelCliente() {
       setCliente({
         ...cliente,
         nome: dadosEditados.nome,
-        whatsapp: dadosEditados.whatsapp
+        whatsapp: whatsappValidado
       });
 
       setEditando(false);
@@ -220,21 +291,30 @@ export default function PainelCliente() {
     }
   };
 
+  const handleUpgradePlano = () => {
+    // Abrir modal ou redirecionar para página de upgrade
+    toast.info("Entre em contato com o suporte para fazer upgrade do seu plano");
+    // Aqui poderia abrir um modal com opções de plano ou redirecionar para uma página
+  };
+
   const renderPlanoDetalhes = () => {
     if (!cliente) return null;
+
+    // Usar os valores da configuração para garantir consistência
+    const planoConfig = config.planos[cliente.plano as keyof typeof config.planos] || config.planos.basico;
 
     switch (cliente.plano) {
       case "basico":
         return (
           <div className="mt-4 p-4 bg-gray-50 rounded-lg">
             <h3 className="text-lg font-semibold mb-2">Plano Básico</h3>
-            <p className="text-2xl font-bold text-green-600 mb-4">R$ 197/mês</p>
+            <p className="text-2xl font-bold text-green-600 mb-4">R$ {planoConfig.preco}/mês</p>
             <ul className="space-y-2">
               <li className="flex items-center">
                 <span className="text-green-500 mr-2">✓</span> Acesso ao assistente IA
               </li>
               <li className="flex items-center">
-                <span className="text-green-500 mr-2">✓</span> 1000 mensagens por mês
+                <span className="text-green-500 mr-2">✓</span> {planoConfig.limite} mensagens por mês
               </li>
               <li className="flex items-center">
                 <span className="text-green-500 mr-2">✓</span> Suporte por email
@@ -242,7 +322,7 @@ export default function PainelCliente() {
             </ul>
             <Button 
               className="w-full mt-4 bg-blue-600 hover:bg-blue-700"
-              onClick={() => toast.info("Entre em contato para fazer upgrade do plano")}
+              onClick={handleUpgradePlano}
             >
               Fazer Upgrade
             </Button>
@@ -252,13 +332,13 @@ export default function PainelCliente() {
         return (
           <div className="mt-4 p-4 bg-blue-50 rounded-lg">
             <h3 className="text-lg font-semibold mb-2">Plano Intermediário</h3>
-            <p className="text-2xl font-bold text-blue-600 mb-4">R$ 99/mês</p>
+            <p className="text-2xl font-bold text-blue-600 mb-4">R$ {planoConfig.preco}/mês</p>
             <ul className="space-y-2">
               <li className="flex items-center">
                 <span className="text-blue-500 mr-2">✓</span> Acesso ao assistente IA
               </li>
               <li className="flex items-center">
-                <span className="text-blue-500 mr-2">✓</span> 300 mensagens por mês
+                <span className="text-blue-500 mr-2">✓</span> {planoConfig.limite} mensagens por mês
               </li>
               <li className="flex items-center">
                 <span className="text-blue-500 mr-2">✓</span> Suporte por WhatsApp
@@ -269,7 +349,7 @@ export default function PainelCliente() {
             </ul>
             <Button 
               className="w-full mt-4 bg-purple-600 hover:bg-purple-700"
-              onClick={() => toast.info("Entre em contato para fazer upgrade do plano")}
+              onClick={handleUpgradePlano}
             >
               Fazer Upgrade para Avançado
             </Button>
@@ -279,13 +359,13 @@ export default function PainelCliente() {
         return (
           <div className="mt-4 p-4 bg-purple-50 rounded-lg">
             <h3 className="text-lg font-semibold mb-2">Plano Avançado</h3>
-            <p className="text-2xl font-bold text-purple-600 mb-4">R$ 149/mês</p>
+            <p className="text-2xl font-bold text-purple-600 mb-4">R$ {planoConfig.preco}/mês</p>
             <ul className="space-y-2">
               <li className="flex items-center">
                 <span className="text-purple-500 mr-2">✓</span> Acesso ao assistente IA
               </li>
               <li className="flex items-center">
-                <span className="text-purple-500 mr-2">✓</span> Mensagens ilimitadas
+                <span className="text-purple-500 mr-2">✓</span> {planoConfig.limite} mensagens por mês
               </li>
               <li className="flex items-center">
                 <span className="text-purple-500 mr-2">✓</span> Suporte prioritário 24/7
@@ -384,7 +464,7 @@ export default function PainelCliente() {
               className="mt-2"
             />
           ) : (
-            <>WhatsApp: {cliente?.whatsapp || "Não informado"}</>
+            <>WhatsApp: {cliente?.whatsapp ? formatarWhatsAppParaExibicao(cliente.whatsapp) : "Não informado"}</>
           )}
         </p>
         
@@ -404,44 +484,82 @@ export default function PainelCliente() {
         )}
       </div>
       
-      {/* Informações do plano */}
-      <Card className="mb-6">
-        <CardContent className="pt-6">
-          <h2 className="text-xl font-bold mb-4">Seu Plano: {cliente?.plano || "Básico"}</h2>
-          
-          {/* Barra de progresso */}
-          <div className="mb-4">
-            <div className="flex justify-between mb-1">
-              <span>Uso de mensagens este mês</span>
-              <span className="font-medium">
-                {cliente?.mensagens_usadas || 0} / {cliente?.mensagens_limite || 1000}
-              </span>
-            </div>
-            <div className="w-full bg-gray-200 rounded-full h-2.5">
-              <div 
-                className={`${getProgressBarColor()} h-2.5 rounded-full`} 
-                style={{ 
-                  width: `${Math.min(
-                    ((cliente?.mensagens_usadas || 0) / (cliente?.mensagens_limite || 100)) * 100, 
-                    100
-                  )}%` 
-                }}
-              ></div>
-            </div>
-          </div>
-          
-          {renderPlanoDetalhes()}
-        </CardContent>
-      </Card>
-      
-      {/* Painel de respostas humanas */}
+      {/* Alerta de limite de mensagens */}
       {cliente && (
-        <PainelRespostasCliente 
-          clienteId={cliente.id}
-          mensagens={mensagens}
-          onAtualizarHistorico={() => cliente && atualizarHistorico(cliente.id as number)}
-          isAdmin={true}
+        <AlertaLimiteMensagens 
+          mensagensUsadas={cliente.mensagens_usadas || 0}
+          mensagensLimite={cliente.mensagens_limite || 1000}
+          onUpgrade={handleUpgradePlano}
         />
+      )}
+      
+      {/* Botões de navegação */}
+      <div className="flex mb-6 border-b">
+        <Button 
+          variant="link" 
+          className={`${mostrarDashboard ? 'border-b-2 border-blue-500' : ''}`}
+          onClick={() => setMostrarDashboard(true)}
+        >
+          Dashboard
+        </Button>
+        <Button 
+          variant="link" 
+          className={`${!mostrarDashboard ? 'border-b-2 border-blue-500' : ''}`}
+          onClick={() => setMostrarDashboard(false)}
+        >
+          Histórico de Mensagens
+        </Button>
+      </div>
+      
+      {/* Dashboard ou Histórico */}
+      {mostrarDashboard ? (
+        <>
+          {/* Dashboard */}
+          {cliente && <Dashboard clienteId={cliente.id} />}
+          
+          {/* Informações do plano */}
+          <Card className="mb-6 mt-6">
+            <CardContent className="pt-6">
+              <h2 className="text-xl font-bold mb-4">Seu Plano: {cliente?.plano || "Básico"}</h2>
+              
+              {/* Barra de progresso */}
+              <div className="mb-4">
+                <div className="flex justify-between mb-1">
+                  <span>Uso de mensagens este mês</span>
+                  <span className="font-medium">
+                    {cliente?.mensagens_usadas || 0} / {cliente?.mensagens_limite || 1000}
+                  </span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-2.5">
+                  <div 
+                    className={`${getProgressBarColor()} h-2.5 rounded-full`} 
+                    style={{ 
+                      width: `${Math.min(
+                        ((cliente?.mensagens_usadas || 0) / (cliente?.mensagens_limite || 1000)) * 100, 
+                        100
+                      )}%` 
+                    }}
+                  ></div>
+                </div>
+              </div>
+              
+              {renderPlanoDetalhes()}
+            </CardContent>
+          </Card>
+        </>
+      ) : (
+        /* Painel de respostas */
+        cliente && (
+          <PainelRespostasCliente 
+            clienteId={cliente.id}
+            mensagens={mensagens}
+            onAtualizarHistorico={(resetar = true) => cliente && atualizarHistorico(cliente.id as number, resetar)}
+            onCarregarMais={carregarMaisMensagens}
+            totalMensagens={totalMensagens}
+            carregandoMais={carregandoMais}
+            isAdmin={true}
+          />
+        )
       )}
     </div>
   );

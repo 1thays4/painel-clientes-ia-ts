@@ -4,6 +4,8 @@ import { Input } from "./ui/input";
 import { Button } from "./ui/button";
 import { ToastContainer, toast } from "react-toastify";
 import { criarCliente } from "../services/cliente";
+import { validarWhatsApp, formatarWhatsAppParaExibicao } from "../lib/validacao";
+import { config } from "../config";
 import "react-toastify/dist/ReactToastify.css";
 
 export default function AdicionarCliente({ onClienteAdicionado }: { onClienteAdicionado: () => void }) {
@@ -11,6 +13,26 @@ export default function AdicionarCliente({ onClienteAdicionado }: { onClienteAdi
   const [whatsapp, setWhatsapp] = useState("");
   const [plano, setPlano] = useState("basico");
   const [carregando, setCarregando] = useState(false);
+  const [whatsappError, setWhatsappError] = useState("");
+
+  const handleWhatsappChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const valor = e.target.value;
+    setWhatsapp(valor);
+    
+    // Limpar erro quando o campo estiver vazio
+    if (!valor) {
+      setWhatsappError("");
+      return;
+    }
+    
+    // Validar o número
+    const numeroValidado = validarWhatsApp(valor);
+    if (!numeroValidado && valor.length > 0) {
+      setWhatsappError("Número de WhatsApp inválido");
+    } else {
+      setWhatsappError("");
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -20,13 +42,23 @@ export default function AdicionarCliente({ onClienteAdicionado }: { onClienteAdi
       return;
     }
     
+    // Validar WhatsApp se foi informado
+    if (whatsapp) {
+      const numeroValidado = validarWhatsApp(whatsapp);
+      if (!numeroValidado) {
+        setWhatsappError("Número de WhatsApp inválido");
+        toast.error("Número de WhatsApp inválido");
+        return;
+      }
+    }
+    
     setCarregando(true);
     
     try {
       const novoCliente = await criarCliente({
         nome,
         plano,
-        whatsapp
+        whatsapp: whatsapp ? validarWhatsApp(whatsapp) : ""
       });
       
       if (novoCliente) {
@@ -45,6 +77,9 @@ export default function AdicionarCliente({ onClienteAdicionado }: { onClienteAdi
       setCarregando(false);
     }
   };
+
+  // Obter informações dos planos da configuração
+  const planos = config.planos;
 
   return (
     <Card className="w-full">
@@ -66,9 +101,16 @@ export default function AdicionarCliente({ onClienteAdicionado }: { onClienteAdi
             <label className="block text-sm font-medium mb-1">WhatsApp</label>
             <Input
               value={whatsapp}
-              onChange={(e) => setWhatsapp(e.target.value)}
+              onChange={handleWhatsappChange}
               placeholder="(00) 00000-0000"
+              className={whatsappError ? "border-red-500" : ""}
             />
+            {whatsappError && (
+              <p className="text-red-500 text-sm mt-1">{whatsappError}</p>
+            )}
+            <p className="text-xs text-gray-500 mt-1">
+              Formato: código do país + DDD + número (ex: 5511999999999)
+            </p>
           </div>
           
           <div>
@@ -78,9 +120,9 @@ export default function AdicionarCliente({ onClienteAdicionado }: { onClienteAdi
               onChange={(e) => setPlano(e.target.value)}
               className="w-full p-2 border rounded-md"
             >
-              <option value="basico">Básico</option>
-              <option value="intermediario">Intermediário</option>
-              <option value="avancado">Avançado</option>
+              <option value="basico">Básico - {planos.basico.limite} mensagens - R$ {planos.basico.preco}/mês</option>
+              <option value="intermediario">Intermediário - {planos.intermediario.limite} mensagens - R$ {planos.intermediario.preco}/mês</option>
+              <option value="avancado">Avançado - {planos.avancado.limite} mensagens - R$ {planos.avancado.preco}/mês</option>
             </select>
           </div>
           

@@ -14,15 +14,21 @@ import { toast } from 'react-toastify';
 interface PainelRespostasClienteProps {
   clienteId: string | number;
   mensagens: Mensagem[];
-  onAtualizarHistorico: () => void;
+  onAtualizarHistorico: (resetarPaginacao?: boolean) => void;
+  onCarregarMais?: () => void;
+  totalMensagens?: number;
   isAdmin?: boolean;
+  carregandoMais?: boolean;
 }
 
 export default function PainelRespostasCliente({ 
   clienteId, 
   mensagens, 
   onAtualizarHistorico,
-  isAdmin = false
+  onCarregarMais,
+  totalMensagens = 0,
+  isAdmin = false,
+  carregandoMais = false
 }: PainelRespostasClienteProps) {
   const [resposta, setResposta] = useState('');
   const [enviandoResposta, setEnviandoResposta] = useState(false);
@@ -59,34 +65,52 @@ export default function PainelRespostasCliente({
         return;
       }
       
-      // Enviar a resposta para o webhook do n8n
-      try {
-        // Preparar os dados para o webhook
-        const webhookData = {
-           
+      // Enviar a resposta para o webhook do n8n (se configurado)
+      if (config.N8N_WEBHOOK_URL && !config.N8N_WEBHOOK_URL.includes('localhost')) {
+        try {
+          // Verificar se o número de WhatsApp é válido
+          // Priorizar o número de destino salvo na mensagem, se disponível
+          const numeroDestino = msgSelecionada.numero_destino || msgSelecionada.whatsapp_cliente_final || '';
+          const numeroRemetente = msgSelecionada.numero_remetente || msgSelecionada.whatsapp_cliente || '';
+          
+          // Validar número de destino (deve ser um número válido com pelo menos 10 dígitos)
+          if (!numeroDestino || !numeroDestino.match(/^\d{10,}$/)) {
+            console.log('Número de WhatsApp de destino inválido ou ausente');
+            toast.warning('Resposta salva no sistema, mas não enviada por WhatsApp (número inválido)');
+            return;
+          }
+          
+          // Formatar número para garantir que esteja no formato correto para o Twilio
+          // Twilio espera números no formato internacional (ex: +5511999999999)
+          const formatarNumeroInternacional = (numero: string): string => {
+            // Remover qualquer caractere não numérico
+            const apenasDigitos = numero.replace(/\D/g, '');
+            
+            // Adicionar o prefixo + se não existir
+            return apenasDigitos.startsWith('55') ? `+${apenasDigitos}` : `+55${apenasDigitos}`;
+          };
+          
+          // Preparar os dados para o webhook
+          const webhookData = {
             mensagem: resposta.trim(),
-            numeroDestino: msgSelecionada.whatsapp_cliente_final,
-            numeroRemetente: msgSelecionada.whatsapp_cliente || config.N8N_WEBHOOK_URL.split('/').pop(),
+            numeroDestino: formatarNumeroInternacional(numeroDestino),
+            numeroRemetente: numeroRemetente ? formatarNumeroInternacional(numeroRemetente) : 'sistema',
             tipoMensagem: 'resposta_humana',
             mensagemId: mensagemSelecionada
+          };
           
-        };
-        
-        // Enviar para o webhook do n8n
-        await axios.post(config.N8N_WEBHOOK_URL, /* {
-          whatsappNumero: msgSelecionada.whatsapp_cliente_final || "5547991950615",
-          pergunta: msgSelecionada.pergunta || "Pergunta original",
-          resposta: resposta.trim()
-        } */ webhookData, {
-          headers: {
-            'Content-Type': 'application/json'
-          }
-        });
-        console.log('Resposta enviada para o webhook do n8n');
-      } catch (webhookError) {
-        console.error('Erro ao enviar para o webhook:', webhookError);
-        // Não falhar o processo principal se o webhook falhar
-        toast.warning('Resposta salva, mas pode não ter sido enviada para o WhatsApp');
+          // Enviar para o webhook do n8n com timeout reduzido
+          await axios.post(config.N8N_WEBHOOK_URL, webhookData, {
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            timeout: 3000 // 3 segundos de timeout
+          });
+          console.log('Resposta enviada para o webhook do n8n');
+        } catch (webhookError) {
+          console.log('Erro ao enviar para webhook:', webhookError);
+          toast.warning('Resposta salva, mas pode não ter sido enviada para o WhatsApp');
+        }
       }
       
       toast.success('Resposta enviada com sucesso!');
@@ -138,10 +162,12 @@ export default function PainelRespostasCliente({
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-bold">Histórico de Mensagens</h2>
+        <h2 className="text-xl font-bold">
+          Histórico de Mensagens ({mensagens.length}{totalMensagens > 0 ? ` de ${totalMensagens}` : ''})
+        </h2>
         <Button 
           variant="outline" 
-          onClick={onAtualizarHistorico}
+          onClick={() => onAtualizarHistorico(true)}
           disabled={enviandoResposta}
         >
           {enviandoResposta ? "Atualizando..." : "Atualizar"}
@@ -167,16 +193,32 @@ export default function PainelRespostasCliente({
             {mensagens.length === 0 ? (
               <p className="text-gray-500 text-center py-4">Nenhuma mensagem encontrada</p>
             ) : (
-              <div className="max-h-[500px] overflow-y-auto">
-                <MensagemGrupo 
-                  mensagens={clienteFinalSelecionado 
-                    ? mensagens.filter(msg => msg.cliente_final_id === clienteFinalSelecionado)
-                    : mensagens
-                  }
-                  clienteId={clienteSelecionado}
-                  onMensagemSelecionada={setMensagemSelecionada}
-                  mensagemSelecionada={mensagemSelecionada}
-                />
+              <div className="flex flex-col">
+                <div className="max-h-[500px] overflow-y-auto">
+                  <MensagemGrupo 
+                    mensagens={clienteFinalSelecionado 
+                      ? mensagens.filter(msg => msg.cliente_final_id === clienteFinalSelecionado)
+                      : mensagens
+                    }
+                    clienteId={clienteSelecionado}
+                    onMensagemSelecionada={setMensagemSelecionada}
+                    mensagemSelecionada={mensagemSelecionada}
+                  />
+                </div>
+                
+                {/* Botão para carregar mais mensagens */}
+                {onCarregarMais && mensagens.length < totalMensagens && (
+                  <div className="mt-4 text-center">
+                    <Button 
+                      variant="outline" 
+                      onClick={onCarregarMais}
+                      disabled={carregandoMais}
+                      className="w-full"
+                    >
+                      {carregandoMais ? "Carregando..." : `Carregar mais (${mensagens.length} de ${totalMensagens})`}
+                    </Button>
+                  </div>
+                )}
               </div>
             )}
           </CardContent>
@@ -201,21 +243,29 @@ export default function PainelRespostasCliente({
                           {msgSelecionada?.nome_cliente && (
                             <div className="mb-2">
                               <h4 className="font-medium text-blue-600">Empresa: {msgSelecionada.nome_cliente}</h4>
-                              {msgSelecionada.whatsapp_cliente && (
-                                <p className="text-sm text-gray-600">WhatsApp: {msgSelecionada.whatsapp_cliente}</p>
+                              {/* Mostrar número da empresa apenas se for diferente do número do cliente final */}
+                              {msgSelecionada.whatsapp_cliente && 
+                               msgSelecionada.whatsapp_cliente !== msgSelecionada.numero_destino && 
+                               msgSelecionada.whatsapp_cliente !== msgSelecionada.whatsapp_cliente_final && (
+                                <p className="text-sm text-gray-600">
+                                  WhatsApp: {msgSelecionada.whatsapp_cliente}
+                                </p>
                               )}
                             </div>
                           )}
                           
                           {/* Informações do cliente final */}
-                          {msgSelecionada?.nome_cliente_final && (
-                            <div>
-                              <h4 className="font-medium text-green-600">Cliente: {msgSelecionada.nome_cliente_final}</h4>
-                              {msgSelecionada.whatsapp_cliente_final && (
-                                <p className="text-sm text-gray-600">WhatsApp: {msgSelecionada.whatsapp_cliente_final}</p>
-                              )}
-                            </div>
-                          )}
+                          <div>
+                            <h4 className="font-medium text-green-600">
+                              {msgSelecionada?.nome_cliente_final || "Cliente"}
+                            </h4>
+                            {/* Mostrar número do cliente final */}
+                            {(msgSelecionada?.numero_destino || msgSelecionada?.whatsapp_cliente_final) && (
+                              <p className="text-sm text-gray-600">
+                                WhatsApp: {msgSelecionada.numero_destino || msgSelecionada.whatsapp_cliente_final}
+                              </p>
+                            )}
+                          </div>
                         </div>
                         <h4 className="font-medium mb-2">Mensagem:</h4>
                         <p>
