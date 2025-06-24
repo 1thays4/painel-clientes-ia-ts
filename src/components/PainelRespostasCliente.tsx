@@ -163,9 +163,17 @@ export default function PainelRespostasCliente({
   }, [clienteId]);
 
   // Função para lidar com a mudança de cliente selecionado
-  const handleClienteSelecionado = (novoClienteId: string | number | null) => {
-    setClienteSelecionado(novoClienteId);
-    setClienteFinalSelecionado(null); // Resetar o cliente final quando mudar a empresa
+  const handleClienteSelecionado = (novoClienteId: string | number | null, tipo?: 'empresa' | 'cliente_final') => {
+    if (tipo === 'cliente_final') {
+      // Se for um cliente final, definir como cliente final selecionado
+      setClienteFinalSelecionado(novoClienteId);
+      // Manter o cliente principal atual
+    } else {
+      // Se for uma empresa ou null, atualizar o cliente selecionado
+      setClienteSelecionado(novoClienteId);
+      setClienteFinalSelecionado(null); // Resetar o cliente final quando mudar a empresa
+    }
+    
     setMensagemSelecionada(null);
     setResposta('');
     onAtualizarHistorico();
@@ -206,6 +214,7 @@ export default function PainelRespostasCliente({
           <ClienteSelector 
             onClienteSelecionado={handleClienteSelecionado}
             clienteSelecionado={clienteSelecionado}
+            empresaId={clienteId} // Passar o ID da empresa atual
           />
         </div>
       )}

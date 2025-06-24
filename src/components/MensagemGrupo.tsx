@@ -80,7 +80,7 @@ export default function MensagemGrupo({
                     Cliente: {msgs[0].nome_cliente_final}
                     {/* Mostrar número de destino se disponível, senão mostrar whatsapp_cliente_final */}
                     {(numeroFormatado || msgs[0].whatsapp_cliente_final) ?
-                      ` (${numeroFormatado || msgs[0].whatsapp_cliente_final})` : ''}
+                      ` ${numeroFormatado || msgs[0].whatsapp_cliente_final}` : ''}
                   </>
                 ) : (
                   <>

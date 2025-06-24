@@ -402,7 +402,6 @@ export async function atualizarTokensNulos(): Promise<number> {
 // Buscar todos os clientes finais
 export async function buscarClientesFinais(): Promise<any[]> {
   try {
-    console.log('Buscando clientes finais diretamente...');
     
     // Tentar buscar na tabela clientes_finais
     const { data, error } = await supabase
@@ -411,9 +410,6 @@ export async function buscarClientesFinais(): Promise<any[]> {
     
     if (error) {
       console.error('Erro ao buscar clientes_finais:', error);
-      console.log('Código do erro:', error.code);
-      console.log('Mensagem do erro:', error.message);
-      console.log('Detalhes do erro:', error.details);
       
       // Tentar com nome alternativo
       console.log('Tentando com nome alternativo: cliente_final');
@@ -423,8 +419,7 @@ export async function buscarClientesFinais(): Promise<any[]> {
       
       if (altError) {
         console.error('Erro ao buscar cliente_final:', altError);
-        console.log('Código do erro alternativo:', altError.code);
-        console.log('Mensagem do erro alternativo:', altError.message);
+
         
         // Tentar criar a tabela se ela não existir
         if (altError.code === '42P01') { // Tabela não existe
