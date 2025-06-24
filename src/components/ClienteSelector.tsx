@@ -28,7 +28,12 @@ export default function ClienteSelector({
         setCarregando(true);
         
         // Lista de números do sistema que não devem aparecer como empresas
-        const numerosDoSistema = ['5547991950615', '+14155238886'];
+        const numerosDoSistema = [
+          '5547991950615', 
+          '+14155238886',
+          '15557811105',
+          '+15557811105'
+        ];
         
         const { data, error } = await supabase
           .from('clientes')
@@ -64,7 +69,7 @@ export default function ClienteSelector({
 
   return (
     <div className="mb-6">
-      <h3 className="text-lg font-medium mb-3">Selecionar Empresa</h3>
+      <h3 className="text-lg font-medium mb-3">Filtrar por Cliente</h3>
       
       <Input
         type="text"
@@ -80,7 +85,7 @@ export default function ClienteSelector({
           onClick={() => onClienteSelecionado(null)}
           className="mb-2"
         >
-          Todas as Empresas
+          Todos os Clientes
         </Button>
         
         {carregando ? (

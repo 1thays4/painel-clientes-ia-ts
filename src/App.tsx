@@ -8,6 +8,7 @@ import Registro from './components/Registro';
 import ProtectedRoute from './components/ProtectedRoute';
 import AdminRoute from './components/AdminRoute';
 import Dashboard from './components/Dashboard';
+import DiagnosticoPage from './pages/DiagnosticoPage';
 import { AuthProvider } from './contexts/AuthContext';
 
 const App: React.FC = () => {
@@ -46,6 +47,14 @@ const App: React.FC = () => {
           />
           {/* Rota do cliente não precisa de proteção, pois tem sua própria lógica de autorização */}
           <Route path="/cliente/:token" element={<PainelCliente />} />
+          <Route 
+            path="/diagnostico" 
+            element={
+              <ProtectedRoute>
+                <DiagnosticoPage />
+              </ProtectedRoute>
+            } 
+          />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Router>

@@ -401,13 +401,13 @@ export default function PainelCliente() {
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return new Intl.DateTimeFormat('pt-BR', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    }).format(date);
+    const dia = date.getDate().toString().padStart(2, '0');
+    const mes = (date.getMonth() + 1).toString().padStart(2, '0');
+    const ano = date.getFullYear();
+    const hora = date.getHours().toString().padStart(2, '0');
+    const minutos = date.getMinutes().toString().padStart(2, '0');
+    
+    return `${dia}/${mes}/${ano} às ${hora}h${minutos}`;
   };
 
   if (carregando) {
@@ -452,7 +452,9 @@ export default function PainelCliente() {
               className="text-xl font-bold"
             />
           ) : (
-            <>Olá, {cliente?.nome || "Cliente"}!</>
+            <>Olá, {cliente?.nome && !cliente.nome.includes('+') ? 
+              cliente.nome : 
+              (cliente?.nome?.includes('+') ? 'Empresa sem nome cadastrado' : 'Cliente')}!</>
           )}
         </h1>
         <p className="text-gray-600">
@@ -497,14 +499,15 @@ export default function PainelCliente() {
       <div className="flex mb-6 border-b">
         <Button 
           variant="link" 
-          className={`${mostrarDashboard ? 'border-b-2 border-blue-500' : ''}`}
+          className={`${mostrarDashboard ? 'border-b-2 border-blue-500' : ''} mr-2`}
           onClick={() => setMostrarDashboard(true)}
         >
           Dashboard
         </Button>
+        <span className="self-center text-gray-400 mx-1">›</span>
         <Button 
           variant="link" 
-          className={`${!mostrarDashboard ? 'border-b-2 border-blue-500' : ''}`}
+          className={`${!mostrarDashboard ? 'border-b-2 border-blue-500' : ''} ml-2`}
           onClick={() => setMostrarDashboard(false)}
         >
           Histórico de Mensagens

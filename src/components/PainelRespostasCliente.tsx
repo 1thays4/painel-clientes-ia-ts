@@ -10,6 +10,7 @@ import axios from 'axios';
 import 'react-toastify/dist/ReactToastify.css';
 import { useEffect, useState } from 'react';
 import { toast } from 'react-toastify';
+import { formatarTelefone } from '../utils';
 
 interface PainelRespostasClienteProps {
   clienteId: string | number;
@@ -33,9 +34,29 @@ export default function PainelRespostasCliente({
   const [resposta, setResposta] = useState('');
   const [enviandoResposta, setEnviandoResposta] = useState(false);
   const [mensagemSelecionada, setMensagemSelecionada] = useState<string | number | null>(null);
-  const [expandedMessage, setExpandedMessage] = useState<string | null>(null);
   const [clienteSelecionado, setClienteSelecionado] = useState<string | number | null>(clienteId);
   const [clienteFinalSelecionado, setClienteFinalSelecionado] = useState<string | number | null>(null);
+
+  // Função para determinar o número do cliente final
+  const getNumeroClienteFinal = (msg: Mensagem): string => {
+    // Prioridade 1: numero_destino se não for igual ao whatsapp_cliente
+    if (msg.numero_destino && msg.numero_destino !== msg.whatsapp_cliente) {
+      const numeroFormatado = formatarTelefone(msg.numero_destino);
+      return numeroFormatado;
+    }
+    
+    // Prioridade 2: numero_remetente se não for igual ao whatsapp_cliente
+    if (msg.numero_remetente && msg.numero_remetente !== msg.whatsapp_cliente) {
+      return msg.numero_remetente;
+    }
+    
+    // Prioridade 3: whatsapp_cliente_final
+    if (msg.whatsapp_cliente_final) {
+      return msg.whatsapp_cliente_final;
+    }
+    
+    return '';
+  };
 
   // Enviar resposta humana
   const enviarRespostaHumana = async () => {
@@ -68,13 +89,12 @@ export default function PainelRespostasCliente({
       // Enviar a resposta para o webhook do n8n (se configurado)
       if (config.N8N_WEBHOOK_URL && !config.N8N_WEBHOOK_URL.includes('localhost')) {
         try {
-          // Verificar se o número de WhatsApp é válido
-          // Priorizar o número de destino salvo na mensagem, se disponível
-          const numeroDestino = msgSelecionada.numero_destino || msgSelecionada.whatsapp_cliente_final || '';
-          const numeroRemetente = msgSelecionada.numero_remetente || msgSelecionada.whatsapp_cliente || '';
+          // Obter o número do cliente final
+          const numeroDestino = getNumeroClienteFinal(msgSelecionada);
+          const numeroRemetente = msgSelecionada.whatsapp_cliente || '';
           
-          // Validar número de destino (deve ser um número válido com pelo menos 10 dígitos)
-          if (!numeroDestino || !numeroDestino.match(/^\d{10,}$/)) {
+          // Validar número de destino (deve ser um número válido com pelo menos 8 dígitos)
+          if (!numeroDestino || numeroDestino.length < 8) {
             console.log('Número de WhatsApp de destino inválido ou ausente');
             toast.warning('Resposta salva no sistema, mas não enviada por WhatsApp (número inválido)');
             return;
@@ -128,13 +148,13 @@ export default function PainelRespostasCliente({
   // Formatar data
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return new Intl.DateTimeFormat('pt-BR', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    }).format(date);
+    const dia = date.getDate().toString().padStart(2, '0');
+    const mes = (date.getMonth() + 1).toString().padStart(2, '0');
+    const ano = date.getFullYear();
+    const hora = date.getHours().toString().padStart(2, '0');
+    const minutos = date.getMinutes().toString().padStart(2, '0');
+    
+    return `${dia}/${mes}/${ano} às ${hora}h${minutos}`;
   };
 
   // Efeito para atualizar o cliente selecionado quando o clienteId mudar
@@ -162,21 +182,27 @@ export default function PainelRespostasCliente({
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-bold">
-          Histórico de Mensagens ({mensagens.length}{totalMensagens > 0 ? ` de ${totalMensagens}` : ''})
-        </h2>
-        <Button 
-          variant="outline" 
-          onClick={() => onAtualizarHistorico(true)}
-          disabled={enviandoResposta}
-        >
-          {enviandoResposta ? "Atualizando..." : "Atualizar"}
-        </Button>
+        <div className="flex items-center">
+          <h2 className="text-xl font-bold">
+            Histórico de Mensagens ({mensagens.length}{totalMensagens > 0 ? ` de ${totalMensagens}` : ''})
+          </h2>
+          <Button 
+            variant="ghost" 
+            onClick={() => onAtualizarHistorico(true)}
+            disabled={enviandoResposta}
+            className="ml-2 p-1 h-8"
+            title="Atualizar histórico"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
+            </svg>
+          </Button>
+        </div>
       </div>
       
       {isAdmin && (
         <div className="mb-4">
-          <h3 className="text-sm font-medium mb-2">Filtrar por:</h3>
+          <h3 className="text-sm font-medium mb-2">Filtros:</h3>
           <ClienteSelector 
             onClienteSelecionado={handleClienteSelecionado}
             clienteSelecionado={clienteSelecionado}
@@ -227,7 +253,7 @@ export default function PainelRespostasCliente({
         {/* Área de resposta */}
         <Card>
           <CardContent className="pt-6">
-            <h3 className="font-medium mb-4">Responder Manualmente</h3>
+            <h3 className="font-medium mb-4">Responder ao Cliente</h3>
             
             {!mensagemSelecionada ? (
               <p className="text-center py-8 text-gray-500">Selecione uma mensagem para responder</p>
@@ -236,33 +262,21 @@ export default function PainelRespostasCliente({
                 <div className="bg-gray-50 p-4 rounded-lg">
                   {(() => {
                     const msgSelecionada = mensagens.find(m => m.id === mensagemSelecionada);
+                    if (!msgSelecionada) return null;
+                    
+                    const numeroClienteFinal = getNumeroClienteFinal(msgSelecionada);
+                    
                     return (
                       <>
                         <div className="mb-3 pb-2 border-b border-gray-200">
-                          {/* Informações da empresa */}
-                          {msgSelecionada?.nome_cliente && (
-                            <div className="mb-2">
-                              <h4 className="font-medium text-blue-600">Empresa: {msgSelecionada.nome_cliente}</h4>
-                              {/* Mostrar número da empresa apenas se for diferente do número do cliente final */}
-                              {msgSelecionada.whatsapp_cliente && 
-                               msgSelecionada.whatsapp_cliente !== msgSelecionada.numero_destino && 
-                               msgSelecionada.whatsapp_cliente !== msgSelecionada.whatsapp_cliente_final && (
-                                <p className="text-sm text-gray-600">
-                                  WhatsApp: {msgSelecionada.whatsapp_cliente}
-                                </p>
-                              )}
-                            </div>
-                          )}
-                          
                           {/* Informações do cliente final */}
                           <div>
                             <h4 className="font-medium text-green-600">
-                              {msgSelecionada?.nome_cliente_final || "Cliente"}
+                              Cliente
                             </h4>
-                            {/* Mostrar número do cliente final */}
-                            {(msgSelecionada?.numero_destino || msgSelecionada?.whatsapp_cliente_final) && (
+                            {numeroClienteFinal && (
                               <p className="text-sm text-gray-600">
-                                WhatsApp: {msgSelecionada.numero_destino || msgSelecionada.whatsapp_cliente_final}
+                                WhatsApp: {numeroClienteFinal}
                               </p>
                             )}
                           </div>

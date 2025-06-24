@@ -61,6 +61,20 @@ export default function ClienteFinalSelector({
           return;
         }
         
+        // Primeiro, buscar o número da empresa
+        const { data: empresaData, error: empresaError } = await supabase
+          .from('clientes')
+          .select('whatsapp')
+          .eq('id', clienteId)
+          .single();
+        
+        if (empresaError) {
+          console.error('Erro ao buscar dados da empresa:', empresaError);
+        }
+        
+        const numeroEmpresa = empresaData?.whatsapp?.replace(/\D/g, '');
+        
+        // Buscar todos os clientes finais
         const { data, error } = await supabase
           .from('clientes_finais')
           .select('id, nome, whatsapp, cliente_id')
@@ -72,7 +86,13 @@ export default function ClienteFinalSelector({
           return;
         }
         
-        setClientesFinais(data || []);
+        // Filtrar clientes finais que têm o mesmo número da empresa
+        const clientesFinaisFiltrados = data ? data.filter((cliente: { whatsapp: string; }) => {
+          const numeroCliente = cliente.whatsapp?.replace(/\D/g, '');
+          return !numeroEmpresa || !numeroCliente || numeroEmpresa !== numeroCliente;
+        }) : [];
+        
+        setClientesFinais(clientesFinaisFiltrados);
       } catch (error) {
         console.error('Erro:', error);
       } finally {
@@ -90,7 +110,7 @@ export default function ClienteFinalSelector({
 
   return (
     <div className="mb-6">
-      <h3 className="text-lg font-medium mb-3">Selecionar Cliente Final</h3>
+      <h3 className="text-lg font-medium mb-3">Filtrar por Contato</h3>
       
       {!clienteId ? (
         <p className="text-sm text-gray-500">Selecione uma empresa primeiro</p>
@@ -110,7 +130,7 @@ export default function ClienteFinalSelector({
               onClick={() => onClienteFinalSelecionado(null)}
               className="mb-2"
             >
-              Todos os Clientes Finais
+              Todos os Contatos
             </Button>
             
             {carregando ? (

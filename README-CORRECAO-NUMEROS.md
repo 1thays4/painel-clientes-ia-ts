@@ -1,50 +1,58 @@
-# Correção na Identificação de Números de Telefone
+# Correção para Exibição de Números de Cliente
 
-Este documento explica as correções implementadas para resolver problemas na identificação de números de telefone.
+Este documento descreve as correções feitas para resolver o problema de exibição incorreta dos números de cliente no painel.
 
 ## Problema
 
-O sistema estava incorretamente identificando números de telefone devido a diferenças na formatação, resultando em:
-- Números do proprietário sendo tratados como clientes finais
-- Falhas na correspondência devido a caracteres especiais, espaços e prefixos
+O sistema estava exibindo o número da própria empresa como número do cliente final, causando confusão na interface.
 
-## Solução
+## Arquivos Corrigidos
 
-Implementamos uma abordagem mais robusta para normalizar e comparar números de telefone:
+Foram criados os seguintes arquivos com as correções:
 
-1. **Normalização completa dos números**:
-   - Remoção de todos os caracteres não numéricos (`/\D/g`)
-   - Remoção de espaços extras com `trim()`
-   - Remoção do prefixo "whatsapp:" frequentemente incluído nas mensagens
+1. `src/components/PainelRespostasCliente-fixed.tsx` - Versão corrigida do componente PainelRespostasCliente
+2. `src/components/MensagemGrupo-fixed.tsx` - Versão corrigida do componente MensagemGrupo
+3. `src/services/cliente-fix.ts` - Função auxiliar para corrigir os números de cliente
 
-2. **Comparação flexível**:
-   - Comparação exata do número completo normalizado
-   - Verificação adicional se o número termina com os dígitos principais (47991950615)
-   - Esta abordagem lida com variações no prefixo do país (+55, 55, etc.)
+## Como Aplicar as Correções
 
-3. **Logging aprimorado**:
-   - Adição de logs para mostrar os números normalizados sendo comparados
-   - Facilita a depuração de problemas futuros
+### Opção 1: Substituir os arquivos originais
 
-## Exemplo
+Renomeie os arquivos corrigidos para substituir os originais:
 
-Antes:
-```javascript
-const numeroProprietario = '+55 47 9195-0615';
-const numeroProprietarioLimpo = numeroProprietario.replace(/\s+/g, '');
-const isProprietario = numeroLimpo === numeroProprietarioLimpo;
+```bash
+mv src/components/PainelRespostasCliente-fixed.tsx src/components/PainelRespostasCliente.tsx
+mv src/components/MensagemGrupo-fixed.tsx src/components/MensagemGrupo.tsx
 ```
 
-Depois:
-```javascript
-const numeroProprietario = '5547991950615';  // Já normalizado
-const numeroLimpoNormalizado = numeroLimpo.replace(/\D/g, '');
-const isProprietario = numeroLimpoNormalizado === numeroProprietario || 
-                      numeroLimpoNormalizado.endsWith('47991950615');
-```
+### Opção 2: Copiar as funções relevantes
 
-## Observações
+Alternativamente, você pode copiar apenas as funções relevantes dos arquivos corrigidos para os arquivos originais:
 
-- Esta abordagem é mais tolerante a diferentes formatos de entrada
-- Funciona mesmo se o número vier com ou sem código do país
-- Recomenda-se monitorar os logs para verificar se a identificação está funcionando corretamente
+1. Copie a função `getNumeroClienteFinal` de `PainelRespostasCliente-fixed.tsx` para `PainelRespostasCliente.tsx`
+2. Atualize a lógica de exibição do cliente final no componente `PainelRespostasCliente.tsx`
+3. Copie a função `getNumeroClienteFinal` de `MensagemGrupo-fixed.tsx` para `MensagemGrupo.tsx`
+4. Atualize a lógica de agrupamento e exibição no componente `MensagemGrupo.tsx`
+
+## Principais Alterações
+
+1. **Lógica de Prioridade para Números**:
+   - Prioridade 1: `numero_destino` (se diferente do número da empresa)
+   - Prioridade 2: `numero_remetente` (se diferente do número da empresa)
+   - Prioridade 3: `whatsapp_cliente_final`
+
+2. **Agrupamento de Mensagens**:
+   - As mensagens agora são agrupadas pelo número do cliente final
+   - Isso garante que mensagens do mesmo cliente fiquem juntas, mesmo se o ID do cliente final não estiver disponível
+
+3. **Exibição na Interface**:
+   - O cabeçalho do grupo agora mostra "Cliente: [número]"
+   - A área de resposta mostra apenas o número do cliente final, não o da empresa
+
+## Verificação
+
+Para verificar se as correções funcionaram:
+
+1. Envie uma mensagem de teste pelo WhatsApp
+2. Verifique no painel se o número exibido é o do cliente final, não o da empresa
+3. Verifique se as mensagens estão agrupadas corretamente por cliente

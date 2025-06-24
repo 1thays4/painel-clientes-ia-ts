@@ -33,6 +33,8 @@ export interface Mensagem {
   numero_destino?: string;
 }
 
+let clientesFinaisData: any[] = [];
+
 // Buscar cliente pelo token público
 export async function buscarClientePorToken(token: string): Promise<Cliente | null> {
   try {
@@ -177,7 +179,7 @@ export async function atualizarCliente(
 }
 
 // Buscar histórico de mensagens do cliente
-export async function buscarHistoricoMensagens(clienteId: string | number | null, limite: number = 200, offset: number = 0): Promise<Mensagem[]> {
+export async function buscarHistoricoMensagens(this: any, clienteId: string | number | null, limite: number = 200, offset: number = 0): Promise<Mensagem[]> {
   try {
     console.log('Buscando histórico para cliente ID:', clienteId, 'limite:', limite, 'offset:', offset);
     
@@ -257,20 +259,24 @@ export async function buscarHistoricoMensagens(clienteId: string | number | null
       const clienteFinaisIds = Array.from(new Set(data
         .map((msg: { cliente_final_id: any; }) => msg.cliente_final_id)
         .filter(Boolean)));
+
+    
       
       // Buscar informações dos clientes finais
-      const { data: clientesFinaisData } = await supabase
-        .from('clientes_finais')
-        .select('id, nome, whatsapp')
-        .in('id', clienteFinaisIds);
+      clientesFinaisData = await buscarClientesFinais(); 
+      
+      // Filtrar clientes finais que possuem o clienteId
+      const clientesFinaisDoCliente = clientesFinaisData.filter(
+        (clienteFinal: { cliente_id?: string | number }) => clienteFinal.cliente_id == clienteId
+      );
+      console.log(`Clientes finais do cliente ${clienteId}:`, clientesFinaisDoCliente);
       
       // Criar mapa de clientes finais para fácil acesso
-      const clientesFinaisMap: { [key: string]: { id: string | number; nome?: string; whatsapp?: string } } = {};
-      if (clientesFinaisData) {
-        clientesFinaisData.forEach((clienteFinal: { id: string | number; nome?: string; whatsapp?: string }) => {
-          clientesFinaisMap[String(clienteFinal.id)] = clienteFinal;
-        });
-      }
+      const clientesFinaisMap = processarClientesFinais(clientesFinaisData);
+      
+      // Verificar se há dados
+      console.log(`Encontrados ${clientesFinaisData.length} clientes finais`);
+
       
       // Formatar os dados para corresponder à interface Mensagem
       const mensagensFormatadas = data.map((msg: { 
@@ -280,7 +286,8 @@ export async function buscarHistoricoMensagens(clienteId: string | number | null
         numero_destino?: string;
       }) => {
         const cliente = clientesMap[String(msg.cliente_id)] || {};
-        const clienteFinal: { nome?: string; whatsapp?: string } = msg.cliente_final_id ? clientesFinaisMap[String(msg.cliente_final_id)] || {} : {};
+        // Usar os dados do mapa de clientes finais
+        const clienteFinal = msg.cliente_final_id ? clientesFinaisMap[String(msg.cliente_final_id)] || {} : {};
         
         // Função para limpar e validar número de WhatsApp
         const formatarNumeroWhatsApp = (numero?: string): string => {
@@ -298,7 +305,7 @@ export async function buscarHistoricoMensagens(clienteId: string | number | null
         };
         
         const whatsappCliente = formatarNumeroWhatsApp((cliente as { whatsapp?: string }).whatsapp);
-        const whatsappClienteFinal = formatarNumeroWhatsApp(clienteFinal.whatsapp);
+        const whatsappClienteFinal = formatarNumeroWhatsApp((clienteFinal as { whatsapp?: string })?.whatsapp);
         
         // Usar os números de remetente e destino se disponíveis
         const numeroRemetente = (msg as any).numero_remetente || whatsappCliente;
@@ -311,7 +318,7 @@ export async function buscarHistoricoMensagens(clienteId: string | number | null
           ...msg,
           nome_cliente: (cliente as { nome?: string }).nome || 'Cliente sem nome',
           whatsapp_cliente: whatsappCliente,
-          nome_cliente_final: clienteFinal.nome || 'Usuário final',
+          nome_cliente_final: (clienteFinal as { nome?: string })?.nome || 'Usuário final',
           whatsapp_cliente_final: numeroDestinoFinal || whatsappClienteFinal,
           numero_remetente: numeroRemetente,
           numero_destino: numeroDestinoFinal
@@ -390,6 +397,66 @@ export async function atualizarTokensNulos(): Promise<number> {
     console.error("Erro ao atualizar tokens:", error);
     return 0;
   }
+}
+
+// Buscar todos os clientes finais
+export async function buscarClientesFinais(): Promise<any[]> {
+  try {
+    console.log('Buscando clientes finais diretamente...');
+    
+    // Tentar buscar na tabela clientes_finais
+    const { data, error } = await supabase
+      .from('clientes_finais')
+      .select('*');
+    
+    if (error) {
+      console.error('Erro ao buscar clientes_finais:', error);
+      console.log('Código do erro:', error.code);
+      console.log('Mensagem do erro:', error.message);
+      console.log('Detalhes do erro:', error.details);
+      
+      // Tentar com nome alternativo
+      console.log('Tentando com nome alternativo: cliente_final');
+      const { data: altData, error: altError } = await supabase
+        .from('cliente_final')
+        .select('*');
+      
+      if (altError) {
+        console.error('Erro ao buscar cliente_final:', altError);
+        console.log('Código do erro alternativo:', altError.code);
+        console.log('Mensagem do erro alternativo:', altError.message);
+        
+        // Tentar criar a tabela se ela não existir
+        if (altError.code === '42P01') { // Tabela não existe
+          console.log('Tabela não existe. Verifique o nome correto da tabela no Supabase.');
+        }
+        
+        return [];
+      }
+      
+      console.log('Clientes finais encontrados (tabela singular):', altData?.length || 0);
+      return altData || [];
+    }
+    
+    console.log('Clientes finais encontrados:', data?.length || 0);
+    return data || [];
+  } catch (error) {
+    console.error('Erro ao buscar clientes finais:', error);
+    return [];
+  }
+}
+
+// Processar dados de clientes finais
+export function processarClientesFinais(clientesFinaisData: any[]): { [key: string]: { id: string | number; nome?: string; whatsapp?: string; email?: string } } {
+  const clientesFinaisMap: { [key: string]: { id: string | number; nome?: string; whatsapp?: string; email?: string } } = {};
+  
+  if (clientesFinaisData && clientesFinaisData.length > 0) {
+    clientesFinaisData.forEach((clienteFinal: { id: string | number; nome?: string; whatsapp?: string; email?: string }) => {
+      clientesFinaisMap[String(clienteFinal.id)] = clienteFinal;
+    });
+  }
+  
+  return clientesFinaisMap;
 }
 
 // Contar total de mensagens do cliente

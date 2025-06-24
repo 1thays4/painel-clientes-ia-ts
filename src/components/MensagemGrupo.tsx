@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Mensagem } from '../services/cliente';
+import { formatarTelefone } from '../utils';
 
 interface MensagemGrupoProps {
   mensagens: Mensagem[];
@@ -70,26 +71,29 @@ export default function MensagemGrupo({
       {Object.entries(mensagensPorCliente).map(([clienteKey, msgs]) => (
         <div key={clienteKey} className="border-t pt-4">
           {/* Cabeçalho do grupo - mostra o cliente final */}
-          {msgs[0] && (
-            <h3 className="font-bold text-green-600 mb-2">
-              {msgs[0].nome_cliente_final && msgs[0].nome_cliente_final !== 'Usuário final' ? (
-                <>
-                  Cliente: {msgs[0].nome_cliente_final} 
-                  {/* Mostrar número de destino se disponível, senão mostrar whatsapp_cliente_final */}
-                  {(msgs[0].numero_destino || msgs[0].whatsapp_cliente_final) ? 
-                    ` (${msgs[0].numero_destino || msgs[0].whatsapp_cliente_final})` : ''}
-                </>
-              ) : (
-                <>
-                  Cliente: {msgs[0].numero_destino ? 
-                    `${msgs[0].numero_destino}` : 
-                    (msgs[0].whatsapp_cliente_final ? 
-                      `${msgs[0].whatsapp_cliente_final}` : 
-                      'Desconhecido')}
-                </>
-              )}
-            </h3>
-          )}
+          {msgs[0] && (() => {
+            const numeroFormatado = formatarTelefone(msgs[0].numero_destino ?? "");
+            return (
+              <h3 className="font-bold text-green-600 mb-2">
+                {msgs[0].nome_cliente_final && msgs[0].nome_cliente_final !== 'Usuário final' ? (
+                  <>
+                    Cliente: {msgs[0].nome_cliente_final}
+                    {/* Mostrar número de destino se disponível, senão mostrar whatsapp_cliente_final */}
+                    {(numeroFormatado || msgs[0].whatsapp_cliente_final) ?
+                      ` (${numeroFormatado || msgs[0].whatsapp_cliente_final})` : ''}
+                  </>
+                ) : (
+                  <>
+                    Cliente: {numeroFormatado ?
+                      `${numeroFormatado}` :
+                      msgs[0].nome_cliente_final ?
+                        `${msgs[0].nome_cliente_final}` :
+                        'Não informado'}
+                  </>
+                )}
+              </h3>
+            );
+          })()}
           
           <div className="space-y-3">
             {msgs.map((msg) => (
