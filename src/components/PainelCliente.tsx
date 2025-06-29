@@ -345,9 +345,9 @@ export default function PainelCliente() {
 
     const getPlanoBackgroundColor = () => {
       switch (cliente?.plano) {
-        case "basico": return "#f0f9f0";
-        case "intermediario": return "#f0f5ff";
-        case "avancado": return "#f9f0ff";
+        case "basico": return "linear-gradient(135deg, #43a047 0%, #66bb6a 100%)";
+        case "intermediario": return "linear-gradient(135deg, #1976d2 0%, #42a5f5 100%)";
+        case "avancado": return "linear-gradient(135deg, #9c27b0 0%, #ba68c8 100%)";
         default: return "#f5f5f5";
       }
     };
@@ -355,7 +355,7 @@ export default function PainelCliente() {
     const renderListItem = (text: string) => (
       <ListItem sx={{ py: 0.5 }}>
         <ListItemIcon sx={{ minWidth: 36 }}>
-          <CheckIcon color={getPlanoColor() as "success" | "primary" | "secondary"} />
+          <CheckIcon color="inherit" />
         </ListItemIcon>
         <ListItemText primary={text} />
       </ListItem>
@@ -365,16 +365,17 @@ export default function PainelCliente() {
       case "basico":
         return (
           <Paper 
-            elevation={0} 
+            elevation={3} 
             sx={{ 
               mt: 3, 
               p: 3, 
-              bgcolor: getPlanoBackgroundColor(),
-              borderRadius: 2
+              background: getPlanoBackgroundColor(),
+              borderRadius: 2,
+              color: 'white'
             }}
           >
             <Typography variant="h6" fontWeight="600" gutterBottom>Plano Básico</Typography>
-            <Typography variant="h4" fontWeight="700" color="success.main" sx={{ mb: 2 }}>
+            <Typography variant="h4" fontWeight="700" sx={{ mb: 2 }}>
               R$ {planoConfig.preco}/mês
             </Typography>
             <List dense disablePadding>
@@ -384,9 +385,9 @@ export default function PainelCliente() {
             </List>
             <Button 
               variant="contained" 
-              color="primary"
+              color="inherit"
               fullWidth
-              sx={{ mt: 3 }}
+              sx={{ mt: 3, color: '#43a047', bgcolor: 'white', '&:hover': { bgcolor: 'rgba(255,255,255,0.9)' } }}
               onClick={handleUpgradePlano}
               startIcon={<ArrowUpwardIcon />}
             >
@@ -397,16 +398,17 @@ export default function PainelCliente() {
       case "intermediario":
         return (
           <Paper 
-            elevation={0} 
+            elevation={3} 
             sx={{ 
               mt: 3, 
               p: 3, 
-              bgcolor: getPlanoBackgroundColor(),
-              borderRadius: 2
+              background: getPlanoBackgroundColor(),
+              borderRadius: 2,
+              color: 'white'
             }}
           >
             <Typography variant="h6" fontWeight="600" gutterBottom>Plano Intermediário</Typography>
-            <Typography variant="h4" fontWeight="700" color="primary.main" sx={{ mb: 2 }}>
+            <Typography variant="h4" fontWeight="700" sx={{ mb: 2 }}>
               R$ {planoConfig.preco}/mês
             </Typography>
             <List dense disablePadding>
@@ -417,9 +419,9 @@ export default function PainelCliente() {
             </List>
             <Button 
               variant="contained" 
-              color="secondary"
+              color="inherit"
               fullWidth
-              sx={{ mt: 3 }}
+              sx={{ mt: 3, color: '#1976d2', bgcolor: 'white', '&:hover': { bgcolor: 'rgba(255,255,255,0.9)' } }}
               onClick={handleUpgradePlano}
               startIcon={<ArrowUpwardIcon />}
             >
@@ -430,16 +432,17 @@ export default function PainelCliente() {
       case "avancado":
         return (
           <Paper 
-            elevation={0} 
+            elevation={3} 
             sx={{ 
               mt: 3, 
               p: 3, 
-              bgcolor: getPlanoBackgroundColor(),
-              borderRadius: 2
+              background: getPlanoBackgroundColor(),
+              borderRadius: 2,
+              color: 'white'
             }}
           >
             <Typography variant="h6" fontWeight="600" gutterBottom>Plano Avançado</Typography>
-            <Typography variant="h4" fontWeight="700" color="secondary.main" sx={{ mb: 2 }}>
+            <Typography variant="h4" fontWeight="700" sx={{ mb: 2 }}>
               R$ {planoConfig.preco}/mês
             </Typography>
             <List dense disablePadding>
@@ -514,11 +517,17 @@ export default function PainelCliente() {
   }
 
   return (
-    <Container maxWidth="lg" sx={{ py: 4 }}>
+    <Box sx={{ 
+      background: 'linear-gradient(135deg, #f5f7fa 0%, #e4e8f0 100%)',
+      minHeight: '100vh',
+      pt: 4,
+      pb: 6
+    }}>
+    <Container maxWidth="lg">
       <ToastContainer position="top-right" autoClose={3000} />
       
       {/* Cabeçalho */}
-      <Paper elevation={2} sx={{ p: 3, mb: 4, borderRadius: 2 }}>
+      <Paper elevation={3} sx={{ p: 3, mb: 4, borderRadius: 2, background: 'linear-gradient(135deg, #6a11cb 0%, #2575fc 100%)', color: 'white' }}>
         <Box sx={{ mb: 3 }}>
           {editando ? (
             <TextField
@@ -549,7 +558,7 @@ export default function PainelCliente() {
               sx={{ mb: 2 }}
             />
           ) : (
-            <Typography variant="body1" color="text.secondary">
+            <Typography variant="body1" color="rgba(255, 255, 255, 0.8)">
               WhatsApp: {cliente?.whatsapp ? formatarWhatsAppParaExibicao(cliente.whatsapp) : "Não informado"}
             </Typography>
           )}
@@ -558,7 +567,7 @@ export default function PainelCliente() {
             <Box sx={{ mt: 2, display: 'flex', gap: 2 }}>
               <Button 
                 variant="contained" 
-                color="primary" 
+                color="success" 
                 onClick={handleSalvarDados}
                 startIcon={<SaveIcon />}
               >
@@ -566,15 +575,18 @@ export default function PainelCliente() {
               </Button>
               <Button 
                 variant="outlined" 
+                color="inherit"
                 onClick={() => setEditando(false)}
                 startIcon={<CancelIcon />}
+                sx={{ borderColor: 'rgba(255,255,255,0.5)', color: 'white' }}
               >
                 Cancelar
               </Button>
             </Box>
           ) : (
             <Button 
-              variant="outlined" 
+              variant="contained" 
+              color="secondary"
               startIcon={<EditIcon />}
               onClick={() => setEditando(true)}
               sx={{ mt: 2 }}
@@ -625,7 +637,7 @@ export default function PainelCliente() {
           {cliente && <Dashboard clienteId={cliente.id} />}
           
           {/* Informações do plano */}
-          <Card elevation={3} sx={{ mb: 4, mt: 4, borderRadius: 2 }}>
+          <Card elevation={3} sx={{ mb: 4, mt: 4, borderRadius: 2, background: 'linear-gradient(135deg, #f6f9fc 0%, #f1f4f8 100%)' }}>
             <CardContent sx={{ p: 3 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
                 <Typography variant="h5" fontWeight="bold">
@@ -677,5 +689,6 @@ export default function PainelCliente() {
         )
       )}
     </Container>
+    </Box>
   );
 }

@@ -116,7 +116,7 @@ export default function ClienteSelector({
       
       <Input
         type="text"
-        placeholder="Filtrar por nome ou WhatsApp"
+        placeholder="Filtrar por nome"
         value={filtro}
         onChange={(e) => setFiltro(e.target.value)}
         className="mb-3"
