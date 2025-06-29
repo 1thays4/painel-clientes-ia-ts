@@ -88,6 +88,16 @@ export default function PainelCliente() {
         setCarregando(false);
         return;
       }
+      
+      // Verificar se o cliente está autenticado
+      const clienteToken = sessionStorage.getItem('clienteToken');
+      const clienteId = sessionStorage.getItem('clienteId');
+      
+      if (!clienteToken || clienteToken !== token) {
+        // Redirecionar para a página de login do cliente
+        window.location.href = `/cliente-login/${token}`;
+        return;
+      }
 
       try {
         console.log("Carregando dados para token:", token);
@@ -332,22 +342,22 @@ export default function PainelCliente() {
     if (!cliente) return null;
 
     // Usar os valores da configuração para garantir consistência
-    const planoConfig = config.planos[cliente.plano as keyof typeof config.planos] || config.planos.basico;
+    const planoConfig = config.planos[cliente.plano as keyof typeof config.planos] || config.planos.essencial;
 
     const getPlanoColor = () => {
       switch (cliente?.plano) {
-        case "basico": return "success";
-        case "intermediario": return "primary";
-        case "avancado": return "secondary";
+        case "essencial": return "success";
+        case "Profissional": return "primary";
+        case "Estratégico": return "secondary";
         default: return "primary";
       }
     };
 
     const getPlanoBackgroundColor = () => {
       switch (cliente?.plano) {
-        case "basico": return "linear-gradient(135deg, #43a047 0%, #66bb6a 100%)";
-        case "intermediario": return "linear-gradient(135deg, #1976d2 0%, #42a5f5 100%)";
-        case "avancado": return "linear-gradient(135deg, #9c27b0 0%, #ba68c8 100%)";
+        case "essencial": return "linear-gradient(135deg, #43a047 0%, #66bb6a 100%)";
+        case "Profissional": return "linear-gradient(135deg, #1976d2 0%, #42a5f5 100%)";
+        case "Estratégico": return "linear-gradient(135deg, #9c27b0 0%, #ba68c8 100%)";
         default: return "#f5f5f5";
       }
     };
@@ -362,7 +372,7 @@ export default function PainelCliente() {
     );
 
     switch (cliente.plano) {
-      case "basico":
+      case "essencial":
         return (
           <Paper 
             elevation={3} 
@@ -374,7 +384,7 @@ export default function PainelCliente() {
               color: 'white'
             }}
           >
-            <Typography variant="h6" fontWeight="600" gutterBottom>Plano Básico</Typography>
+            <Typography variant="h6" fontWeight="600" gutterBottom>Plano Essencial</Typography>
             <Typography variant="h4" fontWeight="700" sx={{ mb: 2 }}>
               R$ {planoConfig.preco}/mês
             </Typography>
@@ -395,7 +405,7 @@ export default function PainelCliente() {
             </Button>
           </Paper>
         );
-      case "intermediario":
+      case "Profissional":
         return (
           <Paper 
             elevation={3} 
@@ -407,7 +417,7 @@ export default function PainelCliente() {
               color: 'white'
             }}
           >
-            <Typography variant="h6" fontWeight="600" gutterBottom>Plano Intermediário</Typography>
+            <Typography variant="h6" fontWeight="600" gutterBottom>Plano Profissional</Typography>
             <Typography variant="h4" fontWeight="700" sx={{ mb: 2 }}>
               R$ {planoConfig.preco}/mês
             </Typography>
@@ -429,7 +439,7 @@ export default function PainelCliente() {
             </Button>
           </Paper>
         );
-      case "avancado":
+      case "Estratégico":
         return (
           <Paper 
             elevation={3} 
@@ -441,7 +451,7 @@ export default function PainelCliente() {
               color: 'white'
             }}
           >
-            <Typography variant="h6" fontWeight="600" gutterBottom>Plano Avançado</Typography>
+            <Typography variant="h6" fontWeight="600" gutterBottom>Plano Estratégico</Typography>
             <Typography variant="h4" fontWeight="700" sx={{ mb: 2 }}>
               R$ {planoConfig.preco}/mês
             </Typography>

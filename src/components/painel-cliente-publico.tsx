@@ -103,10 +103,10 @@ export default function PainelClientePublico() {
     if (!cliente) return null;
 
     switch (cliente.plano) {
-      case "basico":
+      case "essencial":
         return (
           <div className="mt-4 p-4 bg-gray-50 rounded-lg">
-            <h3 className="text-lg font-semibold mb-2">Plano Básico</h3>
+            <h3 className="text-lg font-semibold mb-2">Plano Essencial</h3>
             <p className="text-2xl font-bold text-green-600 mb-4">R$ 49/mês</p>
             <ul className="space-y-2">
               <li className="flex items-center">
@@ -121,10 +121,10 @@ export default function PainelClientePublico() {
             </ul>
           </div>
         );
-      case "intermediario":
+      case "Profissional":
         return (
           <div className="mt-4 p-4 bg-blue-50 rounded-lg">
-            <h3 className="text-lg font-semibold mb-2">Plano Intermediário</h3>
+            <h3 className="text-lg font-semibold mb-2">Plano Profissional</h3>
             <p className="text-2xl font-bold text-blue-600 mb-4">R$ 99/mês</p>
             <ul className="space-y-2">
               <li className="flex items-center">
@@ -142,10 +142,10 @@ export default function PainelClientePublico() {
             </ul>
           </div>
         );
-      case "avancado":
+      case "Estratégico":
         return (
           <div className="mt-4 p-4 bg-purple-50 rounded-lg">
-            <h3 className="text-lg font-semibold mb-2">Plano Avançado</h3>
+            <h3 className="text-lg font-semibold mb-2">Plano Estratégico</h3>
             <p className="text-2xl font-bold text-purple-600 mb-4">R$ 149/mês</p>
             <ul className="space-y-2">
               <li className="flex items-center">

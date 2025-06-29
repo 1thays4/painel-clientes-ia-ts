@@ -40,8 +40,8 @@ export function formatarWhatsAppParaExibicao(numero: string): string {
   if (numeroLimpo.startsWith('55') && numeroLimpo.length >= 12) {
     // Formato: +55 (XX) XXXXX-XXXX
     const ddd = numeroLimpo.substring(2, 4);
-    const parte1 = numeroLimpo.substring(4, 9);
-    const parte2 = numeroLimpo.substring(9, numeroLimpo.length);
+    const parte1 = numeroLimpo.substring(4, 8);
+    const parte2 = numeroLimpo.substring(8, numeroLimpo.length);
     return `+55 (${ddd}) ${parte1}-${parte2}`;
   }
   

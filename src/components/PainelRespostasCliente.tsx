@@ -210,7 +210,7 @@ export default function PainelRespostasCliente({
       
       {isAdmin && (
         <div className="mb-4">
-          <h3 className="text-sm font-medium mb-2">Filtros:</h3>
+          {/* <h3 className="text-sm font-medium mb-2">Filtros:</h3> */}
           <ClienteSelector 
             onClienteSelecionado={handleClienteSelecionado}
             clienteSelecionado={clienteSelecionado}
@@ -281,7 +281,7 @@ export default function PainelRespostasCliente({
                           {/* Informações do cliente final */}
                           <div>
                             <h4 className="font-medium text-green-600">
-                              Cliente
+                              {msgSelecionada.nome_cliente_final}
                             </h4>
                             {numeroClienteFinal && (
                               <p className="text-sm text-gray-600">

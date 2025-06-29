@@ -8,15 +8,15 @@ export const config = {
     baseUrl: "/api"
   },
   planos: {
-    basico: {
+    essencial: {
       preco: 197,
       limite: 1000
     },
-    intermediario: {
+    Profissional: {
       preco: 247,
       limite: 3000
     },
-    avancado: {
+    Estratégico: {
       preco: 297,
       limite: 5000
     }

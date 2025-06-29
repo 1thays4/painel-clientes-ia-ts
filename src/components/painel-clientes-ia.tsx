@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { Link } from 'react-router-dom';
+import GerenciarSenhaCliente from './GerenciarSenhaCliente';
 import { ToastContainer, toast } from 'react-toastify';
 import AdicionarCliente from './AdicionarCliente';
 import Dashboard from './Dashboard';
@@ -54,6 +55,8 @@ export default function PainelClientesIA() {
   const [carregando, setCarregando] = useState(true);
   const [mostrarFormulario, setMostrarFormulario] = useState(false);
   const [mostrarDashboard, setMostrarDashboard] = useState(true);
+  const [clienteSelecionadoId, setClienteSelecionadoId] = useState<string | null>(null);
+  const [modalSenhaAberto, setModalSenhaAberto] = useState(false);
   const { user, signOut, isAdmin } = useAuth();
 
   const buscarClientes = async () => {
@@ -113,14 +116,24 @@ export default function PainelClientesIA() {
   };
 
   const copiarLinkCliente = (token: string) => {
-    const link = `${window.location.origin}/cliente/${token}`;
+    const link = `${window.location.origin}/cliente-login/${token}`;
     navigator.clipboard.writeText(link);
     toast.success('Link copiado para a área de transferência!');
+    toast.info('O cliente precisará da senha de acesso para visualizar o painel');
   };
 
   const handleClienteAdicionado = () => {
     buscarClientes();
     setMostrarFormulario(false);
+  };
+  
+  const abrirModalSenha = (clienteId: string) => {
+    setClienteSelecionadoId(clienteId);
+    setModalSenhaAberto(true);
+  };
+  
+  const fecharModalSenha = () => {
+    setModalSenhaAberto(false);
   };
 
   // Função para renderizar o status de uso de mensagens
@@ -255,7 +268,7 @@ export default function PainelClientesIA() {
                         <Button 
                           variant="contained" 
                           component={Link} 
-                          to={`/cliente/${cliente.token_publico || cliente.id}`}
+                          to={`/cliente-login/${cliente.token_publico || cliente.id}`}
                           startIcon={<VisibilityIcon />}
                           fullWidth
                         >
@@ -269,6 +282,14 @@ export default function PainelClientesIA() {
                         >
                           Copiar Link
                         </Button>
+                        <Button 
+                          variant="outlined" 
+                          color="secondary"
+                          onClick={() => abrirModalSenha(cliente.id)}
+                          fullWidth
+                        >
+                          Gerenciar Senha
+                        </Button>
                       </Box>
                     </CardContent>
                   </Card>
@@ -277,6 +298,15 @@ export default function PainelClientesIA() {
             </Grid>
           )}
         </>
+      )}
+      
+      {/* Modal para gerenciar senha */}
+      {clienteSelecionadoId && (
+        <GerenciarSenhaCliente
+          clienteId={clienteSelecionadoId}
+          open={modalSenhaAberto}
+          onClose={fecharModalSenha}
+        />
       )}
     </MuiLayout>
   );

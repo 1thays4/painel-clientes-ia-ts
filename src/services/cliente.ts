@@ -1,5 +1,6 @@
-import { supabase } from './supabase';
+import { supabase } from '../lib/supabase';
 import { config } from '../config';
+import { setupClientAuth } from '../lib/clientAuth';
 
 // Interface para o cliente
 export interface Cliente {
@@ -103,9 +104,9 @@ export async function buscarClientePorToken(token: string): Promise<Cliente | nu
       const novoToken = gerarTokenPublico();
       const novoCliente = {
         nome: "Cliente Novo",
-        plano: "basico",
+        plano: "essencial",
         data_cadastro: new Date().toISOString(),
-        mensagens_limite: config.planos.basico.limite,
+        mensagens_limite: config.planos.essencial.limite,
         mensagens_usadas: 0,
         token_publico: novoToken
       };
@@ -123,9 +124,9 @@ export async function buscarClientePorToken(token: string): Promise<Cliente | nu
         return {
           id: "demo-" + Date.now(),
           nome: "Cliente Demonstração",
-          plano: "basico",
+          plano: "essencial",
           data_cadastro: new Date().toISOString(),
-          mensagens_limite: config.planos.basico.limite,
+          mensagens_limite: config.planos.essencial.limite,
           mensagens_usadas: 0,
           token_publico: token
         };
@@ -180,6 +181,11 @@ export async function atualizarCliente(
 
 // Buscar histórico de mensagens do cliente
 export async function buscarHistoricoMensagens(this: any, clienteId: string | number | null, limite: number = 200, offset: number = 0): Promise<Mensagem[]> {
+  // Configurar o token do cliente nos cabeçalhos
+  const clienteToken = sessionStorage.getItem('clienteToken');
+  if (clienteToken) {
+    setupClientAuth(clienteToken);
+  }
   try {
     console.log('Buscando histórico para cliente ID:', clienteId, 'limite:', limite, 'offset:', offset);
     
@@ -456,6 +462,11 @@ export function processarClientesFinais(clientesFinaisData: any[]): { [key: stri
 
 // Contar total de mensagens do cliente
 export async function contarTotalMensagens(clienteId: string | number | null): Promise<number> {
+  // Configurar o token do cliente nos cabeçalhos
+  const clienteToken = sessionStorage.getItem('clienteToken');
+  if (clienteToken) {
+    setupClientAuth(clienteToken);
+  }
   try {
     console.log('Contando total de mensagens para cliente ID:', clienteId);
     
@@ -500,7 +511,7 @@ export async function criarCliente(
     // Incluir apenas os campos que existem na tabela
     const novoCliente = {
       nome: userData.nome,
-      plano: userData.plano || "basico",
+      plano: userData.plano || "essencial",
       whatsapp: userData.whatsapp || "",
       data_cadastro: new Date().toISOString(),
       token_publico: gerarTokenPublico()

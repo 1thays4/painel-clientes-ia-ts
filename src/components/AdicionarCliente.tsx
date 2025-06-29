@@ -11,7 +11,7 @@ import "react-toastify/dist/ReactToastify.css";
 export default function AdicionarCliente({ onClienteAdicionado }: { onClienteAdicionado: () => void }) {
   const [nome, setNome] = useState("");
   const [whatsapp, setWhatsapp] = useState("");
-  const [plano, setPlano] = useState("basico");
+  const [plano, setPlano] = useState("essencial");
   const [carregando, setCarregando] = useState(false);
   const [whatsappError, setWhatsappError] = useState("");
 
@@ -65,7 +65,7 @@ export default function AdicionarCliente({ onClienteAdicionado }: { onClienteAdi
         toast.success("Cliente adicionado com sucesso!");
         setNome("");
         setWhatsapp("");
-        setPlano("basico");
+        setPlano("essencial");
         onClienteAdicionado();
       } else {
         toast.error("Erro ao adicionar cliente");
@@ -120,9 +120,9 @@ export default function AdicionarCliente({ onClienteAdicionado }: { onClienteAdi
               onChange={(e) => setPlano(e.target.value)}
               className="w-full p-2 border rounded-md"
             >
-              <option value="basico">Básico - {planos.basico.limite} mensagens - R$ {planos.basico.preco}/mês</option>
-              <option value="intermediario">Intermediário - {planos.intermediario.limite} mensagens - R$ {planos.intermediario.preco}/mês</option>
-              <option value="avancado">Avançado - {planos.avancado.limite} mensagens - R$ {planos.avancado.preco}/mês</option>
+              <option value="essencial">Básico - {planos.essencial.limite} mensagens - R$ {planos.essencial.preco}/mês</option>
+              <option value="Profissional">Intermediário - {planos.Profissional.limite} mensagens - R$ {planos.Profissional.preco}/mês</option>
+              <option value="Estratégico">Avançado - {planos.Estratégico.limite} mensagens - R$ {planos.Estratégico.preco}/mês</option>
             </select>
           </div>
           

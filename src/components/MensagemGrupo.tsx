@@ -77,7 +77,7 @@ export default function MensagemGrupo({
               <h3 className="font-bold text-green-600 mb-2">
                 {msgs[0].nome_cliente_final && msgs[0].nome_cliente_final !== 'Usuário final' ? (
                   <>
-                    Cliente: {msgs[0].nome_cliente_final}
+                    {msgs[0].nome_cliente_final}
                     {/* Mostrar número de destino se disponível, senão mostrar whatsapp_cliente_final */}
                     {(numeroFormatado || msgs[0].whatsapp_cliente_final) ?
                       ` ${numeroFormatado || msgs[0].whatsapp_cliente_final}` : ''}

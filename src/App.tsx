@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { ThemeProvider, createTheme, CssBaseline } from '@mui/material';
 import PainelClientesIA from './components/painel-clientes-ia';
 import PainelCliente from './components/PainelCliente';
+import ClienteLogin from './components/ClienteLogin';
 import DashboardHumano from './components/DashboardHumano';
 import Login from './components/Login';
 import Registro from './components/Registro';
@@ -89,7 +90,8 @@ const App: React.FC = () => {
               </ProtectedRoute>
             } 
           />
-          {/* Rota do cliente não precisa de proteção, pois tem sua própria lógica de autorização */}
+          {/* Rotas do cliente */}
+          <Route path="/cliente-login/:token" element={<ClienteLogin />} />
           <Route path="/cliente/:token" element={<PainelCliente />} />
           <Route 
             path="/diagnostico" 

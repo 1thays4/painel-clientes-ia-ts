@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
+import { Select, MenuItem, FormControl, InputLabel, Chip, Box, TextField, Autocomplete } from '@mui/material';
 
 interface Cliente {
   id: string; // UUID
@@ -90,7 +91,8 @@ export default function ClienteSelector({
             nome: cliente.nome /* ? `${cliente.nome} (Cliente Final)` : 'Cliente Final' */,
             // Manter referência à empresa
             empresa_id: cliente.empresa_id || cliente.cliente_id || empresaId
-          })) : [];
+          })) .sort((a: any, b: any) => a.nome.localeCompare(b.nome, 'pt-BR')) // <-- Ordenação alfabética 
+          : [];
 
         
         
@@ -112,42 +114,48 @@ export default function ClienteSelector({
 
   return (
     <div className="mb-6">
-      <h3 className="text-lg font-medium mb-3">Filtrar por Cliente</h3>
+      <h3 className="text-lg font-medium mb-3">Filtrar:</h3>
       
-      <Input
-        type="text"
-        placeholder="Filtrar por nome"
-        value={filtro}
-        onChange={(e) => setFiltro(e.target.value)}
-        className="mb-3"
-      />
-      
-      <div className="flex flex-wrap gap-2">
+      <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-start' }}>
+        <Autocomplete
+          options={[{ id: 'todos', nome: 'Todos os Clientes' }, ...clientes]}
+          getOptionLabel={(option) => option.nome}
+          fullWidth
+          loading={carregando}
+          loadingText="Carregando clientes..."
+          noOptionsText="Nenhum cliente encontrado"
+          value={clienteSelecionado === null ? { id: 'todos', nome: 'Todos os Clientes' } : 
+                 clientes.find(c => c.id === clienteSelecionado) || null}
+          onChange={(_, newValue) => {
+            if (newValue === null || newValue.id === 'todos') {
+              onClienteSelecionado(null);
+            } else {
+              onClienteSelecionado(newValue.id, 'cliente_final');
+            }
+          }}
+          renderInput={(params) => (
+            <TextField 
+              {...params} 
+              label="Selecione um cliente" 
+              variant="outlined" 
+              placeholder="Buscar cliente"
+            />
+          )}
+          renderOption={(props, option) => (
+            <MenuItem {...props} key={option.id}>
+              {option.nome}
+            </MenuItem>
+          )}
+          sx={{ bgcolor: 'white', borderRadius: 1 }}
+        />
+        
         <Button 
           variant={clienteSelecionado === null ? "default" : "outline"}
           onClick={() => onClienteSelecionado(null)}
-          className="mb-2"
         >
-          Todos os Clientes
+          Limpar
         </Button>
-        
-        {carregando ? (
-          <p className="text-sm text-gray-500">Carregando empresas...</p>
-        ) : clientesFiltrados.length === 0 ? (
-          <p className="text-sm text-gray-500">Nenhuma empresa encontrada</p>
-        ) : (
-          clientesFiltrados.map(cliente => (
-            <Button 
-              key={cliente.id}
-              variant={clienteSelecionado === cliente.id ? "default" : "outline"}
-              onClick={() => onClienteSelecionado(cliente.id, 'cliente_final')}
-              className="mb-2"
-            >
-              {cliente.nome}
-            </Button>
-          ))
-        )}
-      </div>
+      </Box>
     </div>
   );
 }

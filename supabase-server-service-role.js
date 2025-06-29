@@ -42,7 +42,7 @@ async function garantirClienteExiste() {
             nome: 'Empresa Padrão',
             whatsapp: '5547991950615',
             email: 'empresa@exemplo.com',
-            plano: 'basico',
+            plano: 'essencial',
             data_cadastro: new Date().toISOString()
           }
         ])
@@ -144,7 +144,7 @@ app.post('/api/registrar-mensagem', async (req, res) => {
                 nome: `Cliente ${numeroRemetenteOriginal}`,
                 whatsapp: numeroRemetenteOriginal,
                 email: `cliente_${numeroRemetenteNormalizado}@exemplo.com`,
-                plano: 'basico',
+                plano: 'essencial',
                 data_cadastro: new Date().toISOString(),
                 token_publico: Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15)
               }
@@ -190,7 +190,7 @@ app.post('/api/registrar-mensagem', async (req, res) => {
                 nome: `Empresa ${numeroDestinoOriginal}`,
                 whatsapp: numeroDestinoOriginal,
                 email: `empresa_${numeroDestinoNormalizado}@exemplo.com`,
-                plano: 'basico',
+                plano: 'essencial',
                 data_cadastro: new Date().toISOString(),
                 token_publico: Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15)
               }

@@ -1,5 +1,6 @@
-import { supabase } from './supabase';
+import { supabase } from '../lib/supabase';
 import { config } from '../config';
+import { setupClientAuth } from '../lib/clientAuth';
 
 // Interface para o resultado da verificação de limite
 interface ResultadoVerificacao {
@@ -80,6 +81,11 @@ export async function registrarMensagem(
 
 // Contar mensagens do mês atual
 export async function contarMensagensMes(clienteId: string | number): Promise<number> {
+  // Configurar o token do cliente nos cabeçalhos
+  const clienteToken = sessionStorage.getItem('clienteToken');
+  if (clienteToken) {
+    setupClientAuth(clienteToken);
+  }
   try {
     console.log('Contando mensagens para cliente ID:', clienteId);
     

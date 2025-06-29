@@ -2,6 +2,7 @@ import { SetStateAction, useState } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import { ToastContainer, toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
+import { isAuthorizedEmail } from "../utils/emailValidator";
 import "react-toastify/dist/ReactToastify.css";
 
 // Material UI imports
@@ -64,6 +65,12 @@ export default function Login() {
       return;
     }
     
+    // Verificar se o email está autorizado
+    if (!isAuthorizedEmail(email)) {
+      toast.error("Este email não está autorizado a usar o link mágico");
+      return;
+    }
+    
     setLoading(true);
     
     try {
@@ -98,7 +105,7 @@ export default function Login() {
           <Card sx={{ width: '100%' }}>
             <CardContent sx={{ pt: 4, pb: 4 }}>
               <Typography variant="h4" component="h1" align="center" gutterBottom sx={{ fontWeight: 'bold', mb: 3 }}>
-                Login do Cliente
+                Login Administrador
               </Typography>
               
               {/* Opções de login com Tabs do Material UI */}
@@ -185,6 +192,9 @@ export default function Login() {
                       </Button>
                       <Typography variant="body2" color="text.secondary" align="center" sx={{ mt: 2 }}>
                         Enviaremos um link para seu e-mail que permitirá acesso imediato à sua conta.
+                      </Typography>
+                      <Typography variant="caption" color="error" align="center" sx={{ mt: 1, display: 'block' }}>
+                        Nota: Apenas emails autorizados podem utilizar este recurso.
                       </Typography>
                     </Box>
                   )}

@@ -55,7 +55,7 @@ async function garantirClienteExiste() {
             nome: 'Empresa Padrão',
             whatsapp: '5547991950615',
             email: 'empresa@exemplo.com',
-            plano: 'basico',
+            plano: 'essencial',
             data_cadastro: new Date().toISOString()
           }
         ])
