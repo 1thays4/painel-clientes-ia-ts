@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { supabase } from '../lib/supabase';
+import { formatarTimestampComFuso } from '../utils/ajustarTimestamp';
 
 export async function registrarMensagemSimples(req: Request, res: Response) {
   try {
@@ -20,13 +21,15 @@ export async function registrarMensagemSimples(req: Request, res: Response) {
       return res.status(404).json({ error: 'Cliente não encontrado' });
     }
 
-    // Registrar a mensagem
+    // Registrar a mensagem com timestamp ajustado para o fuso horário brasileiro
+    const timestampAjustado = formatarTimestampComFuso();
+    
     await supabase.from('mensagens_enviadas').insert([
       {
         cliente_id: cliente.id,
         pergunta,
         resposta,
-        timestamp: new Date().toISOString(),
+        timestamp: timestampAjustado,
         numero_remetente: whatsappNumero.replace(/\D/g, ''),
         numero_destino: req.body.numeroDestino ? req.body.numeroDestino.replace(/\D/g, '') : ''
       },

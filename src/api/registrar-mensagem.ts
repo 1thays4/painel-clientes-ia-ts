@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { supabase } from '../lib/supabase';
 import { config } from '../config';
+import { formatarTimestampComFuso } from '../utils/ajustarTimestamp';
 
 interface MensagemRequest {
   whatsappNumero: string;
@@ -78,14 +79,17 @@ export async function registrarMensagemWhatsApp(req: Request, res: Response) {
       numeroDestinoFormatado 
     });
 
-    // Registrar a mensagem
+    // Registrar a mensagem com timestamp ajustado para o fuso horário brasileiro
     console.log('🔍 DEBUG: Registrando mensagem no banco de dados');
+    const timestampAjustado = formatarTimestampComFuso();
+    console.log('🔍 DEBUG: Timestamp ajustado para fuso BR:', timestampAjustado);
+    
     const { data: mensagemInserida, error } = await supabase.from('mensagens_enviadas').insert([
       {
         cliente_id: cliente.id,
         pergunta: pergunta,
         resposta: resposta,
-        timestamp: new Date().toISOString(),
+        timestamp: timestampAjustado,
         numero_remetente: numeroRemetenteFormatado,
         numero_destino: numeroDestinoFormatado
       },

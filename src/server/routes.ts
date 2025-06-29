@@ -3,7 +3,8 @@ import {
   processarMensagemWhatsApp, 
   processarWebhookN8N, 
   registrarMensagemWhatsApp,
-  registrarMensagemSimples 
+  registrarMensagemSimples,
+  marcarFollowup 
 } from '../api';
 import axios from 'axios';
 import { config } from '../config';
@@ -21,6 +22,9 @@ router.post('/registrar-mensagem', registrarMensagemWhatsApp);
 
 // Rota simplificada para registrar mensagens
 router.post('/registrar-simples', registrarMensagemSimples);
+
+// Rota para marcar cliente para follow-up
+router.post('/marcar-followup', marcarFollowup);
 
 // Rota para enviar mensagens para o WhatsApp
 router.post('/enviar-whatsapp', async (req, res) => {

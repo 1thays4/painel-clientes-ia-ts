@@ -1,0 +1,370 @@
+{
+  "name": "Follow-up Automatizado",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "minutesInterval": 1,
+              "triggerAtHour": 10
+            }
+          ]
+        }
+      },
+      "name": "Agendador Follow-up",
+      "type": "n8n-nodes-base.cron",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "a0800e83-1100-4cff-b137-84781f2c9979"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "tableId": "clientes_finais",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "modo",
+              "keyValue": "em aberto"
+            }
+          ]
+        }
+      },
+      "name": "Buscar Clientes Pendentes",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        200,
+        0
+      ],
+      "id": "ce5a0278-eba1-40c4-979a-b152a51e31a9",
+      "alwaysOutputData": true,
+      "credentials": {
+        "supabaseApi": {
+          "id": "MvZyOWznLIEU00vQ",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT me.* FROM mensagens_enviadas me\nJOIN clientes_finais cf ON me.cliente_final_id = cf.id\nWHERE cf.modo = 'em aberto'\nAND me.timestamp = (\n  SELECT MAX(timestamp) FROM mensagens_enviadas\n  WHERE cliente_final_id = cf.id\n)"
+      },
+      "name": "Buscar Ultima Mensagem",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        400,
+        0
+      ],
+      "id": "ce5a0278-eba1-40c4-979a-b152a51e31b1",
+      "alwaysOutputData": true,
+      "credentials": {
+        "supabaseApi": {
+          "id": "MvZyOWznLIEU00vQ",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Filtrar clientes que precisam de follow-up\n// Ajustar para o fuso horário brasileiro (GMT-3)\nconst agora = new Date();\n\n// Função para ajustar timestamp para fuso horário brasileiro\nfunction ajustarParaFusoBrasil(data) {\n  // Criar uma string de data no formato ISO com o fuso horário de São Paulo\n  const dataString = data.toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' });\n  // Converter de volta para objeto Date\n  return new Date(dataString);\n}\n\n// Ajustar a data atual para o fuso horário brasileiro\nconst agoraBrasil = ajustarParaFusoBrasil(agora);\nconsole.log('Data atual (fuso BR):', agoraBrasil);\n\nconst clientesParaFollowUp = [];\n\n// Obter todas as últimas mensagens\nconst ultimasMensagens = $node[\"Buscar Ultima Mensagem\"].json;\n\nfor (const item of $input.all()) {\n  const cliente = item.json;\n  \n  // Encontrar a última mensagem deste cliente\n  const ultimaMensagem = ultimasMensagens.find(m => m.cliente_final_id === cliente.id);\n  \n  // Verificar se tem última mensagem\n  if (!ultimaMensagem || !ultimaMensagem.timestamp) continue;\n  \n  // Converter para data e ajustar para fuso horário brasileiro\n  const dataUltimaMensagem = new Date(ultimaMensagem.timestamp);\n  const dataUltimaMensagemBR = ajustarParaFusoBrasil(dataUltimaMensagem);\n  \n  console.log(`Cliente ${cliente.id} - Última mensagem:`, dataUltimaMensagemBR);\n  \n  // Calcular diferença em dias (usando datas no mesmo fuso)\n  const diffTime = Math.abs(agoraBrasil - dataUltimaMensagemBR);\n  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));\n  \n  console.log(`Cliente ${cliente.id} - Dias desde última mensagem:`, diffDays);\n  \n  // Adicionar tipo de follow-up baseado no tempo\n  if (diffDays === 1) {\n    clientesParaFollowUp.push({\n      ...cliente,\n      tipoFollowUp: 'lembrete_leve',\n      diasEspera: diffDays,\n      ultimaMensagemData: ultimaMensagem.timestamp\n    });\n  } else if (diffDays === 3) {\n    clientesParaFollowUp.push({\n      ...cliente,\n      tipoFollowUp: 'reforcar_beneficio',\n      diasEspera: diffDays,\n      ultimaMensagemData: ultimaMensagem.timestamp\n    });\n  } else if (diffDays === 7) {\n    clientesParaFollowUp.push({\n      ...cliente,\n      tipoFollowUp: 'encerramento',\n      diasEspera: diffDays,\n      ultimaMensagemData: ultimaMensagem.timestamp\n    });\n  }\n}\n\n// Retornar apenas clientes que precisam de follow-up\nreturn clientesParaFollowUp.map(cliente => ({ json: cliente }));"
+      },
+      "name": "Filtrar Follow-ups",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        600,
+        0
+      ],
+      "id": "37b14782-e647-489a-852e-ea6148f70d27"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "name": "Loop Clientes",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        800,
+        0
+      ],
+      "id": "ed981d1b-4a0a-4075-9672-133a7eaecab3"
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "resource": "chat",
+        "prompt": {
+          "messages": [
+            {
+              "role": "system",
+              "content": "Você é um assistente especializado em follow-up de vendas. Crie mensagens curtas, amigáveis e naturais para WhatsApp."
+            },
+            {
+              "role": "user",
+              "content": "=Crie uma mensagem de follow-up para um cliente chamado {{$json.nome}}. Passaram-se {{$json.diasEspera}} dias desde a última interação.\n\nTipo de follow-up: {{$json.tipoFollowUp}}\n\nSe o tipo for 'lembrete_leve', envie uma mensagem simpática perguntando se o cliente viu as informações enviadas anteriormente.\n\nSe o tipo for 'reforcar_beneficio', reforce os benefícios do serviço e pergunte se o cliente tem alguma dúvida específica.\n\nSe o tipo for 'encerramento', informe que o atendimento será encerrado, mas que o cliente pode entrar em contato quando quiser.\n\nA mensagem deve ser curta (máximo 3 linhas), amigável e natural, como se fosse enviada por uma pessoa real. Não mencione que é um follow-up automatizado."
+            }
+          ]
+        },
+        "options": {
+          "model": "gpt-3.5-turbo",
+          "temperature": 0.7,
+          "maxTokens": 150,
+          "additionalProperties": {}
+        },
+        "simplifyOutput": true
+      },
+      "name": "Gerar Mensagem Follow-up",
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        1000,
+        0
+      ],
+      "id": "73c21b6d-6374-4eec-8d62-d63121c0757a",
+      "credentials": {
+        "openAiApi": {
+          "id": "ujt7M99ALkXXRbg8",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Depurar a saída do OpenAI\nconst openAIOutput = $input.first().json;\nconsole.log('Saída do OpenAI:', JSON.stringify(openAIOutput, null, 2));\n\n// Tentar extrair a mensagem de diferentes formatos possíveis\nlet mensagem = '';\nif (typeof openAIOutput === 'string') {\n  mensagem = openAIOutput;\n} else if (openAIOutput.text) {\n  mensagem = openAIOutput.text;\n} else if (openAIOutput.content) {\n  mensagem = openAIOutput.content;\n} else if (openAIOutput.choices && openAIOutput.choices[0]) {\n  mensagem = openAIOutput.choices[0].message?.content || '';\n}\n\nconsole.log('Mensagem extraída:', mensagem);\n\n// Garantir que temos uma mensagem padrão se nada for encontrado\nif (!mensagem) {\n  if ($node[\"Loop Clientes\"].json.tipoFollowUp === 'lembrete_leve') {\n    mensagem = `Olá ${$node[\"Loop Clientes\"].json.nome}! Só passando para saber se você chegou a ver as informações que te enviei. Estou à disposição para qualquer dúvida! 😊`;\n  } else if ($node[\"Loop Clientes\"].json.tipoFollowUp === 'reforcar_beneficio') {\n    mensagem = `Oi ${$node[\"Loop Clientes\"].json.nome}! Lembra que conversamos sobre nossos planos? Eles oferecem o melhor custo-benefício do mercado. Posso te ajudar com alguma dúvida específica?`;\n  } else {\n    mensagem = `Olá ${$node[\"Loop Clientes\"].json.nome}, estou encerrando seu atendimento por aqui, mas fique à vontade para me chamar quando precisar! Estamos sempre à disposição. 🙌`;\n  }\n}\n\nreturn [{\n  json: {\n    mensagemGerada: mensagem\n  }\n}];"
+      },
+      "name": "Debug OpenAI",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1100,
+        0
+      ],
+      "id": "7f42255f-8548-424d-b4c3-438f05afd5a6"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Obter o número do Twilio para envio\n// Normalmente seria armazenado em uma configuração ou obtido de algum lugar\n\nreturn [{\n  json: {\n    numeroRemetente: \"+14155238886\", // Substitua pelo número do Twilio real\n    mensagemParaEnviar: $node[\"Debug OpenAI\"].json.mensagemGerada\n  }\n}];"
+      },
+      "name": "Buscar Número Twilio",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1200,
+        0
+      ],
+      "id": "7f42255f-8548-424d-b4c3-438f05afd5a5"
+    },
+    {
+      "parameters": {
+        "from": "={{$node[\"Buscar Número Twilio\"].json.numeroRemetente}}",
+        "to": "={{$node[\"Loop Clientes\"].json.whatsapp}}",
+        "toWhatsapp": true,
+        "message": "={{$node[\"Buscar Número Twilio\"].json.mensagemParaEnviar}}",
+        "options": {}
+      },
+      "name": "Enviar WhatsApp",
+      "type": "n8n-nodes-base.twilio",
+      "typeVersion": 1,
+      "position": [
+        1400,
+        0
+      ],
+      "id": "a91534de-6b85-4394-b82b-ebadc0cb4cea",
+      "credentials": {
+        "twilioApi": {
+          "id": "QXezqTUIMW1Crjx7",
+          "name": "Twilio account prod"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=http://supabase-server:3001/api/registrar-mensagem",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "whatsappNumero",
+              "value": "={{$node[\"Buscar Número Twilio\"].json.numeroRemetente}}"
+            },
+            {
+              "name": "pergunta",
+              "value": "follow-up automático"
+            },
+            {
+              "name": "resposta",
+              "value": "={{$node[\"Buscar Número Twilio\"].json.mensagemParaEnviar}}"
+            },
+            {
+              "name": "numeroDestino",
+              "value": "={{$node[\"Loop Clientes\"].json.whatsapp}}"
+            },
+            {
+              "name": "nome",
+              "value": "={{$node[\"Loop Clientes\"].json.nome}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Registrar Mensagem",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [
+        1600,
+        0
+      ],
+      "id": "1a1bf06c-8f9d-4f0a-88bb-d5fb241d3b0c"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "clientes_finais",
+        "id": "={{$node[\"Loop Clientes\"].json.id}}",
+        "updateAllMatching": false,
+        "data": {
+          "ultimo_followup": "={{$today}}",
+          "modo": "={{$node[\"Loop Clientes\"].json.tipoFollowUp === 'encerramento' ? 'encerrado' : 'em aberto'}}",
+          "tentativas_followup": "={{$node[\"Loop Clientes\"].json.tentativas_followup ? $node[\"Loop Clientes\"].json.tentativas_followup + 1 : 1}}"
+        }
+      },
+      "name": "Atualizar Status Cliente",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1800,
+        0
+      ],
+      "id": "ce5a0278-eba1-40c4-979a-b152a51e31b0",
+      "alwaysOutputData": true,
+      "credentials": {
+        "supabaseApi": {
+          "id": "MvZyOWznLIEU00vQ",
+          "name": "Supabase account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Agendador Follow-up": {
+      "main": [
+        [
+          {
+            "node": "Buscar Clientes Pendentes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscar Clientes Pendentes": {
+      "main": [
+        [
+          {
+            "node": "Buscar Ultima Mensagem",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscar Ultima Mensagem": {
+      "main": [
+        [
+          {
+            "node": "Filtrar Follow-ups",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filtrar Follow-ups": {
+      "main": [
+        [
+          {
+            "node": "Loop Clientes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Clientes": {
+      "main": [
+        [
+          {
+            "node": "Gerar Mensagem Follow-up",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gerar Mensagem Follow-up": {
+      "main": [
+        [
+          {
+            "node": "Debug OpenAI",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Debug OpenAI": {
+      "main": [
+        [
+          {
+            "node": "Buscar Número Twilio",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscar Número Twilio": {
+      "main": [
+        [
+          {
+            "node": "Enviar WhatsApp",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enviar WhatsApp": {
+      "main": [
+        [
+          {
+            "node": "Registrar Mensagem",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Registrar Mensagem": {
+      "main": [
+        [
+          {
+            "node": "Atualizar Status Cliente",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}
