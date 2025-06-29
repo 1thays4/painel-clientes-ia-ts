@@ -1,8 +1,20 @@
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent } from './ui/card';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { verificarLimiteMensagens } from '../lib/validacao';
+
+// Material UI imports
+import { 
+  Card, 
+  CardContent, 
+  Typography, 
+  Grid, 
+  Box, 
+  LinearProgress, 
+  Divider, 
+  Skeleton,
+  Paper
+} from '@mui/material';
 
 interface DashboardProps {
   clienteId?: string | number;
@@ -189,79 +201,85 @@ const Dashboard: React.FC<DashboardProps> = ({ clienteId, isAdmin = false }) => 
   
   const renderEstatisticasGerais = () => {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        <Card>
-          <CardContent className="pt-6">
-            <h3 className="text-lg font-semibold mb-2">Mensagens</h3>
-            <div className="grid grid-cols-2 gap-2">
-              <div>
-                <p className="text-sm text-gray-500">Total</p>
-                <p className="text-2xl font-bold">{estatisticasGerais.totalMensagens}</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-500">Hoje</p>
-                <p className="text-2xl font-bold">{estatisticasGerais.mensagensHoje}</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-500">Semana</p>
-                <p className="text-2xl font-bold">{estatisticasGerais.mensagensSemana}</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-500">Mês</p>
-                <p className="text-2xl font-bold">{estatisticasGerais.mensagensMes}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+      <Grid container spacing={3} sx={{ mb: 4 }}>
+        <Grid item xs={12} md={4}>
+          <Card elevation={3} sx={{ height: '100%', borderRadius: 2 }}>
+            <CardContent sx={{ pt: 3, pb: 3 }}>
+              <Typography variant="h6" fontWeight="600" gutterBottom>Mensagens</Typography>
+              <Grid container spacing={2}>
+                <Grid item xs={6}>
+                  <Typography variant="body2" color="text.secondary">Total</Typography>
+                  <Typography variant="h4" fontWeight="700">{estatisticasGerais.totalMensagens}</Typography>
+                </Grid>
+                <Grid item xs={6}>
+                  <Typography variant="body2" color="text.secondary">Hoje</Typography>
+                  <Typography variant="h4" fontWeight="700">{estatisticasGerais.mensagensHoje}</Typography>
+                </Grid>
+                <Grid item xs={6}>
+                  <Typography variant="body2" color="text.secondary">Semana</Typography>
+                  <Typography variant="h4" fontWeight="700">{estatisticasGerais.mensagensSemana}</Typography>
+                </Grid>
+                <Grid item xs={6}>
+                  <Typography variant="body2" color="text.secondary">Mês</Typography>
+                  <Typography variant="h4" fontWeight="700">{estatisticasGerais.mensagensMes}</Typography>
+                </Grid>
+              </Grid>
+            </CardContent>
+          </Card>
+        </Grid>
         
-        <Card>
-          <CardContent className="pt-6">
-            <h3 className="text-lg font-semibold mb-2">Clientes</h3>
-            <div className="grid grid-cols-2 gap-2">
-              <div>
-                <p className="text-sm text-gray-500">Total</p>
-                <p className="text-2xl font-bold">{estatisticasGerais.clientesTotal}</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-500">Ativos (mês)</p>
-                <p className="text-2xl font-bold">{estatisticasGerais.clientesAtivos}</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-500">Taxa de Atividade</p>
-                <p className="text-2xl font-bold">
-                  {estatisticasGerais.clientesTotal > 0
-                    ? `${Math.round((estatisticasGerais.clientesAtivos / estatisticasGerais.clientesTotal) * 100)}%`
-                    : '0%'}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <Grid item xs={12} md={4}>
+          <Card elevation={3} sx={{ height: '100%', borderRadius: 2 }}>
+            <CardContent sx={{ pt: 3, pb: 3 }}>
+              <Typography variant="h6" fontWeight="600" gutterBottom>Clientes</Typography>
+              <Grid container spacing={2}>
+                <Grid item xs={6}>
+                  <Typography variant="body2" color="text.secondary">Total</Typography>
+                  <Typography variant="h4" fontWeight="700">{estatisticasGerais.clientesTotal}</Typography>
+                </Grid>
+                <Grid item xs={6}>
+                  <Typography variant="body2" color="text.secondary">Ativos (mês)</Typography>
+                  <Typography variant="h4" fontWeight="700">{estatisticasGerais.clientesAtivos}</Typography>
+                </Grid>
+                <Grid item xs={12}>
+                  <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>Taxa de Atividade</Typography>
+                  <Typography variant="h4" fontWeight="700">
+                    {estatisticasGerais.clientesTotal > 0
+                      ? `${Math.round((estatisticasGerais.clientesAtivos / estatisticasGerais.clientesTotal) * 100)}%`
+                      : '0%'}
+                  </Typography>
+                </Grid>
+              </Grid>
+            </CardContent>
+          </Card>
+        </Grid>
         
-        <Card>
-          <CardContent className="pt-6">
-            <h3 className="text-lg font-semibold mb-2">Média por Cliente</h3>
-            <div className="grid grid-cols-2 gap-2">
-              <div>
-                <p className="text-sm text-gray-500">Mensagens/Cliente</p>
-                <p className="text-2xl font-bold">
-                  {estatisticasGerais.clientesTotal > 0
-                    ? Math.round(estatisticasGerais.totalMensagens / estatisticasGerais.clientesTotal)
-                    : 0}
-                </p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-500">Mensagens/Mês</p>
-                <p className="text-2xl font-bold">
-                  {estatisticasGerais.clientesAtivos > 0
-                    ? Math.round(estatisticasGerais.mensagensMes / estatisticasGerais.clientesAtivos)
-                    : 0}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+        <Grid item xs={12} md={4}>
+          <Card elevation={3} sx={{ height: '100%', borderRadius: 2 }}>
+            <CardContent sx={{ pt: 3, pb: 3 }}>
+              <Typography variant="h6" fontWeight="600" gutterBottom>Média por Cliente</Typography>
+              <Grid container spacing={2}>
+                <Grid item xs={6}>
+                  <Typography variant="body2" color="text.secondary">Mensagens/Cliente</Typography>
+                  <Typography variant="h4" fontWeight="700">
+                    {estatisticasGerais.clientesTotal > 0
+                      ? Math.round(estatisticasGerais.totalMensagens / estatisticasGerais.clientesTotal)
+                      : 0}
+                  </Typography>
+                </Grid>
+                <Grid item xs={6}>
+                  <Typography variant="body2" color="text.secondary">Mensagens/Mês</Typography>
+                  <Typography variant="h4" fontWeight="700">
+                    {estatisticasGerais.clientesAtivos > 0
+                      ? Math.round(estatisticasGerais.mensagensMes / estatisticasGerais.clientesAtivos)
+                      : 0}
+                  </Typography>
+                </Grid>
+              </Grid>
+            </CardContent>
+          </Card>
+        </Grid>
+      </Grid>
     );
   };
   
@@ -284,84 +302,110 @@ const Dashboard: React.FC<DashboardProps> = ({ clienteId, isAdmin = false }) => 
       }).format(data);
     };
     
+    // Determinar a cor da barra de progresso com base no status
+    const getProgressColor = () => {
+      switch (limiteInfo.status) {
+        case 'critico':
+          return 'error';
+        case 'alerta':
+          return 'warning';
+        default:
+          return 'success';
+      }
+    };
+    
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-        <Card>
-          <CardContent className="pt-6">
-            <h3 className="text-lg font-semibold mb-2">Uso de Mensagens</h3>
-            <div className="mb-4">
-              <div className="flex justify-between mb-1">
-                <span>Este mês</span>
-                <span className="font-medium">
-                  {estatisticasCliente.mensagensUsadas} / {estatisticasCliente.mensagensLimite}
-                </span>
-              </div>
-              <div className="w-full bg-gray-200 rounded-full h-2.5">
-                <div 
-                  className={`h-2.5 rounded-full ${
-                    limiteInfo.status === 'critico' ? 'bg-red-600' :
-                    limiteInfo.status === 'alerta' ? 'bg-yellow-500' : 'bg-green-500'
-                  }`} 
-                  style={{ width: `${Math.min(limiteInfo.percentual, 100)}%` }}
-                ></div>
-              </div>
-              {limiteInfo.mensagem && (
-                <p className={`mt-1 text-sm ${
-                  limiteInfo.status === 'critico' ? 'text-red-600' :
-                  limiteInfo.status === 'alerta' ? 'text-yellow-600' : ''
-                }`}>
-                  {limiteInfo.mensagem}
-                </p>
-              )}
-            </div>
-            <div className="grid grid-cols-2 gap-2 mt-4">
-              <div>
-                <p className="text-sm text-gray-500">Hoje</p>
-                <p className="text-2xl font-bold">{estatisticasCliente.mensagensHoje}</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-500">Semana</p>
-                <p className="text-2xl font-bold">{estatisticasCliente.mensagensSemana}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+      <Grid container spacing={3} sx={{ mb: 4 }}>
+        <Grid item xs={12} md={6}>
+          <Card elevation={3} sx={{ height: '100%', borderRadius: 2 }}>
+            <CardContent sx={{ pt: 3, pb: 3 }}>
+              <Typography variant="h6" fontWeight="600" gutterBottom>Uso de Mensagens</Typography>
+              <Box sx={{ mb: 3 }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1, alignItems: 'center' }}>
+                  <Typography variant="body2">Este mês</Typography>
+                  <Typography variant="body1" fontWeight="500">
+                    {estatisticasCliente.mensagensUsadas} / {estatisticasCliente.mensagensLimite}
+                  </Typography>
+                </Box>
+                <LinearProgress 
+                  variant="determinate" 
+                  value={Math.min(limiteInfo.percentual, 100)} 
+                  color={getProgressColor() as "error" | "warning" | "success"}
+                  sx={{ height: 8, borderRadius: 4 }}
+                />
+                {limiteInfo.mensagem && (
+                  <Typography 
+                    variant="caption" 
+                    sx={{ 
+                      mt: 1, 
+                      display: 'block',
+                      color: limiteInfo.status === 'critico' ? 'error.main' : 
+                             limiteInfo.status === 'alerta' ? 'warning.main' : 'inherit'
+                    }}
+                  >
+                    {limiteInfo.mensagem}
+                  </Typography>
+                )}
+              </Box>
+              <Divider sx={{ my: 2 }} />
+              <Grid container spacing={2} sx={{ mt: 1 }}>
+                <Grid item xs={6}>
+                  <Typography variant="body2" color="text.secondary">Hoje</Typography>
+                  <Typography variant="h4" fontWeight="700">{estatisticasCliente.mensagensHoje}</Typography>
+                </Grid>
+                <Grid item xs={6}>
+                  <Typography variant="body2" color="text.secondary">Semana</Typography>
+                  <Typography variant="h4" fontWeight="700">{estatisticasCliente.mensagensSemana}</Typography>
+                </Grid>
+              </Grid>
+            </CardContent>
+          </Card>
+        </Grid>
         
-        <Card>
-          <CardContent className="pt-6">
-            <h3 className="text-lg font-semibold mb-2">Atividade</h3>
-            <div>
-              <p className="text-sm text-gray-500">Última mensagem</p>
-              <p className="text-xl font-bold">{formatarData(estatisticasCliente.ultimaAtividade)}</p>
-            </div>
-            <div className="mt-4">
-              <p className="text-sm text-gray-500">Média diária (semana)</p>
-              <p className="text-xl font-bold">
-                {Math.round(estatisticasCliente.mensagensSemana / 7)} mensagens/dia
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+        <Grid item xs={12} md={6}>
+          <Card elevation={3} sx={{ height: '100%', borderRadius: 2 }}>
+            <CardContent sx={{ pt: 3, pb: 3 }}>
+              <Typography variant="h6" fontWeight="600" gutterBottom>Atividade</Typography>
+              <Box sx={{ mb: 3 }}>
+                <Typography variant="body2" color="text.secondary">Última mensagem</Typography>
+                <Typography variant="h5" fontWeight="600">{formatarData(estatisticasCliente.ultimaAtividade)}</Typography>
+              </Box>
+              <Divider sx={{ my: 2 }} />
+              <Box sx={{ mt: 3 }}>
+                <Typography variant="body2" color="text.secondary">Média diária (semana)</Typography>
+                <Typography variant="h5" fontWeight="600">
+                  {Math.round(estatisticasCliente.mensagensSemana / 7)} mensagens/dia
+                </Typography>
+              </Box>
+            </CardContent>
+          </Card>
+        </Grid>
+      </Grid>
     );
   };
   
   if (carregando) {
     return (
-      <div className="p-4 text-center">
-        <p>Carregando estatísticas...</p>
-      </div>
+      <Box sx={{ p: 4, textAlign: 'center' }}>
+        <Grid container spacing={3}>
+          {[1, 2, 3].map((item) => (
+            <Grid item xs={12} md={4} key={item}>
+              <Skeleton variant="rectangular" height={200} sx={{ borderRadius: 2 }} />
+            </Grid>
+          ))}
+        </Grid>
+      </Box>
     );
   }
   
   return (
-    <div>
-      <h2 className="text-xl font-semibold mb-4">
+    <Box>
+      <Typography variant="h5" fontWeight="600" sx={{ mb: 3 }}>
         {isAdmin && !clienteId ? 'Estatísticas Gerais' : 'Estatísticas de Uso'}
-      </h2>
+      </Typography>
       
       {isAdmin && !clienteId ? renderEstatisticasGerais() : renderEstatisticasCliente()}
-    </div>
+    </Box>
   );
 };
 

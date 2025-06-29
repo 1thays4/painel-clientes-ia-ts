@@ -1,8 +1,5 @@
 import { useState, useEffect, useRef } from "react";
 import { useParams } from "react-router-dom";
-import { Card, CardContent } from "./ui/card";
-import { Button } from "./ui/button";
-import { Input } from "./ui/input";
 import { contarMensagensMes } from "../services/mensagens";
 import { ToastContainer, toast } from "react-toastify";
 import { buscarClientePorToken, buscarHistoricoMensagens, atualizarCliente, contarTotalMensagens } from "../services/cliente";
@@ -14,6 +11,40 @@ import AlertaLimiteMensagens from "./AlertaLimiteMensagens";
 import { formatarWhatsAppParaExibicao, validarWhatsApp } from "../lib/validacao";
 import { config } from "../config";
 import "react-toastify/dist/ReactToastify.css";
+
+// Material UI imports
+import {
+  Card,
+  CardContent,
+  Button,
+  TextField,
+  Typography,
+  Box,
+  Container,
+  Grid,
+  LinearProgress,
+  Tabs,
+  Tab,
+  Paper,
+  List,
+  ListItem,
+  ListItemIcon,
+  ListItemText,
+  Divider,
+  CircularProgress,
+  Alert,
+  AlertTitle,
+  Chip
+} from '@mui/material';
+import {
+  Edit as EditIcon,
+  Save as SaveIcon,
+  Cancel as CancelIcon,
+  Dashboard as DashboardIcon,
+  History as HistoryIcon,
+  Check as CheckIcon,
+  ArrowUpward as ArrowUpwardIcon
+} from '@mui/icons-material';
 
 export default function PainelCliente() {
   const { token } = useParams<{ token: string }>();
@@ -303,90 +334,131 @@ export default function PainelCliente() {
     // Usar os valores da configuração para garantir consistência
     const planoConfig = config.planos[cliente.plano as keyof typeof config.planos] || config.planos.basico;
 
+    const getPlanoColor = () => {
+      switch (cliente?.plano) {
+        case "basico": return "success";
+        case "intermediario": return "primary";
+        case "avancado": return "secondary";
+        default: return "primary";
+      }
+    };
+
+    const getPlanoBackgroundColor = () => {
+      switch (cliente?.plano) {
+        case "basico": return "#f0f9f0";
+        case "intermediario": return "#f0f5ff";
+        case "avancado": return "#f9f0ff";
+        default: return "#f5f5f5";
+      }
+    };
+
+    const renderListItem = (text: string) => (
+      <ListItem sx={{ py: 0.5 }}>
+        <ListItemIcon sx={{ minWidth: 36 }}>
+          <CheckIcon color={getPlanoColor() as "success" | "primary" | "secondary"} />
+        </ListItemIcon>
+        <ListItemText primary={text} />
+      </ListItem>
+    );
+
     switch (cliente.plano) {
       case "basico":
         return (
-          <div className="mt-4 p-4 bg-gray-50 rounded-lg">
-            <h3 className="text-lg font-semibold mb-2">Plano Básico</h3>
-            <p className="text-2xl font-bold text-green-600 mb-4">R$ {planoConfig.preco}/mês</p>
-            <ul className="space-y-2">
-              <li className="flex items-center">
-                <span className="text-green-500 mr-2">✓</span> Acesso ao assistente IA
-              </li>
-              <li className="flex items-center">
-                <span className="text-green-500 mr-2">✓</span> {planoConfig.limite} mensagens por mês
-              </li>
-              <li className="flex items-center">
-                <span className="text-green-500 mr-2">✓</span> Suporte por email
-              </li>
-            </ul>
+          <Paper 
+            elevation={0} 
+            sx={{ 
+              mt: 3, 
+              p: 3, 
+              bgcolor: getPlanoBackgroundColor(),
+              borderRadius: 2
+            }}
+          >
+            <Typography variant="h6" fontWeight="600" gutterBottom>Plano Básico</Typography>
+            <Typography variant="h4" fontWeight="700" color="success.main" sx={{ mb: 2 }}>
+              R$ {planoConfig.preco}/mês
+            </Typography>
+            <List dense disablePadding>
+              {renderListItem("Acesso ao assistente IA")}
+              {renderListItem(`${planoConfig.limite} mensagens por mês`)}
+              {renderListItem("Suporte por email")}
+            </List>
             <Button 
-              className="w-full mt-4 bg-blue-600 hover:bg-blue-700"
+              variant="contained" 
+              color="primary"
+              fullWidth
+              sx={{ mt: 3 }}
               onClick={handleUpgradePlano}
+              startIcon={<ArrowUpwardIcon />}
             >
               Fazer Upgrade
             </Button>
-          </div>
+          </Paper>
         );
       case "intermediario":
         return (
-          <div className="mt-4 p-4 bg-blue-50 rounded-lg">
-            <h3 className="text-lg font-semibold mb-2">Plano Intermediário</h3>
-            <p className="text-2xl font-bold text-blue-600 mb-4">R$ {planoConfig.preco}/mês</p>
-            <ul className="space-y-2">
-              <li className="flex items-center">
-                <span className="text-blue-500 mr-2">✓</span> Acesso ao assistente IA
-              </li>
-              <li className="flex items-center">
-                <span className="text-blue-500 mr-2">✓</span> {planoConfig.limite} mensagens por mês
-              </li>
-              <li className="flex items-center">
-                <span className="text-blue-500 mr-2">✓</span> Suporte por WhatsApp
-              </li>
-              <li className="flex items-center">
-                <span className="text-blue-500 mr-2">✓</span> Acesso a modelos avançados
-              </li>
-            </ul>
+          <Paper 
+            elevation={0} 
+            sx={{ 
+              mt: 3, 
+              p: 3, 
+              bgcolor: getPlanoBackgroundColor(),
+              borderRadius: 2
+            }}
+          >
+            <Typography variant="h6" fontWeight="600" gutterBottom>Plano Intermediário</Typography>
+            <Typography variant="h4" fontWeight="700" color="primary.main" sx={{ mb: 2 }}>
+              R$ {planoConfig.preco}/mês
+            </Typography>
+            <List dense disablePadding>
+              {renderListItem("Acesso ao assistente IA")}
+              {renderListItem(`${planoConfig.limite} mensagens por mês`)}
+              {renderListItem("Suporte por WhatsApp")}
+              {renderListItem("Acesso a modelos avançados")}
+            </List>
             <Button 
-              className="w-full mt-4 bg-purple-600 hover:bg-purple-700"
+              variant="contained" 
+              color="secondary"
+              fullWidth
+              sx={{ mt: 3 }}
               onClick={handleUpgradePlano}
+              startIcon={<ArrowUpwardIcon />}
             >
               Fazer Upgrade para Avançado
             </Button>
-          </div>
+          </Paper>
         );
       case "avancado":
         return (
-          <div className="mt-4 p-4 bg-purple-50 rounded-lg">
-            <h3 className="text-lg font-semibold mb-2">Plano Avançado</h3>
-            <p className="text-2xl font-bold text-purple-600 mb-4">R$ {planoConfig.preco}/mês</p>
-            <ul className="space-y-2">
-              <li className="flex items-center">
-                <span className="text-purple-500 mr-2">✓</span> Acesso ao assistente IA
-              </li>
-              <li className="flex items-center">
-                <span className="text-purple-500 mr-2">✓</span> {planoConfig.limite} mensagens por mês
-              </li>
-              <li className="flex items-center">
-                <span className="text-purple-500 mr-2">✓</span> Suporte prioritário 24/7
-              </li>
-              <li className="flex items-center">
-                <span className="text-purple-500 mr-2">✓</span> Acesso a todos os modelos
-              </li>
-              <li className="flex items-center">
-                <span className="text-purple-500 mr-2">✓</span> Personalização avançada
-              </li>
-            </ul>
-          </div>
+          <Paper 
+            elevation={0} 
+            sx={{ 
+              mt: 3, 
+              p: 3, 
+              bgcolor: getPlanoBackgroundColor(),
+              borderRadius: 2
+            }}
+          >
+            <Typography variant="h6" fontWeight="600" gutterBottom>Plano Avançado</Typography>
+            <Typography variant="h4" fontWeight="700" color="secondary.main" sx={{ mb: 2 }}>
+              R$ {planoConfig.preco}/mês
+            </Typography>
+            <List dense disablePadding>
+              {renderListItem("Acesso ao assistente IA")}
+              {renderListItem(`${planoConfig.limite} mensagens por mês`)}
+              {renderListItem("Suporte prioritário 24/7")}
+              {renderListItem("Acesso a todos os modelos")}
+              {renderListItem("Personalização avançada")}
+            </List>
+          </Paper>
         );
       default:
-        return <p>Detalhes do plano não disponíveis</p>;
+        return <Typography>Detalhes do plano não disponíveis</Typography>;
     }
   };
 
   const getProgressBarColor = () => {
     if (!cliente) {
-      return "bg-blue-600";
+      return "primary";
     }
     
     const mensagensUsadas = cliente.mensagens_usadas || 0;
@@ -394,9 +466,9 @@ export default function PainelCliente() {
     
     const percentUsed = (mensagensUsadas / mensagensLimite) * 100;
     
-    if (percentUsed >= 100) return "bg-red-600";
-    if (percentUsed >= 75) return "bg-yellow-500";
-    return "bg-green-500";
+    if (percentUsed >= 100) return "error";
+    if (percentUsed >= 75) return "warning";
+    return "success";
   };
 
   const formatDate = (dateString: string) => {
@@ -412,107 +484,139 @@ export default function PainelCliente() {
 
   if (carregando) {
     return (
-      <div className="p-6 max-w-4xl mx-auto text-center">
-        <p>Carregando informações...</p>
-      </div>
+      <Container maxWidth="md" sx={{ py: 8, textAlign: 'center' }}>
+        <CircularProgress size={60} thickness={4} />
+        <Typography variant="h6" sx={{ mt: 2 }}>Carregando informações...</Typography>
+      </Container>
     );
   }
 
   if (erro) {
     return (
-      <div className="p-6 max-w-4xl mx-auto text-center">
-        <Card>
-          <CardContent className="pt-6">
-            <h2 className="text-xl font-bold text-red-600 mb-2">Erro</h2>
-            <p>{erro}</p>
+      <Container maxWidth="md" sx={{ py: 6 }}>
+        <Paper elevation={3} sx={{ p: 4, borderRadius: 2 }}>
+          <Alert severity="error" sx={{ mb: 3 }}>
+            <AlertTitle>Erro</AlertTitle>
+            {erro}
+          </Alert>
+          <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
             <Button 
-              className="mt-4"
+              variant="contained" 
+              color="primary"
               onClick={() => window.location.href = '/'}
             >
               Voltar ao Painel Principal
             </Button>
-          </CardContent>
-        </Card>
-      </div>
+          </Box>
+        </Paper>
+      </Container>
     );
   }
 
   return (
-    <div className="p-4 sm:p-6 max-w-4xl mx-auto">
+    <Container maxWidth="lg" sx={{ py: 4 }}>
       <ToastContainer position="top-right" autoClose={3000} />
       
       {/* Cabeçalho */}
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold mb-2">
+      <Paper elevation={2} sx={{ p: 3, mb: 4, borderRadius: 2 }}>
+        <Box sx={{ mb: 3 }}>
           {editando ? (
-            <Input 
+            <TextField
+              fullWidth
+              variant="outlined"
+              label="Nome do cliente"
               value={dadosEditados.nome} 
               onChange={(e) => setDadosEditados({...dadosEditados, nome: e.target.value})}
               placeholder="Nome do cliente"
-              className="text-xl font-bold"
+              sx={{ mb: 2 }}
             />
           ) : (
-            <>Olá, {cliente?.nome && !cliente.nome.includes('+') ? 
-              cliente.nome : 
-              (cliente?.nome?.includes('+') ? 'Empresa sem nome cadastrado' : 'Cliente')}!</>
+            <Typography variant="h4" fontWeight="bold" gutterBottom>
+              Olá, {cliente?.nome && !cliente.nome.includes('+') ? 
+                cliente.nome : 
+                (cliente?.nome?.includes('+') ? 'Empresa sem nome cadastrado' : 'Cliente')}!
+            </Typography>
           )}
-        </h1>
-        <p className="text-gray-600">
+          
           {editando ? (
-            <Input 
+            <TextField
+              fullWidth
+              variant="outlined"
+              label="Número do WhatsApp"
               value={dadosEditados.whatsapp} 
               onChange={(e) => setDadosEditados({...dadosEditados, whatsapp: e.target.value})}
               placeholder="Número do WhatsApp"
-              className="mt-2"
+              sx={{ mb: 2 }}
             />
           ) : (
-            <>WhatsApp: {cliente?.whatsapp ? formatarWhatsAppParaExibicao(cliente.whatsapp) : "Não informado"}</>
+            <Typography variant="body1" color="text.secondary">
+              WhatsApp: {cliente?.whatsapp ? formatarWhatsAppParaExibicao(cliente.whatsapp) : "Não informado"}
+            </Typography>
           )}
-        </p>
-        
-        {editando ? (
-          <div className="mt-4 flex gap-2">
-            <Button onClick={handleSalvarDados}>Salvar</Button>
-            <Button variant="outline" onClick={() => setEditando(false)}>Cancelar</Button>
-          </div>
-        ) : (
-          <Button 
-            variant="outline" 
-            className="mt-2" 
-            onClick={() => setEditando(true)}
-          >
-            Editar dados
-          </Button>
-        )}
-      </div>
+          
+          {editando ? (
+            <Box sx={{ mt: 2, display: 'flex', gap: 2 }}>
+              <Button 
+                variant="contained" 
+                color="primary" 
+                onClick={handleSalvarDados}
+                startIcon={<SaveIcon />}
+              >
+                Salvar
+              </Button>
+              <Button 
+                variant="outlined" 
+                onClick={() => setEditando(false)}
+                startIcon={<CancelIcon />}
+              >
+                Cancelar
+              </Button>
+            </Box>
+          ) : (
+            <Button 
+              variant="outlined" 
+              startIcon={<EditIcon />}
+              onClick={() => setEditando(true)}
+              sx={{ mt: 2 }}
+            >
+              Editar dados
+            </Button>
+          )}
+        </Box>
+      </Paper>
       
       {/* Alerta de limite de mensagens */}
       {cliente && (
-        <AlertaLimiteMensagens 
-          mensagensUsadas={cliente.mensagens_usadas || 0}
-          mensagensLimite={cliente.mensagens_limite || 1000}
-          onUpgrade={handleUpgradePlano}
-        />
+        <Box sx={{ mb: 3 }}>
+          <AlertaLimiteMensagens 
+            mensagensUsadas={cliente.mensagens_usadas || 0}
+            mensagensLimite={cliente.mensagens_limite || 1000}
+            onUpgrade={handleUpgradePlano}
+          />
+        </Box>
       )}
       
-      {/* Botões de navegação */}
-      <div className="flex mb-6 border-b">
-        <Button 
-          variant="link" 
-          className={`${mostrarDashboard ? 'border-b-2 border-blue-500' : ''} mr-2`}
-          onClick={() => setMostrarDashboard(true)}
+      {/* Tabs de navegação */}
+      <Paper elevation={1} sx={{ mb: 4, borderRadius: 2 }}>
+        <Tabs 
+          value={mostrarDashboard ? 0 : 1}
+          onChange={(_, newValue) => setMostrarDashboard(newValue === 0)}
+          variant="fullWidth"
+          indicatorColor="primary"
+          textColor="primary"
         >
-          Dashboard
-        </Button>
-        <span className="self-center text-gray-400 mx-1">›</span>
-        <Button 
-          variant="link" 
-          className={`${!mostrarDashboard ? 'border-b-2 border-blue-500' : ''} ml-2`}
-          onClick={() => setMostrarDashboard(false)}
-        >
-          Histórico de Mensagens
-        </Button>
-      </div>
+          <Tab 
+            icon={<DashboardIcon />} 
+            iconPosition="start" 
+            label="Dashboard" 
+          />
+          <Tab 
+            icon={<HistoryIcon />} 
+            iconPosition="start" 
+            label="Histórico de Mensagens" 
+          />
+        </Tabs>
+      </Paper>
       
       {/* Dashboard ou Histórico */}
       {mostrarDashboard ? (
@@ -521,30 +625,38 @@ export default function PainelCliente() {
           {cliente && <Dashboard clienteId={cliente.id} />}
           
           {/* Informações do plano */}
-          <Card className="mb-6 mt-6">
-            <CardContent className="pt-6">
-              <h2 className="text-xl font-bold mb-4">Seu Plano: {cliente?.plano || "Básico"}</h2>
+          <Card elevation={3} sx={{ mb: 4, mt: 4, borderRadius: 2 }}>
+            <CardContent sx={{ p: 3 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+                <Typography variant="h5" fontWeight="bold">
+                  Seu Plano: 
+                </Typography>
+                <Chip 
+                  label={cliente?.plano || "Básico"} 
+                  color="primary" 
+                  variant="outlined" 
+                  sx={{ ml: 2, textTransform: 'capitalize' }} 
+                />
+              </Box>
               
               {/* Barra de progresso */}
-              <div className="mb-4">
-                <div className="flex justify-between mb-1">
-                  <span>Uso de mensagens este mês</span>
-                  <span className="font-medium">
+              <Box sx={{ mb: 4 }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1, alignItems: 'center' }}>
+                  <Typography variant="body2">Uso de mensagens este mês</Typography>
+                  <Typography variant="body1" fontWeight="500">
                     {cliente?.mensagens_usadas || 0} / {cliente?.mensagens_limite || 1000}
-                  </span>
-                </div>
-                <div className="w-full bg-gray-200 rounded-full h-2.5">
-                  <div 
-                    className={`${getProgressBarColor()} h-2.5 rounded-full`} 
-                    style={{ 
-                      width: `${Math.min(
-                        ((cliente?.mensagens_usadas || 0) / (cliente?.mensagens_limite || 1000)) * 100, 
-                        100
-                      )}%` 
-                    }}
-                  ></div>
-                </div>
-              </div>
+                  </Typography>
+                </Box>
+                <LinearProgress 
+                  variant="determinate" 
+                  value={Math.min(
+                    ((cliente?.mensagens_usadas || 0) / (cliente?.mensagens_limite || 1000)) * 100, 
+                    100
+                  )}
+                  color={getProgressBarColor() as "error" | "warning" | "success"}
+                  sx={{ height: 8, borderRadius: 4 }}
+                />
+              </Box>
               
               {renderPlanoDetalhes()}
             </CardContent>
@@ -564,6 +676,6 @@ export default function PainelCliente() {
           />
         )
       )}
-    </div>
+    </Container>
   );
 }

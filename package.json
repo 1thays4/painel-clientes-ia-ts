@@ -12,6 +12,10 @@
     "test:api": "node testar-api.js"
   },
   "dependencies": {
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.1",
+    "@mui/icons-material": "^5.17.1",
+    "@mui/material": "^5.17.1",
     "@supabase/supabase-js": "^2.49.9",
     "axios": "^1.9.0",
     "body-parser": "^1.20.2",

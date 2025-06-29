@@ -2,14 +2,39 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { Link } from 'react-router-dom';
-import { Button } from './ui/button';
-import { Card, CardContent } from './ui/card';
 import { ToastContainer, toast } from 'react-toastify';
 import AdicionarCliente from './AdicionarCliente';
 import Dashboard from './Dashboard';
 import { formatarWhatsAppParaExibicao } from '../lib/validacao';
 import { verificarLimiteMensagens } from '../lib/validacao';
 import 'react-toastify/dist/ReactToastify.css';
+
+// Material UI imports
+import {
+  Button,
+  Card,
+  CardContent,
+  Typography,
+  Box,
+  Grid,
+  LinearProgress,
+  Alert,
+  AlertTitle,
+  Chip,
+  Divider,
+  Paper,
+  Skeleton
+} from '@mui/material';
+import {
+  Add as AddIcon,
+  Dashboard as DashboardIcon,
+  List as ListIcon,
+  ContentCopy as ContentCopyIcon,
+  Visibility as VisibilityIcon
+} from '@mui/icons-material';
+
+// Import do novo layout
+import MuiLayout from './ui/MuiLayout';
 
 interface Cliente {
   id: string;
@@ -104,135 +129,155 @@ export default function PainelClientesIA() {
     const mensagensLimite = cliente.mensagens_limite || 1000;
     const limiteInfo = verificarLimiteMensagens(mensagensUsadas, mensagensLimite);
     
+    // Determinar a cor da barra de progresso com base no status
+    const getProgressColor = () => {
+      switch (limiteInfo.status) {
+        case 'critico':
+          return 'error';
+        case 'alerta':
+          return 'warning';
+        default:
+          return 'success';
+      }
+    };
+    
     return (
-      <div className="mt-2">
-        <div className="flex justify-between text-xs mb-1">
-          <span>Uso: {mensagensUsadas}/{mensagensLimite}</span>
-          <span>{Math.round(limiteInfo.percentual)}%</span>
-        </div>
-        <div className="w-full bg-gray-200 rounded-full h-1.5">
-          <div 
-            className={`h-1.5 rounded-full ${
-              limiteInfo.status === 'critico' ? 'bg-red-600' :
-              limiteInfo.status === 'alerta' ? 'bg-yellow-500' : 'bg-green-500'
-            }`} 
-            style={{ width: `${Math.min(limiteInfo.percentual, 100)}%` }}
-          ></div>
-        </div>
-      </div>
+      <Box sx={{ mt: 2 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5, alignItems: 'center' }}>
+          <Typography variant="caption">Uso: {mensagensUsadas}/{mensagensLimite}</Typography>
+          <Typography variant="caption">{Math.round(limiteInfo.percentual)}%</Typography>
+        </Box>
+        <LinearProgress 
+          variant="determinate" 
+          value={Math.min(limiteInfo.percentual, 100)} 
+          color={getProgressColor() as "error" | "warning" | "success"}
+          sx={{ height: 4, borderRadius: 2 }}
+        />
+      </Box>
     );
   };
 
   return (
-    <div className="p-6 max-w-6xl mx-auto">
+    <MuiLayout title={isAdmin ? 'Painel Administrativo' : 'Meu Painel'}>
       <ToastContainer position="top-right" autoClose={3000} />
       
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">
-          {isAdmin ? 'Painel Administrativo' : 'Meu Painel'}
-        </h1>
-        <div className="flex items-center gap-4">
-          <span className="text-sm text-gray-600">
-            {user?.email} {isAdmin && '(Admin)'}
-          </span>
-          <Link to="/atendimento-humano">
-            <Button variant="default" className="mr-2">
-              Atendimento Humano
-            </Button>
-          </Link>
-          <Button variant="outline" onClick={handleLogout}>
-            Sair
-          </Button>
-        </div>
-      </div>
-      
       {isAdmin && (
-        <Card className="mb-6 bg-yellow-50 border-yellow-200">
-          <CardContent className="pt-6">
-            <h2 className="text-lg font-semibold mb-2">Modo Administrador</h2>
-            <p className="text-sm text-gray-700 mb-4">
-              Você tem acesso a todos os clientes cadastrados no sistema.
-            </p>
-            <div className="flex gap-2">
-              <Button 
-                className="bg-green-600 hover:bg-green-700"
-                onClick={() => setMostrarFormulario(!mostrarFormulario)}
-              >
-                {mostrarFormulario ? "Cancelar" : "Adicionar Novo Cliente"}
-              </Button>
-              <Button 
-                variant="outline"
-                onClick={() => setMostrarDashboard(!mostrarDashboard)}
-              >
-                {mostrarDashboard ? "Ver Lista de Clientes" : "Ver Dashboard"}
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+        <Alert 
+          severity="info" 
+          variant="outlined"
+          sx={{ mb: 4, borderRadius: 2 }}
+        >
+          <AlertTitle>Modo Administrador</AlertTitle>
+          Você tem acesso a todos os clientes cadastrados no sistema.
+          <Box sx={{ mt: 2, display: 'flex', gap: 2 }}>
+            <Button 
+              variant="contained" 
+              color="success"
+              startIcon={<AddIcon />}
+              onClick={() => setMostrarFormulario(!mostrarFormulario)}
+            >
+              {mostrarFormulario ? "Cancelar" : "Adicionar Novo Cliente"}
+            </Button>
+            <Button 
+              variant="outlined"
+              startIcon={mostrarDashboard ? <ListIcon /> : <DashboardIcon />}
+              onClick={() => setMostrarDashboard(!mostrarDashboard)}
+            >
+              {mostrarDashboard ? "Ver Lista de Clientes" : "Ver Dashboard"}
+            </Button>
+          </Box>
+        </Alert>
       )}
       
       {/* Formulário de adicionar cliente */}
       {mostrarFormulario && (
-        <div className="mb-6">
+        <Box sx={{ mb: 4 }}>
           <AdicionarCliente onClienteAdicionado={handleClienteAdicionado} />
-        </div>
+        </Box>
       )}
       
       {/* Dashboard para administradores */}
       {isAdmin && mostrarDashboard && (
-        <div className="mb-6">
+        <Box sx={{ mb: 4 }}>
           <Dashboard isAdmin={true} />
-        </div>
+        </Box>
       )}
       
       {/* Lista de clientes */}
       {(!mostrarDashboard || !isAdmin) && (
         <>
-          <h2 className="text-xl font-semibold mb-4">
+          <Typography variant="h5" fontWeight="600" sx={{ mb: 3 }}>
             {isAdmin ? 'Todos os Clientes' : 'Meus Dados'}
-          </h2>
+          </Typography>
           
           {carregando ? (
-            <p className="text-center py-8">Carregando clientes...</p>
+            <Box sx={{ py: 4 }}>
+              <Grid container spacing={3}>
+                {[1, 2, 3, 4, 5, 6].map((item) => (
+                  <Grid item xs={12} md={6} lg={4} key={item}>
+                    <Skeleton variant="rectangular" height={180} sx={{ borderRadius: 2 }} />
+                  </Grid>
+                ))}
+              </Grid>
+            </Box>
           ) : clientes.length === 0 ? (
-            <Card>
-              <CardContent className="py-8 text-center">
-                <p className="text-gray-500">Nenhum cliente encontrado</p>
-              </CardContent>
-            </Card>
+            <Paper elevation={0} sx={{ py: 8, textAlign: 'center', bgcolor: 'background.default' }}>
+              <Typography color="text.secondary">Nenhum cliente encontrado</Typography>
+            </Paper>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <Grid container spacing={3}>
               {clientes.map((cliente) => (
-                <Card key={cliente.id} className="overflow-hidden">
-                  <CardContent className="pt-6">
-                    <h3 className="font-bold text-lg mb-1">{cliente.nome}</h3>
-                    <p className="text-sm text-gray-500 mb-2">
-                      Plano: <span className="font-medium capitalize">{cliente.plano}</span>
-                    </p>
-                    <div className="text-sm mb-4">
-                      <p>WhatsApp: {cliente.whatsapp ? formatarWhatsAppParaExibicao(cliente.whatsapp) : 'Não informado'}</p>
-                      <p>Email: {cliente.email || 'Não informado'}</p>
-                      {renderStatusMensagens(cliente)}
-                    </div>
-                    <div className="flex flex-col gap-2">
-                      <Link to={`/cliente/${cliente.token_publico || cliente.id}`}>
-                        <Button className="w-full">Ver Painel</Button>
-                      </Link>
-                      <Button 
-                        variant="outline" 
-                        className="w-full"
-                        onClick={() => copiarLinkCliente(cliente.token_publico || cliente.id)}
-                      >
-                        Copiar Link
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
+                <Grid item xs={12} md={6} lg={4} key={cliente.id}>
+                  <Card elevation={2} sx={{ height: '100%', borderRadius: 2, overflow: 'hidden' }}>
+                    <CardContent sx={{ pt: 3, pb: 3 }}>
+                      <Typography variant="h6" fontWeight="bold" gutterBottom>{cliente.nome}</Typography>
+                      <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                        <Typography variant="body2" color="text.secondary" sx={{ mr: 1 }}>Plano:</Typography>
+                        <Chip 
+                          label={cliente.plano} 
+                          size="small" 
+                          color="primary" 
+                          variant="outlined" 
+                          sx={{ textTransform: 'capitalize' }} 
+                        />
+                      </Box>
+                      <Box sx={{ mb: 3 }}>
+                        <Typography variant="body2" sx={{ mb: 0.5 }}>
+                          WhatsApp: {cliente.whatsapp ? formatarWhatsAppParaExibicao(cliente.whatsapp) : 'Não informado'}
+                        </Typography>
+                        <Typography variant="body2">
+                          Email: {cliente.email || 'Não informado'}
+                        </Typography>
+                        {renderStatusMensagens(cliente)}
+                      </Box>
+                      <Divider sx={{ my: 2 }} />
+                      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                        <Button 
+                          variant="contained" 
+                          component={Link} 
+                          to={`/cliente/${cliente.token_publico || cliente.id}`}
+                          startIcon={<VisibilityIcon />}
+                          fullWidth
+                        >
+                          Ver Painel
+                        </Button>
+                        <Button 
+                          variant="outlined" 
+                          startIcon={<ContentCopyIcon />}
+                          onClick={() => copiarLinkCliente(cliente.token_publico || cliente.id)}
+                          fullWidth
+                        >
+                          Copiar Link
+                        </Button>
+                      </Box>
+                    </CardContent>
+                  </Card>
+                </Grid>
               ))}
-            </div>
+            </Grid>
           )}
         </>
       )}
-    </div>
+    </MuiLayout>
   );
 }

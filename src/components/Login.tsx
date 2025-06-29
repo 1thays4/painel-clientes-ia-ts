@@ -1,11 +1,24 @@
-import { useState } from "react";
-import { Card, CardContent } from "./ui/card";
-import { Input } from "./ui/input";
-import { Button } from "./ui/button";
+import { SetStateAction, useState } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import { ToastContainer, toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 import "react-toastify/dist/ReactToastify.css";
+
+// Material UI imports
+import { 
+  Card, 
+  CardContent, 
+  TextField, 
+  Button, 
+  Typography, 
+  Box, 
+  Tabs, 
+  Tab, 
+  Container, 
+  Paper,
+  CircularProgress
+} from "@mui/material";
+import { Email, Lock, Send } from "@mui/icons-material";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -71,97 +84,116 @@ export default function Login() {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-100">
+    <Box sx={{ 
+      display: 'flex', 
+      alignItems: 'center', 
+      justifyContent: 'center', 
+      minHeight: '100vh',
+      bgcolor: 'background.default',
+      padding: 2
+    }}>
       <ToastContainer position="top-right" autoClose={3000} />
-      <Card className="w-full max-w-md">
-        <CardContent className="pt-6">
-          <h1 className="text-2xl font-bold text-center mb-6">Login do Cliente</h1>
-          
-          {/* Opções de login */}
-          <div className="flex mb-6 border-b">
-            <button
-              className={`flex-1 py-2 text-center ${loginMethod === "password" ? "border-b-2 border-blue-600 text-blue-600" : "text-gray-500"}`}
-              onClick={() => setLoginMethod("password")}
-            >
-              E-mail e Senha
-            </button>
-            <button
-              className={`flex-1 py-2 text-center ${loginMethod === "magic" ? "border-b-2 border-blue-600 text-blue-600" : "text-gray-500"}`}
-              onClick={() => setLoginMethod("magic")}
-            >
-              Link Mágico
-            </button>
-          </div>
-          
-          {loginMethod === "password" ? (
-            <form onSubmit={handlePasswordLogin} className="space-y-4">
-              <div>
-                <Input
-                  type="email"
-                  placeholder="Email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                />
-              </div>
-              <div>
-                <Input
-                  type="password"
-                  placeholder="Senha"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                />
-              </div>
-              <Button 
-                type="submit" 
-                className="w-full bg-blue-600 hover:bg-blue-700"
-                disabled={loading}
+      <Container maxWidth="sm">
+        <Paper elevation={6} sx={{ borderRadius: 3 }}>
+          <Card sx={{ width: '100%' }}>
+            <CardContent sx={{ pt: 4, pb: 4 }}>
+              <Typography variant="h4" component="h1" align="center" gutterBottom sx={{ fontWeight: 'bold', mb: 3 }}>
+                Login do Cliente
+              </Typography>
+              
+              {/* Opções de login com Tabs do Material UI */}
+              <Tabs
+                value={loginMethod === "password" ? 0 : 1}
+                onChange={(_: any, newValue: number) => setLoginMethod(newValue === 0 ? "password" : "magic")}
+                variant="fullWidth"
+                sx={{ mb: 4 }}
               >
-                {loading ? "Entrando..." : "Entrar"}
-              </Button>
-            </form>
-          ) : (
-            <div>
-              {magicLinkSent ? (
-                <div className="text-center py-4">
-                  <p className="mb-4">✅ Link de acesso enviado para:</p>
-                  <p className="font-bold mb-4">{email}</p>
-                  <p className="text-sm text-gray-600 mb-4">Verifique sua caixa de entrada e clique no link enviado para acessar sua conta.</p>
-                  <Button 
-                    className="mt-2"
-                    onClick={() => setMagicLinkSent(false)}
-                  >
-                    Enviar novamente
-                  </Button>
-                </div>
-              ) : (
-                <form onSubmit={handleMagicLinkLogin} className="space-y-4">
-                  <div>
-                    <Input
-                      type="email"
-                      placeholder="Email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      required
-                    />
-                  </div>
+                <Tab label="E-mail e Senha" icon={<Lock fontSize="small" />} iconPosition="start" />
+                <Tab label="Link Mágico" icon={<Email fontSize="small" />} iconPosition="start" />
+              </Tabs>
+              
+              {loginMethod === "password" ? (
+                <Box component="form" onSubmit={handlePasswordLogin} sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                  <TextField
+                    type="email"
+                    label="Email"
+                    variant="outlined"
+                    fullWidth
+                    value={email}
+                    onChange={(e: { target: { value: SetStateAction<string>; }; }) => setEmail(e.target.value)}
+                    required
+                  />
+                  <TextField
+                    type="password"
+                    label="Senha"
+                    variant="outlined"
+                    fullWidth
+                    value={password}
+                    onChange={(e: { target: { value: SetStateAction<string>; }; }) => setPassword(e.target.value)}
+                    required
+                  />
                   <Button 
                     type="submit" 
-                    className="w-full bg-blue-600 hover:bg-blue-700"
+                    variant="contained" 
+                    color="primary"
+                    fullWidth
+                    size="large"
                     disabled={loading}
+                    sx={{ mt: 1 }}
+                    startIcon={loading ? <CircularProgress size={20} color="inherit" /> : null}
                   >
-                    {loading ? "Enviando..." : "Enviar link de acesso"}
+                    {loading ? "Entrando..." : "Entrar"}
                   </Button>
-                  <p className="text-sm text-center text-gray-600">
-                    Enviaremos um link para seu e-mail que permitirá acesso imediato à sua conta.
-                  </p>
-                </form>
+                </Box>
+              ) : (
+                <Box>
+                  {magicLinkSent ? (
+                    <Box sx={{ textAlign: 'center', py: 2 }}>
+                      <Typography variant="body1" sx={{ mb: 2 }}>✅ Link de acesso enviado para:</Typography>
+                      <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mb: 2 }}>{email}</Typography>
+                      <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                        Verifique sua caixa de entrada e clique no link enviado para acessar sua conta.
+                      </Typography>
+                      <Button 
+                        variant="outlined"
+                        onClick={() => setMagicLinkSent(false)}
+                      >
+                        Enviar novamente
+                      </Button>
+                    </Box>
+                  ) : (
+                    <Box component="form" onSubmit={handleMagicLinkLogin} sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                      <TextField
+                        type="email"
+                        label="Email"
+                        variant="outlined"
+                        fullWidth
+                        value={email}
+                        onChange={(e: { target: { value: SetStateAction<string>; }; }) => setEmail(e.target.value)}
+                        required
+                      />
+                      <Button 
+                        type="submit" 
+                        variant="contained" 
+                        color="primary"
+                        fullWidth
+                        size="large"
+                        disabled={loading}
+                        startIcon={loading ? <CircularProgress size={20} color="inherit" /> : <Send />}
+                      >
+                        {loading ? "Enviando..." : "Enviar link de acesso"}
+                      </Button>
+                      <Typography variant="body2" color="text.secondary" align="center" sx={{ mt: 2 }}>
+                        Enviaremos um link para seu e-mail que permitirá acesso imediato à sua conta.
+                      </Typography>
+                    </Box>
+                  )}
+                </Box>
               )}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-    </div>
+            </CardContent>
+          </Card>
+        </Paper>
+      </Container>
+    </Box>
   );
 }

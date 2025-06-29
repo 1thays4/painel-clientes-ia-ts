@@ -87,7 +87,7 @@ export default function ClienteSelector({
           .map((cliente: any) => ({
             ...cliente,
             // Garantir que o nome seja legível
-            nome: cliente.nome ? `${cliente.nome} (Cliente Final)` : 'Cliente Final',
+            nome: cliente.nome /* ? `${cliente.nome} (Cliente Final)` : 'Cliente Final' */,
             // Manter referência à empresa
             empresa_id: cliente.empresa_id || cliente.cliente_id || empresaId
           })) : [];
