@@ -1,10 +1,10 @@
 import { supabase } from '../lib/supabase';
 import { config } from '../config';
-import { setupClientAuth } from '../lib/clientAuth';
+import { setupAuthHeaders } from '../lib/authHeaders';
 
 // Interface para o cliente
 export interface Cliente {
-  id: string | number;
+  id: number;
   nome: string;
   plano: string;
   whatsapp?: string;
@@ -121,7 +121,7 @@ export async function buscarClientePorToken(token: string): Promise<Cliente | nu
       if (errorCriacao) {
         console.error("Erro ao criar cliente automático:", errorCriacao);
         // Fallback para cliente de demonstração se não conseguir criar
-        return {
+       /*  return {
           id: "demo-" + Date.now(),
           nome: "Cliente Demonstração",
           plano: "essencial",
@@ -129,7 +129,7 @@ export async function buscarClientePorToken(token: string): Promise<Cliente | nu
           mensagens_limite: config.planos.essencial.limite,
           mensagens_usadas: 0,
           token_publico: token
-        };
+        }; */
       }
       
       console.log("Cliente criado automaticamente:", clienteCriado);
@@ -182,10 +182,7 @@ export async function atualizarCliente(
 // Buscar histórico de mensagens do cliente
 export async function buscarHistoricoMensagens(this: any, clienteId: string | number | null, limite: number = 200, offset: number = 0): Promise<Mensagem[]> {
   // Configurar o token do cliente nos cabeçalhos
-  const clienteToken = sessionStorage.getItem('clienteToken');
-  if (clienteToken) {
-    setupClientAuth(clienteToken);
-  }
+  setupAuthHeaders();
   try {
     console.log('Buscando histórico para cliente ID:', clienteId, 'limite:', limite, 'offset:', offset);
     
@@ -463,10 +460,7 @@ export function processarClientesFinais(clientesFinaisData: any[]): { [key: stri
 // Contar total de mensagens do cliente
 export async function contarTotalMensagens(clienteId: string | number | null): Promise<number> {
   // Configurar o token do cliente nos cabeçalhos
-  const clienteToken = sessionStorage.getItem('clienteToken');
-  if (clienteToken) {
-    setupClientAuth(clienteToken);
-  }
+  setupAuthHeaders();
   try {
     console.log('Contando total de mensagens para cliente ID:', clienteId);
     

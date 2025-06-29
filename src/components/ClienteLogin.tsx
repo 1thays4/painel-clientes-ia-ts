@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { ToastContainer, toast } from "react-toastify";
 import { supabase } from "../lib/supabase";
+import { saveClientToken, logAccess } from "../lib/tokenManager";
 import "react-toastify/dist/ReactToastify.css";
 
 // Material UI imports
@@ -57,11 +58,13 @@ export default function ClienteLogin() {
         return;
       }
       
-      // Armazenar o token de acesso na sessão
+      // Armazenar o token de acesso com expiração
       if (token) {
-        sessionStorage.setItem('clienteToken', token);
+        saveClientToken(token, data.id);
+        
+        // Registrar o login
+        logAccess('login_success', data.id);
       }
-      sessionStorage.setItem('clienteId', data.id);
       
       // Redirecionar para o painel do cliente
       navigate(`/cliente/${token}`);

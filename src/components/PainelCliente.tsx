@@ -1,10 +1,11 @@
 import { useState, useEffect, useRef } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { contarMensagensMes } from "../services/mensagens";
 import { ToastContainer, toast } from "react-toastify";
 import { buscarClientePorToken, buscarHistoricoMensagens, atualizarCliente, contarTotalMensagens } from "../services/cliente";
 import { Cliente, Mensagem } from "../services/cliente";
 import { supabase } from "../lib/supabase";
+import { isTokenValid, getClientToken, logAccess, refreshToken } from "../lib/tokenManager";
 import PainelRespostasCliente from "./PainelRespostasCliente";
 import Dashboard from "./Dashboard";
 import AlertaLimiteMensagens from "./AlertaLimiteMensagens";
@@ -48,6 +49,7 @@ import {
 
 export default function PainelCliente() {
   const { token } = useParams<{ token: string }>();
+  const navigate = useNavigate();
   const [cliente, setCliente] = useState<Cliente | null>(null);
   const [mensagens, setMensagens] = useState<Mensagem[]>([]);
   const [carregando, setCarregando] = useState(true);
@@ -61,6 +63,21 @@ export default function PainelCliente() {
   const [totalMensagens, setTotalMensagens] = useState(0);
   const [mostrarDashboard, setMostrarDashboard] = useState(true);
   const limitePorPagina = 100;
+  
+  // Verificar token a cada minuto
+  useEffect(() => {
+    const checkTokenInterval = setInterval(() => {
+      if (!isTokenValid()) {
+        // Tentar renovar o token
+        if (!refreshToken()) {
+          // Redirecionar para login se não conseguir renovar
+          navigate(`/cliente-login/${token}`);
+        }
+      }
+    }, 60000); // Verificar a cada minuto
+    
+    return () => clearInterval(checkTokenInterval);
+  }, [token, navigate]);
 
   // Referências para os canais de assinatura
   const mensagensChannelRef = useRef<any>(null);
@@ -90,13 +107,17 @@ export default function PainelCliente() {
       }
       
       // Verificar se o cliente está autenticado
-      const clienteToken = sessionStorage.getItem('clienteToken');
-      const clienteId = sessionStorage.getItem('clienteId');
+      const clienteToken = getClientToken();
       
-      if (!clienteToken || clienteToken !== token) {
+      if (!clienteToken || clienteToken !== token || !isTokenValid()) {
         // Redirecionar para a página de login do cliente
-        window.location.href = `/cliente-login/${token}`;
+        navigate(`/cliente-login/${token}`);
         return;
+      }
+      
+      // Registrar acesso ao painel
+      if(cliente?.id) {
+      logAccess('view_panel', cliente?.id.toString());
       }
 
       try {
