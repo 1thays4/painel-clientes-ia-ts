@@ -1,20 +1,9 @@
 import { supabase } from '../lib/supabase';
 import { config } from '../config';
 import { setupAuthHeaders } from '../lib/authHeaders';
+import { Cliente } from '../types/Cliente';
 
-// Interface para o cliente
-export interface Cliente {
-  id: number;
-  nome: string;
-  plano: string;
-  whatsapp?: string;
-  data_cadastro: string;
-  status_pagamento?: "em_dia" | "pendente";
-  mensagens_usadas?: number;
-  mensagens_limite?: number;
-  token_publico?: string;
-  user_id?: string;
-}
+// Interface Cliente importada de ../types/Cliente
 
 // Interface para o histórico de mensagens
 export interface Mensagem {

@@ -5,6 +5,7 @@ import { Mensagem } from '../services/cliente';
 import ClienteSelector from './ClienteSelector';
 import ClienteFinalSelector from './ClienteFinalSelector';
 import MensagemGrupo from './MensagemGrupo';
+import FormattedText from './FormattedText';
 import { config } from '../config';
 import axios from 'axios';
 import 'react-toastify/dist/ReactToastify.css';
@@ -291,16 +292,20 @@ export default function PainelRespostasCliente({
                           </div>
                         </div>
                         <h4 className="font-medium mb-2">Mensagem:</h4>
-                        <p>
-                          {msgSelecionada?.pergunta || 'Mensagem sem conteúdo'}
-                        </p>
+                        <FormattedText 
+                          text={msgSelecionada?.pergunta || 'Mensagem sem conteúdo'}
+                          type="received"
+                          className="mb-3"
+                        />
                         
                         {msgSelecionada?.resposta && (
                           <div className="mt-4 text-sm">
                             <h4 className="font-medium">Resposta da IA:</h4>
-                            <p className="mt-1 text-gray-700">
-                              {msgSelecionada.resposta}
-                            </p>
+                            <FormattedText 
+                              text={msgSelecionada.resposta}
+                              type="ai"
+                              className="mt-1"
+                            />
                           </div>
                         )}
                       </>

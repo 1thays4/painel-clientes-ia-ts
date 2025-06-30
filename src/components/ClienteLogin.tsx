@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { ToastContainer, toast } from "react-toastify";
 import { supabase } from "../lib/supabase";
 import { saveClientToken, logAccess } from "../lib/tokenManager";
+import { autenticarCliente } from "../services/authService";
 import "react-toastify/dist/ReactToastify.css";
 
 // Material UI imports
@@ -54,6 +55,15 @@ export default function ClienteLogin() {
       // Verificar se a senha está correta
       if (data.senha_acesso !== senha) {
         toast.error("Senha incorreta");
+        setLoading(false);
+        return;
+      }
+      
+      // Autenticar o cliente no Supabase
+      const autenticado = await autenticarCliente(token || '', data.id);
+      
+      if (!autenticado) {
+        toast.error("Falha na autenticação");
         setLoading(false);
         return;
       }

@@ -2,8 +2,10 @@ import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { contarMensagensMes } from "../services/mensagens";
 import { ToastContainer, toast } from "react-toastify";
+import { autenticarCliente } from "../services/authService";
 import { buscarClientePorToken, buscarHistoricoMensagens, atualizarCliente, contarTotalMensagens } from "../services/cliente";
-import { Cliente, Mensagem } from "../services/cliente";
+import { Mensagem } from "../services/cliente";
+import { Cliente } from "../types/Cliente";
 import { supabase } from "../lib/supabase";
 import { isTokenValid, getClientToken, logAccess, refreshToken } from "../lib/tokenManager";
 import PainelRespostasCliente from "./PainelRespostasCliente";
@@ -628,7 +630,7 @@ export default function PainelCliente() {
         </Box>
       </Paper>
       
-      {/* Alerta de limite de mensagens */}
+      {/* Alerta de limite de mensagens e status de pagamento */}
       {cliente && (
         <Box sx={{ mb: 3 }}>
           <AlertaLimiteMensagens 
@@ -636,6 +638,17 @@ export default function PainelCliente() {
             mensagensLimite={cliente.mensagens_limite || 1000}
             onUpgrade={handleUpgradePlano}
           />
+          
+          {cliente.status_pagamento === 'pendente' && (
+            <Alert 
+              severity="warning" 
+              variant="filled"
+              sx={{ mt: 2 }}
+            >
+              <AlertTitle>Pagamento Pendente</AlertTitle>
+              Seu pagamento está pendente. Por favor, regularize para continuar utilizando todos os recursos.
+            </Alert>
+          )}
         </Box>
       )}
       

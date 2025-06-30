@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Mensagem } from '../services/cliente';
 import { formatarTelefone } from '../utils';
+import FormattedText from './FormattedText';
 
 interface MensagemGrupoProps {
   mensagens: Mensagem[];
@@ -105,14 +106,13 @@ export default function MensagemGrupo({
                 onClick={() => onMensagemSelecionada(msg.id)}
               >
                 <div className="flex flex-col gap-1 mb-2">
-
-                  
                   <div className="flex justify-between items-start">
                     <span className="font-medium">
                       {msg.pergunta ? (
                         msg.pergunta.length > 50 && expandedMessage !== msg.id.toString() ? (
                           <>
-                            {msg.pergunta.substring(0, 50)}...
+                            <FormattedText text={msg.pergunta.substring(0, 50)} />
+                            <span>...</span>
                             <button 
                               className="text-blue-500 ml-2 text-sm"
                               onClick={(e) => {
@@ -125,7 +125,7 @@ export default function MensagemGrupo({
                           </>
                         ) : (
                           <>
-                            {msg.pergunta}
+                            <FormattedText text={msg.pergunta} />
                             {expandedMessage === msg.id.toString() && (
                               <button 
                                 className="text-blue-500 ml-2 text-sm"
@@ -154,7 +154,8 @@ export default function MensagemGrupo({
                     <strong>Resposta IA:</strong> {
                       msg.resposta.length > 100 && expandedMessage !== `${msg.id}-resp` ? (
                         <>
-                          {msg.resposta.substring(0, 100)}...
+                          <FormattedText text={msg.resposta.substring(0, 100)} />
+                          <span>...</span>
                           <button 
                             className="text-blue-500 ml-2 text-sm"
                             onClick={(e) => {
@@ -167,7 +168,7 @@ export default function MensagemGrupo({
                         </>
                       ) : (
                         <>
-                          {msg.resposta}
+                          <FormattedText text={msg.resposta} />
                           {expandedMessage === `${msg.id}-resp` && (
                             <button 
                               className="text-blue-500 ml-2 text-sm"
@@ -190,7 +191,8 @@ export default function MensagemGrupo({
                     <strong>Resposta Humana:</strong> {
                       msg.resposta_humana.length > 100 && expandedMessage !== `${msg.id}-human` ? (
                         <>
-                          {msg.resposta_humana.substring(0, 100)}...
+                          <FormattedText text={msg.resposta_humana.substring(0, 100)} />
+                          <span>...</span>
                           <button 
                             className="text-blue-500 ml-2 text-sm"
                             onClick={(e) => {
@@ -203,7 +205,7 @@ export default function MensagemGrupo({
                         </>
                       ) : (
                         <>
-                          {msg.resposta_humana}
+                          <FormattedText text={msg.resposta_humana} />
                           {expandedMessage === `${msg.id}-human` && (
                             <button 
                               className="text-blue-500 ml-2 text-sm"

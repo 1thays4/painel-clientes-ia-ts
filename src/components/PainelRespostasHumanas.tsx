@@ -4,8 +4,9 @@ import { Card, CardContent } from './ui/card';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { ToastContainer, toast } from 'react-toastify';
-import { Mensagem, Cliente } from '../services/cliente';
+import { Mensagem } from '../services/cliente';
 import 'react-toastify/dist/ReactToastify.css';
+import { Cliente } from '../types/Cliente';
 
 interface PainelRespostasHumanasProps {
   clienteId?: string | number;
