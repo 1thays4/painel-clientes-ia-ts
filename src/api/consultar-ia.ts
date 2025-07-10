@@ -6,6 +6,7 @@ import axios from 'axios';
 interface WhatsAppMessage {
   Body: string;
   From: string;
+  To?: string;
   ProfileName?: string;
   WaId: string;
 }
@@ -22,6 +23,7 @@ export async function consultarIA(mensagem: WhatsAppMessage): Promise<IAResponse
   try {
     // Extrair número do WhatsApp (remover prefixo "whatsapp:")
     const whatsappNumero = mensagem.From.replace('whatsapp:', '');
+    const numeroDestino = mensagem.To?.replace('whatsapp:', '');
     
     // Buscar cliente pelo número de WhatsApp
     const { data: cliente, error: clienteError } = await supabase
@@ -38,6 +40,24 @@ export async function consultarIA(mensagem: WhatsAppMessage): Promise<IAResponse
         error: 'Cliente não encontrado'
       };
     }
+    
+    // Verificar se existe um cliente final para este número e se o modo bot está ativo
+    const { data: clienteFinal } = await supabase
+      .from('clientes_finais')
+      .select('id, modo')
+      .eq('cliente_id', cliente.id)
+      .eq('whatsapp', numeroDestino)
+      .single();
+    
+    // Se encontrou um cliente final e o modo bot está explicitamente desativado
+    if (clienteFinal && clienteFinal.modo === false) {
+      console.log('Modo bot desativado para o cliente final:', clienteFinal.id);
+      return { 
+        success: false, 
+        response: 'O atendimento automático está desativado para este contato. Um atendente humano responderá em breve.',
+        error: 'Modo bot desativado'
+      };
+    }
 
     // Verificar limite de mensagens
     if (cliente.mensagens_usadas >= cliente.mensagens_limite) {
@@ -52,13 +72,19 @@ export async function consultarIA(mensagem: WhatsAppMessage): Promise<IAResponse
     const respostaIA = await chamarModeloIA(mensagem.Body);
     
     // Registrar o uso da IA no Supabase
-    const { error } = await supabase.from('mensagens_enviadas').insert([
+    const { error, data: mensagemInserida } = await supabase.from('mensagens_enviadas').insert([
       {
         cliente_id: cliente.id,
         conteudo: `WhatsApp: ${mensagem.Body.substring(0, 50)}${mensagem.Body.length > 50 ? '...' : ''}`,
         timestamp: new Date().toISOString(),
+        pergunta: mensagem.Body,
+        resposta: respostaIA,
+        numero_remetente: whatsappNumero,
+        numero_destino: numeroDestino,
+        cliente_final_id: clienteFinal?.id || null,
+        whatsapp_cliente_final: numeroDestino || whatsappNumero
       },
-    ]);
+    ]).select();
 
     if (error) {
       console.error('Erro ao registrar mensagem:', error);

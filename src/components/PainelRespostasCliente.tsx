@@ -6,12 +6,15 @@ import ClienteSelector from './ClienteSelector';
 import ClienteFinalSelector from './ClienteFinalSelector';
 import MensagemGrupo from './MensagemGrupo';
 import FormattedText from './FormattedText';
+import ControleNotificacoes from './ControleNotificacoes';
 import { config } from '../config';
 import axios from 'axios';
 import 'react-toastify/dist/ReactToastify.css';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { toast } from 'react-toastify';
 import { formatarTelefone } from '../utils';
+import { notificacaoService } from '../services/notificacoes';
+import { buscarClienteFinalPorId } from '../services/cliente-final';
 
 interface PainelRespostasClienteProps {
   clienteId: string | number;
@@ -37,6 +40,8 @@ export default function PainelRespostasCliente({
   const [mensagemSelecionada, setMensagemSelecionada] = useState<string | number | null>(null);
   const [clienteSelecionado, setClienteSelecionado] = useState<string | number | null>(clienteId);
   const [clienteFinalSelecionado, setClienteFinalSelecionado] = useState<string | number | null>(null);
+  const [clientesFinaisInfo, setClientesFinaisInfo] = useState<Record<string | number, { modoBotAtivo: boolean }>>({});
+  const mensagensAnteriorRef = useRef<Mensagem[]>([]);
 
   // Função para determinar o número do cliente final
   const getNumeroClienteFinal = (msg: Mensagem): string => {
@@ -162,6 +167,61 @@ export default function PainelRespostasCliente({
   useEffect(() => {
     setClienteSelecionado(clienteId);
   }, [clienteId]);
+  
+  // Efeito para buscar informações dos clientes finais
+  useEffect(() => {
+    if (!mensagens.length) return;
+    
+    const carregarClientesFinaisInfo = async () => {
+      // Extrair IDs únicos de clientes finais das mensagens
+      const clientesFinaisIds = new Set<string | number>();
+      mensagens.forEach(msg => {
+        if (msg.cliente_final_id) {
+          clientesFinaisIds.add(msg.cliente_final_id);
+        }
+      });
+      
+      if (clientesFinaisIds.size === 0) return;
+      
+      // Buscar informações de cada cliente final
+      const infoMap: Record<string | number, { modoBotAtivo: boolean }> = {};
+      
+      for (const id of Array.from(clientesFinaisIds)) {
+        const clienteFinal = await buscarClienteFinalPorId(id);
+        if (clienteFinal) {
+          infoMap[id] = {
+            modoBotAtivo: clienteFinal.modo !== false // true por padrão se não estiver definido
+          };
+        }
+      }
+      
+      setClientesFinaisInfo(infoMap);
+    };
+    
+    carregarClientesFinaisInfo();
+  }, [mensagens]);
+  
+  // Efeito para verificar novas mensagens e tocar notificação
+  useEffect(() => {
+    // Se não há mensagens anteriores registradas, apenas armazenar as atuais
+    if (mensagensAnteriorRef.current.length === 0) {
+      mensagensAnteriorRef.current = [...mensagens];
+      return;
+    }
+    
+    // Verificar se há novas mensagens
+    const mensagensAnterioresIds = new Set(mensagensAnteriorRef.current.map(m => m.id));
+    const novasMensagens = mensagens.filter(m => !mensagensAnterioresIds.has(m.id));
+    
+    // Se houver novas mensagens, tocar notificação
+    if (novasMensagens.length > 0) {
+      notificacaoService.tocarNotificacao();
+      toast.info(`${novasMensagens.length} nova(s) mensagem(ns) recebida(s)`);
+    }
+    
+    // Atualizar referência de mensagens anteriores
+    mensagensAnteriorRef.current = [...mensagens];
+  }, [mensagens]);
 
   // Função para lidar com a mudança de cliente selecionado
   const handleClienteSelecionado = (novoClienteId: string | number | null, tipo?: 'empresa' | 'cliente_final') => {
@@ -207,6 +267,7 @@ export default function PainelRespostasCliente({
             </svg>
           </Button>
         </div>
+        <ControleNotificacoes />
       </div>
       
       {isAdmin && (
@@ -224,13 +285,39 @@ export default function PainelRespostasCliente({
         {/* Lista de mensagens */}
         <Card>
           <CardContent className="pt-6">
-            <h3 className="font-medium mb-4">Mensagens</h3>
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="font-medium">Mensagens</h3>
+              <div className="flex items-center gap-2 text-xs">
+                <span className="flex items-center gap-1">
+                  <span className="w-3 h-3 rounded-full bg-yellow-400"></span>
+                  Resposta manual
+                </span>
+                <span className="flex items-center gap-1">
+                  <span className="w-3 h-3 rounded-full bg-green-400"></span>
+                  Resposta automática
+                </span>
+              </div>
+            </div>
             
             {mensagens.length === 0 ? (
               <p className="text-gray-500 text-center py-4">Nenhuma mensagem encontrada</p>
             ) : (
               <div className="flex flex-col">
                 <div className="max-h-[500px] overflow-y-auto">
+                  <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
+                    <h4 className="font-medium text-blue-800 mb-2 flex items-center gap-2">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="16" x2="12" y2="12"></line>
+                        <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                      </svg>
+                      Como usar o modo bot
+                    </h4>
+                    <p className="text-sm text-blue-700">
+                      Você pode ativar ou desativar o modo bot para cada contato usando o botão de toggle. 
+                      Quando o modo bot está desativado, as mensagens desse contato não serão respondidas automaticamente pela IA.
+                    </p>
+                  </div>
                   <MensagemGrupo 
                     mensagens={clienteFinalSelecionado 
                       ? mensagens.filter(msg => msg.cliente_final_id === clienteFinalSelecionado)
@@ -239,6 +326,7 @@ export default function PainelRespostasCliente({
                     clienteId={clienteSelecionado}
                     onMensagemSelecionada={setMensagemSelecionada}
                     mensagemSelecionada={mensagemSelecionada}
+                    showBotToggle={true}
                   />
                 </div>
                 

@@ -8,6 +8,7 @@ interface ClienteFinal {
   nome: string;
   whatsapp?: string;
   cliente_id: string; // UUID
+  modo?: boolean;
 }
 
 interface ClienteFinalSelectorProps {

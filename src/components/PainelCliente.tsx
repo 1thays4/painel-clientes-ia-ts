@@ -11,6 +11,7 @@ import { isTokenValid, getClientToken, logAccess, refreshToken } from "../lib/to
 import PainelRespostasCliente from "./PainelRespostasCliente";
 import Dashboard from "./Dashboard";
 import AlertaLimiteMensagens from "./AlertaLimiteMensagens";
+import StatusModoBotCliente from "./StatusModoBotCliente";
 import { formatarWhatsAppParaExibicao, validarWhatsApp } from "../lib/validacao";
 import { config } from "../config";
 import "react-toastify/dist/ReactToastify.css";
@@ -674,6 +675,63 @@ export default function PainelCliente() {
         </Tabs>
       </Paper>
       
+      {/* Botão de acesso rápido às configurações de modo bot */}
+      <Paper 
+        elevation={2} 
+        sx={{ 
+          mb: 4, 
+          p: 2, 
+          borderRadius: 2, 
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          alignItems: 'center',
+          background: 'linear-gradient(135deg, #e0f7fa 0%, #b2ebf2 100%)'
+        }}
+      >
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          <Box sx={{ 
+            width: 40, 
+            height: 40, 
+            borderRadius: '50%', 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'center',
+            bgcolor: '#00acc1',
+            color: 'white'
+          }}>
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="3" y="11" width="18" height="10" rx="2" />
+              <circle cx="12" cy="5" r="2" />
+              <path d="M12 7v4" />
+              <line x1="8" y1="16" x2="8" y2="16" />
+              <line x1="16" y1="16" x2="16" y2="16" />
+            </svg>
+          </Box>
+          <Box>
+            <Typography variant="h6" fontWeight="bold" color="primary.dark">Configurações de Resposta Automática</Typography>
+            <Typography variant="body2" color="text.secondary">
+              Escolha quais contatos receberão respostas automáticas da IA
+            </Typography>
+          </Box>
+        </Box>
+        <Button 
+          variant="contained" 
+          color="primary"
+          onClick={() => {
+            setMostrarDashboard(true);
+            // Usar setTimeout para dar tempo de renderizar o dashboard
+            setTimeout(() => {
+              const element = document.getElementById('modo-bot-config');
+              if (element) {
+                element.scrollIntoView({ behavior: 'smooth' });
+              }
+            }, 100);
+          }}
+        >
+          Configurar
+        </Button>
+      </Paper>
+      
       {/* Dashboard ou Histórico */}
       {mostrarDashboard ? (
         <>
@@ -717,6 +775,28 @@ export default function PainelCliente() {
               {renderPlanoDetalhes()}
             </CardContent>
           </Card>
+          
+          {/* Configurações de Modo Bot */}
+          <Box sx={{ mt: 4 }} id="modo-bot-config">
+            <Card elevation={3} sx={{ mb: 4, borderRadius: 2 }}>
+              <CardContent sx={{ p: 3 }}>
+                <Typography variant="h5" fontWeight="bold" gutterBottom>
+                  Configurações de Resposta Automática
+                </Typography>
+                <Typography variant="body1" paragraph>
+                  Você pode escolher quais contatos receberão respostas automáticas da IA e quais serão atendidos manualmente.
+                </Typography>
+                <Alert severity="info" sx={{ mb: 3 }}>
+                  <AlertTitle>Como funciona</AlertTitle>
+                  <Typography variant="body2">
+                    Quando o modo bot está <strong>desativado</strong> para um contato, as mensagens recebidas desse contato não serão respondidas automaticamente pela IA. 
+                    Você poderá responder manualmente a essas mensagens através do painel.
+                  </Typography>
+                </Alert>
+              </CardContent>
+            </Card>
+            {cliente && <StatusModoBotCliente clienteId={cliente.id} />}
+          </Box>
         </>
       ) : (
         /* Painel de respostas */

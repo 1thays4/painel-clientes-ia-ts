@@ -2,6 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import './index.css';
 import './styles/message-styles.css';
+import './styles/notification.css';
 import App from './App';
 
 ReactDOM.render(

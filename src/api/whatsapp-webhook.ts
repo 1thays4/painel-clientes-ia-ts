@@ -6,7 +6,7 @@ import { supabase } from '../lib/supabase';
 export async function processarMensagemWhatsApp(req: Request, res: Response) {
   try {
     // Extrair dados da requisição do webhook do WhatsApp
-    const { message, sender, cliente_id } = req.body;
+    const { message, sender, cliente_id, recipient } = req.body;
     
     if (!cliente_id || !message) {
       return res.status(400).json({ error: 'Dados incompletos' });
@@ -21,6 +21,41 @@ export async function processarMensagemWhatsApp(req: Request, res: Response) {
 
     if (clienteError || !cliente) {
       return res.status(404).json({ error: 'Cliente não encontrado' });
+    }
+    
+    // Verificar se existe um cliente final para este número e se o modo bot está ativo
+    if (recipient) {
+      const { data: clienteFinal } = await supabase
+        .from('clientes_finais')
+        .select('id, modo')
+        .eq('cliente_id', cliente_id)
+        .eq('whatsapp', recipient)
+        .single();
+      
+      // Se encontrou um cliente final e o modo bot está explicitamente desativado
+      if (clienteFinal && clienteFinal.modo === false) {
+        console.log('Modo bot desativado para o cliente final:', clienteFinal.id);
+        
+        // Registrar a mensagem sem resposta automática
+        await supabase.from('mensagens_enviadas').insert([
+          {
+            cliente_id,
+            pergunta: message,
+            timestamp: new Date().toISOString(),
+            numero_remetente: sender,
+            numero_destino: recipient,
+            cliente_final_id: clienteFinal.id,
+            whatsapp_cliente_final: recipient
+          },
+        ]);
+        
+        return res.status(200).json({ 
+          success: false, 
+          response: 'O atendimento automático está desativado para este contato. Um atendente humano responderá em breve.',
+          error: 'Modo bot desativado',
+          modo: false
+        });
+      }
     }
 
     // Verificar limite de mensagens

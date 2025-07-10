@@ -5,6 +5,8 @@ import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { ToastContainer, toast } from 'react-toastify';
 import { Mensagem } from '../services/cliente';
+import ControleNotificacoes from './ControleNotificacoes';
+import { notificacaoService } from '../services/notificacoes';
 import 'react-toastify/dist/ReactToastify.css';
 import { Cliente } from '../types/Cliente';
 
@@ -101,6 +103,7 @@ export default function PainelRespostasHumanas({ clienteId, isAdmin = false }: P
           if (!payload.new.resposta_humana) {
             setMensagens(mensagensAtuais => [payload.new as Mensagem, ...mensagensAtuais]);
             toast.info('Nova mensagem recebida!');
+            notificacaoService.tocarNotificacao();
           }
         }
       )
@@ -161,7 +164,10 @@ export default function PainelRespostasHumanas({ clienteId, isAdmin = false }: P
     <div className="p-4 max-w-6xl mx-auto">
       <ToastContainer position="top-right" autoClose={3000} />
       
-      <h1 className="text-2xl font-bold mb-6">Painel de Respostas Humanas</h1>
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold">Painel de Respostas Humanas</h1>
+        <ControleNotificacoes />
+      </div>
       
       {isAdmin && (
         <Card className="mb-6">

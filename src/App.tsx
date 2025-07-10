@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider, createTheme, CssBaseline } from '@mui/material';
 import PainelClientesIA from './components/painel-clientes-ia';
@@ -12,6 +12,7 @@ import AdminRoute from './components/AdminRoute';
 import Dashboard from './components/Dashboard';
 import DiagnosticoPage from './pages/DiagnosticoPage';
 import { AuthProvider } from './contexts/AuthContext';
+import { notificacaoService } from './services/notificacoes';
 
 // Criando um tema personalizado do Material UI
 const theme = createTheme({
@@ -55,6 +56,22 @@ const theme = createTheme({
 });
 
 const App: React.FC = () => {
+  // Inicializar o serviço de notificações
+  useEffect(() => {
+    // Garantir que o serviço de notificações está disponível
+    notificacaoService.isNotificacoesAtivadas();
+    
+    // Verificar se o script de notificação está carregado
+    if (!(window as any).generateNotificationSound) {
+      console.log('Inicializando gerador de notificações');
+      // Tentar carregar o script se não estiver disponível
+      const script = document.createElement('script');
+      script.src = '/notification.js';
+      script.async = true;
+      document.body.appendChild(script);
+    }
+  }, []);
+  
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline /> {/* Normaliza os estilos CSS */}
