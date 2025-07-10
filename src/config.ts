@@ -27,5 +27,6 @@ export const config = {
   IA_MODEL: process.env.REACT_APP_IA_MODEL || "gpt-3.5-turbo",
   // Configurações do webhook do n8n
   N8N_WEBHOOK_URL: process.env.REACT_APP_N8N_WEBHOOK_URL || "https://n8n.thaysautomacao.com/webhook/whatsapp-resposta",
-  N8N_WEBHOOK_METHOD: process.env.REACT_APP_N8N_WEBHOOK_METHOD || "POST"
+  N8N_WEBHOOK_METHOD: process.env.REACT_APP_N8N_WEBHOOK_METHOD || "POST",
+  N8N_FOLLOWUP_WEBHOOK_URL: process.env.REACT_APP_N8N_FOLLOWUP_WEBHOOK_URL || "https://n8n.thaysautomacao.com/webhook/followup"
 };

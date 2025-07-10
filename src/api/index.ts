@@ -4,6 +4,7 @@ import { consultarIA } from './consultar-ia';
 import { registrarMensagemWhatsApp } from './registrar-mensagem';
 import { registrarMensagemSimples } from './registrar-mensagem-simples';
 import marcarFollowup from './marcar-followup';
+import { enviarVideoWhatsApp } from './enviar-video-whatsapp';
 
 export {
   processarMensagemWhatsApp,
@@ -11,5 +12,6 @@ export {
   consultarIA,
   registrarMensagemWhatsApp,
   registrarMensagemSimples,
-  marcarFollowup
+  marcarFollowup,
+  enviarVideoWhatsApp
 };

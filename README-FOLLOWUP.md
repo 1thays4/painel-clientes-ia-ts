@@ -42,13 +42,26 @@ Corpo da requisição:
 }
 ```
 
-## Funções utilitárias
+## Funções utilitárias e como são chamadas
 
 O módulo `src/utils/marcarFollowup.ts` contém funções para:
 - Marcar um cliente para follow-up
 - Verificar clientes que precisam de follow-up hoje
 
-Exemplo de uso:
+Estas funções são chamadas de três formas diferentes:
+
+### 1. Automaticamente via Cron Job
+
+O servidor executa um cron job diariamente às 10:00 que chama o endpoint `/api/verificar-followups`, que por sua vez executa a função `verificarClientesParaFollowup()` para identificar clientes que precisam de follow-up.
+
+### 2. Manualmente via API
+
+Você pode chamar os endpoints:
+- `POST /api/processar-followups` - Para verificar e processar follow-ups
+- `GET /api/verificar-followups` - Para apenas verificar quais clientes precisam de follow-up
+- `POST /api/marcar-followup` - Para marcar um cliente específico para follow-up
+
+### 3. No código, quando uma conversa termina sem conversão
 
 ```typescript
 import { marcarClienteParaFollowup } from '../utils';

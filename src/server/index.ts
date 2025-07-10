@@ -3,6 +3,7 @@ import bodyParser from 'body-parser';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import routes from './routes';
+import { configurarCronJobs } from './cron';
 
 // Carregar variáveis de ambiente
 dotenv.config();
@@ -21,6 +22,10 @@ app.use('/api', routes);
 // Iniciar servidor
 app.listen(PORT, () => {
   console.log(`Servidor rodando na porta ${PORT}`);
+  
+  // Configurar cron jobs
+  const serverUrl = process.env.SERVER_URL || `http://localhost:${PORT}`;
+  configurarCronJobs(serverUrl);
 });
 
 export default app;

@@ -4,8 +4,10 @@ import {
   processarWebhookN8N, 
   registrarMensagemWhatsApp,
   registrarMensagemSimples,
-  marcarFollowup 
+  marcarFollowup,
+  enviarVideoWhatsApp 
 } from '../api';
+import { processarFollowups } from '../api/processar-followups';
 import axios from 'axios';
 import { config } from '../config';
 
@@ -25,6 +27,18 @@ router.post('/registrar-simples', registrarMensagemSimples);
 
 // Rota para marcar cliente para follow-up
 router.post('/marcar-followup', marcarFollowup);
+
+// Rota para enviar vídeos via WhatsApp
+router.post('/enviar-video-whatsapp', enviarVideoWhatsApp);
+
+// Rota para verificar e processar follow-ups
+router.post('/processar-followups', processarFollowups);
+router.get('/verificar-followups', processarFollowups);
+
+// Rota de health check
+router.get('/health', (req, res) => {
+  res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
+});
 
 // Rota para enviar mensagens para o WhatsApp
 router.post('/enviar-whatsapp', async (req, res) => {

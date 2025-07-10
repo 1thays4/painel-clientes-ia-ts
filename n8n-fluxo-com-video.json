@@ -1,0 +1,352 @@
+{
+  "name": "Fluxo WhatsApp com Envio de Vídeo",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "whatsapp-webhook",
+        "options": {}
+      },
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        0,
+        400
+      ],
+      "id": "a0800e83-1100-4cff-b137-84781f2c9979",
+      "webhookId": "0bc38c7b-c21c-4d20-99cf-4c74acd36bd7"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extrair dados do webhook do WhatsApp\nlet message = \"\";\nlet from = \"\";\nlet profileName = \"\";\nlet waId = \"\";\nlet destinatario = \"\";\n\n// Verificar estrutura do webhook do Twilio\nif ($input.first().json.Body) {\n  message = $input.first().json.Body || \"\";\n  from = $input.first().json.From || \"\";\n  profileName = $input.first().json.ProfileName || \"\";\n  waId = $input.first().json.WaId || \"\";\n  destinatario = $input.first().json.body.To;\n}\n// Verificar estrutura do corpo da requisição\nelse if ($input.first().json.body && $input.first().json.body.Body) {\n  message = $input.first().json.body.Body || \"\";\n  from = $input.first().json.body.From || \"\";\n  profileName = $input.first().json.body.ProfileName || \"\";\n  waId = $input.first().json.body.WaId || \"\";\n  destinatario = $input.first().json.body.To;\n}\n\n\nreturn [\n  {\n    json: {\n      message: message,\n      from: from,\n      profileName: profileName,\n      waId: \"+\"+waId,\n      destinatario: destinatario\n    }\n  }\n];"
+      },
+      "name": "Extrair Dados",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        220,
+        400
+      ],
+      "id": "37b14782-e647-489a-852e-ea6148f70d27"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Detectar solicitações de vídeo\nfunction detectarSolicitacaoVideo(mensagem) {\n  // Converter para minúsculas para facilitar a comparação\n  const mensagemLower = mensagem.toLowerCase();\n  \n  // Palavras-chave que indicam solicitação de vídeo\n  const palavrasChaveVideo = [\n    'envie o vídeo', 'enviar vídeo', 'quero ver o vídeo', \n    'manda o vídeo', 'mandar vídeo', 'envie um vídeo',\n    'enviar um vídeo', 'me manda o vídeo', 'me envie o vídeo',\n    'video', 'vídeo'\n  ];\n  \n  // Verificar se alguma palavra-chave está presente na mensagem\n  return palavrasChaveVideo.some(keyword => mensagemLower.includes(keyword));\n}\n\n// Código para o nó \"Code\" no n8n\nconst message = $input.first().json.message || '';\nconst from = $input.first().json.from || '';\nconst waId = $input.first().json.waId || '';\nconst profileName = $input.first().json.profileName || '';\nconst destinatario = $input.first().json.destinatario || '';\n\n// Verificar se é uma solicitação de vídeo\nconst isSolicitacaoVideo = detectarSolicitacaoVideo(message);\n\nif (isSolicitacaoVideo) {\n  // URL do vídeo a ser enviado\n  const videoUrl = 'https://sua-url-de-video.mp4'; // Substitua pela URL real do vídeo\n  \n  // Preparar dados para envio de vídeo\n  return [{\n    json: {\n      solicitacaoVideo: true,\n      videoUrl: videoUrl,\n      waId: waId,\n      from: from,\n      message: message,\n      profileName: profileName,\n      destinatario: destinatario\n    }\n  }];\n} else {\n  // Continuar com o fluxo normal para mensagens de texto\n  return [{\n    json: {\n      ...$input.first().json,\n      solicitacaoVideo: false\n    }\n  }];\n}"
+      },
+      "name": "Detectar Vídeo",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        440,
+        400
+      ],
+      "id": "video-detection-node"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{$json.solicitacaoVideo}}",
+              "operation": "equals",
+              "value2": "true"
+            }
+          ]
+        }
+      },
+      "name": "É Solicitação de Vídeo?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        660,
+        400
+      ],
+      "id": "video-condition-node"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=http://supabase-server:3001/api/enviar-video-whatsapp",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "whatsappNumero",
+              "value": "={{$node[\"Detectar Vídeo\"].json.waId}}"
+            },
+            {
+              "name": "videoUrl",
+              "value": "={{$node[\"Detectar Vídeo\"].json.videoUrl}}"
+            },
+            {
+              "name": "mensagem",
+              "value": "Aqui está o vídeo que você solicitou!"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Preparar Envio Vídeo",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [
+        880,
+        300
+      ],
+      "id": "prepare-video-node"
+    },
+    {
+      "parameters": {
+        "from": "={{$node[\"Preparar Envio Vídeo\"].json.dados.numeroRemetente}}",
+        "to": "={{$node[\"Preparar Envio Vídeo\"].json.dados.numeroDestino}}",
+        "toWhatsapp": true,
+        "message": "={{$node[\"Preparar Envio Vídeo\"].json.dados.mensagem}}",
+        "mediaUrl": "={{$node[\"Preparar Envio Vídeo\"].json.dados.videoUrl}}",
+        "options": {}
+      },
+      "name": "Enviar Vídeo",
+      "type": "n8n-nodes-base.twilio",
+      "typeVersion": 1,
+      "position": [
+        1100,
+        300
+      ],
+      "id": "send-video-node",
+      "credentials": {
+        "twilioApi": {
+          "id": "QXezqTUIMW1Crjx7",
+          "name": "Twilio account prod"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=http://supabase-server:3001/api/registrar-mensagem",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "whatsappNumero",
+              "value": "={{$node[\"Detectar Vídeo\"].json.from.replace(\"whatsapp:\", \"\")}}"
+            },
+            {
+              "name": "pergunta",
+              "value": "={{$node[\"Detectar Vídeo\"].json.message}}"
+            },
+            {
+              "name": "resposta",
+              "value": "Vídeo enviado: {{$node[\"Detectar Vídeo\"].json.videoUrl}}"
+            },
+            {
+              "name": "numeroDestino",
+              "value": "={{$node[\"Detectar Vídeo\"].json.waId}}"
+            },
+            {
+              "name": "nome",
+              "value": "={{$node[\"Detectar Vídeo\"].json.profileName}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Registrar Envio Vídeo",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [
+        1320,
+        300
+      ],
+      "id": "register-video-node"
+    },
+    {
+      "parameters": {
+        "from": "={{$node[\"Webhook\"].json.body.To.replaceAll('whatsapp:', '')}}",
+        "to": "={{$node[\"Extrair Dados\"].json.waId}}",
+        "toWhatsapp": true,
+        "message": "={{$node[\"OpenAI\"].json.output}}",
+        "options": {}
+      },
+      "name": "Enviar Resposta",
+      "type": "n8n-nodes-base.twilio",
+      "typeVersion": 1,
+      "position": [
+        2576,
+        500
+      ],
+      "id": "a91534de-6b85-4394-b82b-ebadc0cb4cea",
+      "credentials": {
+        "twilioApi": {
+          "id": "QXezqTUIMW1Crjx7",
+          "name": "Twilio account prod"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=http://supabase-server:3001/api/registrar-mensagem",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "whatsappNumero",
+              "value": "={{$node[\"Extrair Dados\"].json.from.replace(\"whatsapp:\", \"\")}}"
+            },
+            {
+              "name": "pergunta",
+              "value": "={{$node[\"Extrair Dados\"].json.message}}"
+            },
+            {
+              "name": "resposta",
+              "value": "={{$node[\"OpenAI\"].json.output}}"
+            },
+            {
+              "name": "numeroDestino",
+              "value": "={{$node[\"Enviar Resposta\"].json.from.replaceAll('whatsapp:','')}}"
+            },
+            {
+              "name": "nome",
+              "value": "={{$node[\"Extrair Dados\"].json.profileName}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Registrar Mensagem",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [
+        2796,
+        500
+      ],
+      "id": "1a1bf06c-8f9d-4f0a-88bb-d5fb241d3b0c"
+    },
+    {
+      "parameters": {
+        "resource": "assistant",
+        "assistantId": {
+          "__rl": true,
+          "value": "asst_CJZAwPykZpXY1IZZAEdd1bJk",
+          "mode": "list",
+          "cachedResultName": "ThaysBot"
+        },
+        "prompt": "define",
+        "text": "={{$node[\"Merge\"].json.var1}}",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        2200,
+        500
+      ],
+      "id": "73c21b6d-6374-4eec-8d62-d63121c0757a",
+      "name": "OpenAI",
+      "credentials": {
+        "openAiApi": {
+          "id": "ujt7M99ALkXXRbg8",
+          "name": "OpenAi account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Extrair Dados",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extrair Dados": {
+      "main": [
+        [
+          {
+            "node": "Detectar Vídeo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Detectar Vídeo": {
+      "main": [
+        [
+          {
+            "node": "É Solicitação de Vídeo?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "É Solicitação de Vídeo?": {
+      "main": [
+        [
+          {
+            "node": "Preparar Envio Vídeo",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "OpenAI",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar Envio Vídeo": {
+      "main": [
+        [
+          {
+            "node": "Enviar Vídeo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enviar Vídeo": {
+      "main": [
+        [
+          {
+            "node": "Registrar Envio Vídeo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI": {
+      "main": [
+        [
+          {
+            "node": "Enviar Resposta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enviar Resposta": {
+      "main": [
+        [
+          {
+            "node": "Registrar Mensagem",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}
