@@ -1,8 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
-import { Button } from './ui/button';
-import { Input } from './ui/input';
-import { Select, MenuItem, FormControl, InputLabel, Chip, Box, TextField, Autocomplete } from '@mui/material';
+import { 
+  Select, 
+  MenuItem, 
+  FormControl, 
+  InputLabel, 
+  Chip, 
+  Box, 
+  TextField, 
+  Autocomplete,
+  Typography,
+  Button
+} from '@mui/material';
 
 interface Cliente {
   id: string; // UUID
@@ -50,27 +59,20 @@ export default function ClienteSelector({
           return;
         } 
 
-    // Buscar apenas os clientes finais da empresa atual, se especificada
-    const query = supabase.from('clientes_finais').select('*');
-    
-    // Filtrar por empresa_id ou cliente_id se empresaId for fornecido
-    if (empresaId) {
-      query.or(`cliente_id.eq.${empresaId},cliente_id.eq.${empresaId}`);
-    }
-    
-    const { data: clientesFinaisData, error } = await query;
+        // Buscar apenas os clientes finais da empresa atual, se especificada
+        const query = supabase.from('clientes_finais').select('*');
+        
+        // Filtrar por empresa_id ou cliente_id se empresaId for fornecido
+        if (empresaId) {
+          query.or(`cliente_id.eq.${empresaId},cliente_id.eq.${empresaId}`);
+        }
+        
+        const { data: clientesFinaisData, error } = await query;
 
         if (error) {
           console.error('Erro ao buscar clientes finais:', error);
           return;
         }
-
-      // Filtrar clientes finais que possuem o clienteId
-/*       const clientesFinaisDoCliente = clientesFinaisData.filter(
-        (clienteFinal: { cliente_id?: string | number }) => clienteFinal.cliente_id == clientesData.id
-      );
-      console.log(`Clientes finais do cliente ${clientesData.id}:`, clientesFinaisDoCliente);
-       */
         
         // Formatar e filtrar clientes finais
         const clientesFiltrados = clientesFinaisData ? clientesFinaisData
@@ -88,13 +90,11 @@ export default function ClienteSelector({
           .map((cliente: any) => ({
             ...cliente,
             // Garantir que o nome seja legível
-            nome: cliente.nome /* ? `${cliente.nome} (Cliente Final)` : 'Cliente Final' */,
+            nome: cliente.nome,
             // Manter referência à empresa
             empresa_id: cliente.empresa_id || cliente.cliente_id || empresaId
-          })) .sort((a: any, b: any) => a.nome.localeCompare(b.nome, 'pt-BR')) // <-- Ordenação alfabética 
+          })).sort((a: any, b: any) => a.nome.localeCompare(b.nome, 'pt-BR')) // <-- Ordenação alfabética 
           : [];
-
-        
         
         setClientes(clientesFiltrados);
       } catch (error) {
@@ -113,8 +113,8 @@ export default function ClienteSelector({
   );
 
   return (
-    <div className="mb-6">
-      <h3 className="text-lg font-medium mb-3">Filtrar:</h3>
+    <Box sx={{ mb: 3 }}>
+      <Typography variant="subtitle1" sx={{ mb: 1 }}>Filtrar:</Typography>
       
       <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-start' }}>
         <Autocomplete
@@ -129,8 +129,10 @@ export default function ClienteSelector({
           onChange={(_, newValue) => {
             if (newValue === null || newValue.id === 'todos') {
               onClienteSelecionado(null);
+              console.log('Selecionado: Todos os clientes');
             } else {
               onClienteSelecionado(newValue.id, 'cliente_final');
+              console.log('Selecionado cliente final:', newValue.id, newValue.nome);
             }
           }}
           renderInput={(params) => (
@@ -146,16 +148,16 @@ export default function ClienteSelector({
               {option.nome}
             </MenuItem>
           )}
-          sx={{ bgcolor: 'white', borderRadius: 1 }}
+          sx={{ bgcolor: 'background.paper', borderRadius: 1 }}
         />
         
         <Button 
-          variant={clienteSelecionado === null ? "default" : "outline"}
+          variant={clienteSelecionado === null ? "contained" : "outlined"}
           onClick={() => onClienteSelecionado(null)}
         >
           Limpar
         </Button>
       </Box>
-    </div>
+    </Box>
   );
 }

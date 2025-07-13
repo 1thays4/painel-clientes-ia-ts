@@ -13,12 +13,14 @@ import {
   LinearProgress, 
   Divider, 
   Skeleton,
-  Paper
+  Paper,
+  Alert
 } from '@mui/material';
 
 interface DashboardProps {
   clienteId?: string | number;
   isAdmin?: boolean;
+  cliente?: any; // Cliente completo com todas as informações
 }
 
 interface EstatisticasGerais {
@@ -38,7 +40,7 @@ interface EstatisticasCliente {
   ultimaAtividade: string;
 }
 
-const Dashboard: React.FC<DashboardProps> = ({ clienteId, isAdmin = false }) => {
+const Dashboard: React.FC<DashboardProps> = ({ clienteId, isAdmin = false, cliente }) => {
   const [estatisticasGerais, setEstatisticasGerais] = useState<EstatisticasGerais>({
     totalMensagens: 0,
     mensagensHoje: 0,
@@ -398,11 +400,102 @@ const Dashboard: React.FC<DashboardProps> = ({ clienteId, isAdmin = false }) => 
     );
   }
   
+  // Renderizar detalhes do plano
+  const renderDetalhesDoPlanoPara = (cliente: any) => {
+    return (
+      <Paper sx={{ p: 3, mb: 3, borderRadius: 2 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+          <Typography variant="h6" gutterBottom sx={{ mb: 0 }}>
+            Seu Plano: {cliente?.plano || "Básico"}
+          </Typography>
+          
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Typography variant="body2" fontWeight="medium" color={cliente?.mensagens_usadas && cliente?.mensagens_limite && cliente?.mensagens_usadas >= cliente?.mensagens_limite * 0.8 ? "warning.main" : "inherit"}>
+              {cliente?.mensagens_usadas || 0} / {cliente?.mensagens_limite || 1000}
+            </Typography>
+          </Box>
+        </Box>
+        
+        {/* Barra de progresso */}
+        <Box sx={{ mb: 3 }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+            <Typography variant="body2">Uso de mensagens este mês</Typography>
+            <Typography variant="body2" fontWeight="medium">
+              {Math.round(((cliente?.mensagens_usadas || 0) / (cliente?.mensagens_limite || 1000)) * 100)}%
+            </Typography>
+          </Box>
+          <LinearProgress 
+            variant="determinate" 
+            value={Math.min(((cliente?.mensagens_usadas || 0) / (cliente?.mensagens_limite || 1000)) * 100, 100)} 
+            color={cliente?.mensagens_usadas && cliente?.mensagens_limite && cliente?.mensagens_usadas >= cliente?.mensagens_limite * 0.8 ? "warning" : "primary"}
+            sx={{ height: 8, borderRadius: 1 }}
+          />
+          
+          {cliente?.mensagens_usadas && cliente?.mensagens_limite && cliente?.mensagens_usadas >= cliente?.mensagens_limite * 0.8 && (
+            <Alert severity="warning" sx={{ mt: 2, py: 0 }}>
+              {cliente?.mensagens_usadas >= cliente?.mensagens_limite 
+                ? "Você atingiu o limite de mensagens do seu plano." 
+                : `Você está próximo do limite de mensagens (${Math.round(((cliente?.mensagens_usadas) / (cliente?.mensagens_limite)) * 100)}%).`
+              }
+            </Alert>
+          )}
+        </Box>
+        
+        {/* Detalhes do plano */}
+        <Box>
+          <Typography variant="subtitle1" gutterBottom>Detalhes do Plano:</Typography>
+          <Grid container spacing={2}>
+            <Grid item xs={12} md={6}>
+              <Box sx={{ p: 2, bgcolor: '#f5f5f5', borderRadius: 1 }}>
+                <Typography variant="subtitle2" color="primary">Recursos Incluídos:</Typography>
+                <Box component="ul" sx={{ pl: 2, mt: 1 }}>
+                  <Typography component="li" variant="body2">
+                    Limite mensal: {cliente?.mensagens_limite || 1000} mensagens
+                  </Typography>
+                  <Typography component="li" variant="body2">
+                    Acesso ao painel de controle
+                  </Typography>
+                  <Typography component="li" variant="body2">
+                    Suporte por WhatsApp
+                  </Typography>
+                </Box>
+              </Box>
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <Box sx={{ p: 2, bgcolor: '#f5f5f5', borderRadius: 1 }}>
+                <Typography variant="subtitle2" color="primary">Informações Adicionais:</Typography>
+                <Box component="ul" sx={{ pl: 2, mt: 1 }}>
+                  <Typography component="li" variant="body2">
+                    Renovação automática mensal
+                  </Typography>
+                  <Typography component="li" variant="body2">
+                    Suporte prioritário
+                  </Typography>
+                  <Typography component="li" variant="body2">
+                    Personalização de respostas
+                  </Typography>
+                </Box>
+              </Box>
+            </Grid>
+          </Grid>
+        </Box>
+      </Paper>
+    );
+  };
+
   return (
     <Box>
       <Typography variant="h5" fontWeight="600" sx={{ mb: 3 }}>
         {isAdmin && !clienteId ? 'Estatísticas Gerais' : 'Estatísticas de Uso'}
       </Typography>
+      
+      {/* Mostrar detalhes do plano apenas para clientes específicos, não para admin */}
+      {!isAdmin && clienteId && renderDetalhesDoPlanoPara(cliente || {
+        plano: estatisticasCliente?.mensagensLimite === 1000 ? "Básico" : 
+               estatisticasCliente?.mensagensLimite === 3000 ? "Intermediário" : "Avançado",
+        mensagens_usadas: estatisticasCliente.mensagensUsadas,
+        mensagens_limite: estatisticasCliente.mensagensLimite
+      })}
       
       {isAdmin && !clienteId ? renderEstatisticasGerais() : renderEstatisticasCliente()}
     </Box>

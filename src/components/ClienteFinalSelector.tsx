@@ -1,7 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
-import { Button } from './ui/button';
-import { Input } from './ui/input';
+import { 
+  Box, 
+  Typography, 
+  TextField, 
+  Button, 
+  Chip, 
+  CircularProgress,
+  Stack,
+  ButtonGroup
+} from '@mui/material';
 
 interface ClienteFinal {
   id: string | number;
@@ -110,49 +118,54 @@ export default function ClienteFinalSelector({
   );
 
   return (
-    <div className="mb-6">
-      <h3 className="text-lg font-medium mb-3">Filtrar por Contato</h3>
+    <Box sx={{ mb: 3 }}>
+      <Typography variant="subtitle1" sx={{ mb: 1 }}>Filtrar por Contato</Typography>
       
       {!clienteId ? (
-        <p className="text-sm text-gray-500">Selecione uma empresa primeiro</p>
+        <Typography variant="body2" color="text.secondary">Selecione uma empresa primeiro</Typography>
       ) : (
         <>
-          <Input
+          <TextField
+            fullWidth
+            size="small"
             type="text"
             placeholder="Filtrar por nome"
             value={filtro}
             onChange={(e) => setFiltro(e.target.value)}
-            className="mb-3"
+            sx={{ mb: 2 }}
           />
           
-          <div className="flex flex-wrap gap-2">
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
             <Button 
-              variant={clienteFinalSelecionado === null ? "default" : "outline"}
+              variant={clienteFinalSelecionado === null ? "contained" : "outlined"}
               onClick={() => onClienteFinalSelecionado(null)}
-              className="mb-2"
+              sx={{ mb: 1 }}
             >
               Todos os Contatos
             </Button>
             
             {carregando ? (
-              <p className="text-sm text-gray-500">Carregando clientes finais...</p>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <CircularProgress size={20} />
+                <Typography variant="body2" color="text.secondary">Carregando contatos...</Typography>
+              </Box>
             ) : clientesFiltrados.length === 0 ? (
-              <p className="text-sm text-gray-500">Nenhum cliente final encontrado</p>
+              <Typography variant="body2" color="text.secondary">Nenhum contato encontrado</Typography>
             ) : (
               clientesFiltrados.map(cliente => (
                 <Button 
                   key={cliente.id}
-                  variant={clienteFinalSelecionado === cliente.id ? "default" : "outline"}
+                  variant={clienteFinalSelecionado === cliente.id ? "contained" : "outlined"}
                   onClick={() => onClienteFinalSelecionado(cliente.id)}
-                  className="mb-2"
+                  sx={{ mb: 1 }}
                 >
                   {cliente.nome} {cliente.whatsapp && `(${cliente.whatsapp})`}
                 </Button>
               ))
             )}
-          </div>
+          </Box>
         </>
       )}
-    </div>
+    </Box>
   );
 }

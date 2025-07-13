@@ -1,19 +1,30 @@
-import { cn } from "../../lib/utils";
 import { InputHTMLAttributes, forwardRef } from "react";
+import { TextField } from "@mui/material";
 
+export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
+  fullWidth?: boolean;
+  variant?: "outlined" | "filled" | "standard";
+  size?: "small" | "medium";
+  label?: string;
+  error?: boolean;
+  helperText?: string;
+}
 
-export const Input = forwardRef<HTMLInputElement, InputHTMLAttributes<HTMLInputElement>>(
-  ({ className, ...props }, ref) => {
+export const Input = forwardRef<HTMLInputElement, InputProps>(
+  ({ className, fullWidth = true, variant = "outlined", size = "medium", label, error, helperText, ...props }, ref) => {
     return (
-      <input
-        ref={ref}
-        className={cn(
-          "w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring focus:border-blue-300",
-          className
-        )}
+      <TextField
+        inputRef={ref}
+        fullWidth={fullWidth}
+        variant={variant}
+        size={size}
+        label={label}
+        error={error}
+        helperText={helperText}
         {...props}
       />
     );
   }
 );
+
 Input.displayName = "Input";

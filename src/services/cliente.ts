@@ -173,11 +173,16 @@ export async function atualizarCliente(
 }
 
 // Buscar histórico de mensagens do cliente
-export async function buscarHistoricoMensagens(clienteId: string | number | null, limite: number = 200, offset: number = 0): Promise<Mensagem[]> {
+export async function buscarHistoricoMensagens(
+  clienteId: string | number | null, 
+  limite: number = 200, 
+  offset: number = 0,
+  clienteFinalId?: string | number | null
+): Promise<Mensagem[]> {
   // Configurar o token do cliente nos cabeçalhos
   setupAuthHeaders();
   try {
-    console.log('Buscando histórico para cliente ID:', clienteId, 'limite:', limite, 'offset:', offset);
+    console.log('Buscando histórico para cliente ID:', clienteId, 'limite:', limite, 'offset:', offset, 'cliente final ID:', clienteFinalId);
     
     // Se for um cliente de demonstração, retornar mensagens fictícias
     if (typeof clienteId === 'string' && clienteId?.startsWith('demo-')) {
@@ -218,6 +223,12 @@ export async function buscarHistoricoMensagens(clienteId: string | number | null
     // Filtrar por cliente_id se fornecido
     if (clienteId) {
       query = query.eq('cliente_id', clienteId);
+    }
+    
+    // Filtrar por cliente_final_id se fornecido
+    if (clienteFinalId) {
+      console.log('Filtrando mensagens por cliente final ID:', clienteFinalId);
+      query = query.eq('cliente_final_id', clienteFinalId);
     }
     
     // Aplicar paginação

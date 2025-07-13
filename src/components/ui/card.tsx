@@ -1,9 +1,10 @@
 import { ReactNode } from "react";
+import { Card as MuiCard, CardContent as MuiCardContent } from "@mui/material";
 
 export function Card({ children, className = "" }: { children: ReactNode; className?: string }) {
-  return <div className={`bg-white shadow rounded-lg p-4 ${className}`}>{children}</div>;
+  return <MuiCard sx={{ p: 2 }}>{children}</MuiCard>;
 }
 
 export function CardContent({ children, className = "" }: { children: ReactNode; className?: string }) {
-  return <div className={`space-y-2 ${className}`}>{children}</div>;
+  return <MuiCardContent>{children}</MuiCardContent>;
 }

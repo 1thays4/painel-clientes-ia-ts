@@ -1,16 +1,22 @@
 import React from 'react';
-import '../styles/message-styles.css';
+import { Box, Typography } from '@mui/material';
 
 interface FormattedTextProps {
   text: string;
   className?: string;
   type?: 'default' | 'ai' | 'human' | 'received' | 'sent';
+  component?: React.ElementType;
 }
 
 /**
  * Componente que formata texto com quebras de linha e espaçamento similar ao WhatsApp
  */
-export default function FormattedText({ text, className = '', type = 'default' }: FormattedTextProps) {
+export default function FormattedText({ 
+  text, 
+  className = '', 
+  type = 'default',
+  component = 'div'
+}: FormattedTextProps) {
   // Função para processar o texto e adicionar quebras de linha
   const formatText = (text: string) => {
     // Dividir o texto em parágrafos
@@ -39,8 +45,17 @@ export default function FormattedText({ text, className = '', type = 'default' }
   };
 
   return (
-    <div className={`whitespace-pre-wrap ${getTypeClass()} ${className}`} style={{ lineHeight: '1.5' }}>
+    <Typography
+      component={component}
+      className={getTypeClass()}
+      sx={{ 
+        whiteSpace: 'pre-wrap', 
+        lineHeight: 1.5,
+        ...(className ? { className } : {})
+      }}
+      variant="body2"
+    >
       {formatText(text)}
-    </div>
+    </Typography>
   );
 }

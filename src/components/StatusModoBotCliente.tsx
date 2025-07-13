@@ -1,9 +1,20 @@
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent } from './ui/card';
-import { Button } from './ui/button';
 import ModoBotToggle from './ModoBotToggle';
 import { toast } from 'react-toastify';
 import { buscarClientesFinais, atualizarModoBotTodosClientesFinais } from '../services/cliente-final';
+import { 
+  Card, 
+  CardContent, 
+  Typography, 
+  Box, 
+  Button, 
+  Stack, 
+  Paper, 
+  Grid, 
+  Divider, 
+  Alert, 
+  CircularProgress 
+} from '@mui/material';
 
 interface ClienteFinal {
   id: string | number;
@@ -14,9 +25,10 @@ interface ClienteFinal {
 
 interface StatusModoBotClienteProps {
   clienteId: string | number;
+  modoBotAtivo?: boolean;
 }
 
-export default function StatusModoBotCliente({ clienteId }: StatusModoBotClienteProps) {
+export default function StatusModoBotCliente({ clienteId, modoBotAtivo }: StatusModoBotClienteProps) {
   const [clientesFinais, setClientesFinais] = useState<ClienteFinal[]>([]);
   const [carregando, setCarregando] = useState(true);
   const [atualizandoTodos, setAtualizandoTodos] = useState(false);
@@ -82,8 +94,11 @@ export default function StatusModoBotCliente({ clienteId }: StatusModoBotCliente
   if (carregando) {
     return (
       <Card>
-        <CardContent className="pt-6">
-          <p className="text-center py-4">Carregando configurações...</p>
+        <CardContent sx={{ pt: 2 }}>
+          <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', py: 2 }}>
+            <CircularProgress size={24} sx={{ mr: 1 }} />
+            <Typography>Carregando configurações...</Typography>
+          </Box>
         </CardContent>
       </Card>
     );
@@ -92,8 +107,8 @@ export default function StatusModoBotCliente({ clienteId }: StatusModoBotCliente
   if (clientesFinais.length === 0) {
     return (
       <Card>
-        <CardContent className="pt-6">
-          <p className="text-center py-4">Nenhum contato encontrado.</p>
+        <CardContent sx={{ pt: 2 }}>
+          <Typography align="center" sx={{ py: 2 }}>Nenhum contato encontrado.</Typography>
         </CardContent>
       </Card>
     );
@@ -101,94 +116,108 @@ export default function StatusModoBotCliente({ clienteId }: StatusModoBotCliente
 
   return (
     <Card>
-      <CardContent className="pt-6">
-        <div className="flex justify-between items-center mb-4">
-          <div>
-            <h2 className="text-lg font-semibold">Configurações de Resposta Automática</h2>
-            <p className="text-sm text-gray-600">
+      <CardContent sx={{ pt: 2 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2, flexWrap: 'wrap', gap: 2 }}>
+          <Box>
+            <Typography variant="h6" gutterBottom>Configurações de Resposta Automática</Typography>
+            <Typography variant="body2" color="text.secondary">
               Ative ou desative o modo de resposta automática para cada contato.
-            </p>
-            <div className="mt-2 p-3 bg-blue-50 text-blue-800 rounded-md text-sm">
-              <p><strong>Como funciona:</strong> Quando o modo bot está desativado para um contato, as mensagens recebidas desse contato não serão respondidas automaticamente pela IA. Você poderá responder manualmente a essas mensagens através do painel.</p>
-            </div>
-          </div>
-          <div className="flex gap-2">
+            </Typography>
+            <Alert severity="info" sx={{ mt: 1 }}>
+              <Typography variant="body2">
+                <strong>Como funciona:</strong> Quando o modo bot está desativado para um contato, as mensagens recebidas desse contato não serão respondidas automaticamente pela IA. Você poderá responder manualmente a essas mensagens através do painel.
+              </Typography>
+            </Alert>
+          </Box>
+          <Box sx={{ display: 'flex', gap: 1 }}>
             <Button 
-              variant="outline" 
-              size="sm"
+              variant="outlined" 
+              color="warning"
               onClick={() => toggleTodosModoBot(false)}
               disabled={atualizandoTodos}
-              className="flex items-center gap-1 border-yellow-500 text-yellow-700 hover:bg-yellow-50"
+              startIcon={
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="11" width="18" height="10" rx="2" />
+                  <circle cx="12" cy="5" r="2" />
+                  <path d="M12 7v4" />
+                  <line x1="8" y1="16" x2="8" y2="16" />
+                  <line x1="16" y1="16" x2="16" y2="16" />
+                  <line x1="3" y1="3" x2="21" y2="21" />
+                </svg>
+              }
             >
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <rect x="3" y="11" width="18" height="10" rx="2" />
-                <circle cx="12" cy="5" r="2" />
-                <path d="M12 7v4" />
-                <line x1="8" y1="16" x2="8" y2="16" />
-                <line x1="16" y1="16" x2="16" y2="16" />
-                <line x1="3" y1="3" x2="21" y2="21" />
-              </svg>
-              Desativar Todos os Bots
+              Desativar Todos
             </Button>
             <Button 
-              variant="default" 
-              size="sm"
+              variant="contained" 
+              color="success"
               onClick={() => toggleTodosModoBot(true)}
               disabled={atualizandoTodos}
-              className="flex items-center gap-1 bg-green-600 hover:bg-green-700"
+              startIcon={
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="11" width="18" height="10" rx="2" />
+                  <circle cx="12" cy="5" r="2" />
+                  <path d="M12 7v4" />
+                  <line x1="8" y1="16" x2="8" y2="16" />
+                  <line x1="16" y1="16" x2="16" y2="16" />
+                </svg>
+              }
             >
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <rect x="3" y="11" width="18" height="10" rx="2" />
-                <circle cx="12" cy="5" r="2" />
-                <path d="M12 7v4" />
-                <line x1="8" y1="16" x2="8" y2="16" />
-                <line x1="16" y1="16" x2="16" y2="16" />
-              </svg>
-              Ativar Todos os Bots
+              Ativar Todos
             </Button>
-          </div>
-        </div>
+          </Box>
+        </Box>
         
-        <div className="space-y-4">
+        <Stack spacing={2}>
           {clientesFinais.map(cliente => (
-            <div 
+            <Paper 
               key={cliente.id} 
-              className={`flex justify-between items-center p-4 border rounded-lg ${cliente.modo ? 'bg-green-50 border-green-200' : 'bg-yellow-50 border-yellow-200'} hover:shadow-md transition-all duration-200`}
+              variant="outlined"
+              sx={{ 
+                p: 2, 
+                display: 'flex', 
+                justifyContent: 'space-between', 
+                alignItems: 'center',
+                bgcolor: cliente.modo ? 'success.light' : 'warning.light',
+                borderColor: cliente.modo ? 'success.main' : 'warning.main',
+                transition: 'all 0.2s',
+                '&:hover': { boxShadow: 2 }
+              }}
             >
-              <div>
-                <h3 className="font-medium text-lg">{cliente.nome}</h3>
+              <Box>
+                <Typography variant="subtitle1">{cliente.nome}</Typography>
                 {cliente.whatsapp && (
-                  <p className="text-sm text-gray-600">{cliente.whatsapp}</p>
+                  <Typography variant="body2" color="text.secondary">{cliente.whatsapp}</Typography>
                 )}
-                <p className="text-xs mt-1">
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 0.5 }}>
                   {cliente.modo ? (
-                    <span className="text-green-600 flex items-center gap-1">
+                    <Typography variant="caption" color="success.dark" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                       <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                         <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
                         <polyline points="22 4 12 14.01 9 11.01"></polyline>
                       </svg>
                       Respostas automáticas ativadas
-                    </span>
+                    </Typography>
                   ) : (
-                    <span className="text-yellow-600 flex items-center gap-1">
+                    <Typography variant="caption" color="warning.dark" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                       <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                         <circle cx="12" cy="12" r="10"></circle>
                         <line x1="12" y1="8" x2="12" y2="12"></line>
                         <line x1="12" y1="16" x2="12.01" y2="16"></line>
                       </svg>
                       Aguardando resposta manual
-                    </span>
+                    </Typography>
                   )}
-                </p>
-              </div>
+                </Box>
+              </Box>
               <ModoBotToggle 
                 clienteFinalId={cliente.id}
                 modoBotAtivo={cliente.modo === false ? false : true}
                 onToggle={(novoEstado) => handleToggle(cliente.id, novoEstado)}
               />
-            </div>
+            </Paper>
           ))}
-        </div>
+        </Stack>
       </CardContent>
     </Card>
   );

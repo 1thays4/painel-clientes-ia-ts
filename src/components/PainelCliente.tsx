@@ -10,7 +10,7 @@ import { supabase } from "../lib/supabase";
 import { isTokenValid, getClientToken, logAccess, refreshToken } from "../lib/tokenManager";
 import PainelRespostasCliente from "./PainelRespostasCliente";
 import Dashboard from "./Dashboard";
-import AlertaLimiteMensagens from "./AlertaLimiteMensagens";
+// AlertaLimiteMensagens não é mais necessário, pois o alerta está integrado no card de plano
 import StatusModoBotCliente from "./StatusModoBotCliente";
 import { formatarWhatsAppParaExibicao, validarWhatsApp } from "../lib/validacao";
 import { config } from "../config";
@@ -251,5 +251,304 @@ export default function PainelCliente({ token }: { token?: string }) {
     return limparAssinaturas;
   }, [tokenFromRouter]);
 
-  // Resto do componente...
+  // Função para alternar entre dashboard e histórico
+  const alternarVisualizacao = () => {
+    setMostrarDashboard(!mostrarDashboard);
+  };
+
+  // Função para salvar os dados editados
+  const salvarDadosEditados = async () => {
+    if (!cliente) return;
+    
+    // Validar WhatsApp
+    const whatsappFormatado = validarWhatsApp(dadosEditados.whatsapp);
+    if (dadosEditados.whatsapp && !whatsappFormatado) {
+      toast.error("Número de WhatsApp inválido. Use o formato: +55 (11) 99999-9999");
+      return;
+    }
+    
+    // Usar o número formatado
+    const dadosParaSalvar = {
+      nome: dadosEditados.nome,
+      whatsapp: whatsappFormatado || dadosEditados.whatsapp
+    };
+    
+    try {
+      const sucesso = await atualizarCliente(cliente.id, dadosParaSalvar);
+      
+      if (sucesso) {
+        // Atualizar o cliente no estado
+        setCliente(clienteAtual => {
+          if (!clienteAtual) return null;
+          return {
+            ...clienteAtual,
+            nome: dadosParaSalvar.nome,
+            whatsapp: dadosParaSalvar.whatsapp
+          };
+        });
+        
+        toast.success("Dados atualizados com sucesso!");
+        setEditando(false);
+      } else {
+        toast.error("Erro ao atualizar dados. Tente novamente.");
+      }
+    } catch (error) {
+      console.error("Erro ao atualizar dados:", error);
+      toast.error("Ocorreu um erro ao atualizar os dados");
+    }
+  };
+
+  // Função para carregar mais mensagens
+  const carregarMaisMensagens = async () => {
+    if (!cliente || carregandoMais) return;
+    
+    try {
+      setCarregandoMais(true);
+      const proximaPagina = paginaAtual + 1;
+      const offset = proximaPagina * limitePorPagina;
+      
+      const novasMensagens = await buscarHistoricoMensagens(
+        cliente.id, 
+        limitePorPagina, 
+        offset
+      );
+      
+      if (novasMensagens && novasMensagens.length > 0) {
+        setMensagens(mensagensAtuais => [...mensagensAtuais, ...novasMensagens]);
+        setPaginaAtual(proximaPagina);
+      } else {
+        toast.info("Não há mais mensagens para carregar");
+      }
+    } catch (error) {
+      console.error("Erro ao carregar mais mensagens:", error);
+      toast.error("Erro ao carregar mais mensagens");
+    } finally {
+      setCarregandoMais(false);
+    }
+  };
+
+  // Renderizar o componente
+  return (
+    <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+      <ToastContainer position="top-right" autoClose={3000} />
+      
+      {carregando ? (
+        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '50vh' }}>
+          <CircularProgress />
+          <Typography variant="h6" sx={{ ml: 2 }}>Carregando dados...</Typography>
+        </Box>
+      ) : erro ? (
+        <Alert severity="error">
+          <AlertTitle>Erro</AlertTitle>
+          {erro}
+        </Alert>
+      ) : cliente ? (
+        <>
+          <Box sx={{ mb: 4 }}>
+            <Typography variant="h4" component="h1" gutterBottom>
+              Painel do Cliente
+            </Typography>
+            
+            <Paper sx={{ p: 3, mb: 3 }}>
+              <Grid container spacing={2}>
+                <Grid item xs={12} md={6}>
+                  <Typography variant="h6" gutterBottom>
+                    Informações do Cliente
+                  </Typography>
+                  
+                  {!editando ? (
+                    <>
+                      <List>
+                        <ListItem>
+                          <ListItemText 
+                            primary="Nome" 
+                            secondary={cliente.nome || "Não informado"} 
+                          />
+                        </ListItem>
+                        <ListItem>
+                          <ListItemText 
+                            primary="WhatsApp" 
+                            secondary={cliente.whatsapp ? formatarWhatsAppParaExibicao(cliente.whatsapp) : "Não informado"} 
+                          />
+                        </ListItem>
+                        <ListItem>
+                          <ListItemText 
+                            primary="Plano" 
+                            secondary={cliente.plano || "Básico"} 
+                          />
+                        </ListItem>
+                      </List>
+                      <Button
+                        variant="outlined"
+                        startIcon={<EditIcon />}
+                        onClick={() => setEditando(true)}
+                        sx={{ mt: 2 }}
+                      >
+                        Editar Dados
+                      </Button>
+                    </>
+                  ) : (
+                    <Box component="form" sx={{ mt: 2 }}>
+                      <TextField
+                        fullWidth
+                        label="Nome"
+                        value={dadosEditados.nome}
+                        onChange={(e) => setDadosEditados({ ...dadosEditados, nome: e.target.value })}
+                        margin="normal"
+                      />
+                      <TextField
+                        fullWidth
+                        label="WhatsApp"
+                        value={dadosEditados.whatsapp}
+                        onChange={(e) => setDadosEditados({ ...dadosEditados, whatsapp: e.target.value })}
+                        margin="normal"
+                        helperText="Formato: +55 (11) 99999-9999"
+                      />
+                      <Box sx={{ mt: 2, display: 'flex', gap: 2 }}>
+                        <Button
+                          variant="contained"
+                          color="primary"
+                          startIcon={<SaveIcon />}
+                          onClick={salvarDadosEditados}
+                        >
+                          Salvar
+                        </Button>
+                        <Button
+                          variant="outlined"
+                          startIcon={<CancelIcon />}
+                          onClick={() => {
+                            setEditando(false);
+                            setDadosEditados({
+                              nome: cliente.nome || "",
+                              whatsapp: cliente.whatsapp || ""
+                            });
+                          }}
+                        >
+                          Cancelar
+                        </Button>
+                      </Box>
+                    </Box>
+                  )}
+                </Grid>
+                
+                <Grid item xs={12} md={6}>
+                  <Typography variant="h6" gutterBottom>
+                    Status do Bot
+                  </Typography>
+                  
+                  {cliente.modo_bot !== undefined && (
+                    <StatusModoBotCliente 
+                      clienteId={cliente.id} 
+                      modoBotAtivo={cliente.modo_bot} 
+                    />
+                  )}
+                </Grid>
+              </Grid>
+            </Paper>
+            
+            <Box sx={{ mb: 2 }}>
+              <Tabs 
+                value={mostrarDashboard ? 0 : 1} 
+                onChange={(e, newValue) => setMostrarDashboard(newValue === 0)}
+              >
+                <Tab 
+                  icon={<DashboardIcon />} 
+                  label="Dashboard" 
+                  iconPosition="start" 
+                />
+                <Tab 
+                  icon={<HistoryIcon />} 
+                  label="Histórico de Mensagens" 
+                  iconPosition="start" 
+                />
+              </Tabs>
+            </Box>
+            
+            {/* Card de detalhes do plano foi movido para o Dashboard */}
+            
+            {mostrarDashboard ? (
+              <Dashboard cliente={cliente} clienteId={cliente.id} />
+            ) : (
+              <>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                  <Typography variant="h6" gutterBottom sx={{ mb: 0 }}>
+                    Histórico de Mensagens
+                    <Chip 
+                      label={`Total: ${totalMensagens}`} 
+                      size="small" 
+                      sx={{ ml: 2 }} 
+                    />
+                  </Typography>
+                  <Button 
+                    variant="text" 
+                    onClick={() => onAtualizarHistorico(true)}
+                    disabled={carregandoHistorico}
+                    sx={{ minWidth: 'auto', p: 1 }}
+                    title="Atualizar histórico"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
+                    </svg>
+                  </Button>
+                </Box>
+                
+                {carregandoHistorico ? (
+                  <CircularProgress size={24} />
+                ) : mensagens.length > 0 ? (
+                  <>
+                    <PainelRespostasCliente 
+                      mensagens={mensagens} 
+                      clienteId={cliente.id} 
+                      onAtualizarHistorico={(resetarPaginacao, clienteFinalId) => {
+                        const carregarHistorico = async () => {
+                          setCarregandoHistorico(true);
+                          try {
+                            if (resetarPaginacao) {
+                              setPaginaAtual(0);
+                              const historico = await buscarHistoricoMensagens(cliente.id, limitePorPagina, 0, clienteFinalId);
+                              setMensagens(historico || []);
+                            } else {
+                              const historico = await buscarHistoricoMensagens(cliente.id, limitePorPagina, paginaAtual * limitePorPagina, clienteFinalId);
+                              setMensagens(historico || []);
+                            }
+                          } catch (error) {
+                            console.error("Erro ao atualizar histórico:", error);
+                            toast.error("Erro ao atualizar histórico");
+                          } finally {
+                            setCarregandoHistorico(false);
+                          }
+                        };
+                        carregarHistorico();
+                      }}
+                      onCarregarMais={carregarMaisMensagens}
+                      totalMensagens={totalMensagens}
+                      carregandoMais={carregandoMais}
+                      isAdmin={true}
+                    />
+                    
+                    {(paginaAtual + 1) * limitePorPagina < totalMensagens && (
+                      <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
+                        <Button 
+                          variant="outlined" 
+                          onClick={carregarMaisMensagens}
+                          disabled={carregandoMais}
+                          startIcon={carregandoMais ? <CircularProgress size={20} /> : <ArrowUpwardIcon />}
+                        >
+                          {carregandoMais ? 'Carregando...' : 'Carregar mais mensagens'}
+                        </Button>
+                      </Box>
+                    )}
+                  </>
+                ) : (
+                  <Typography variant="body1">
+                    Nenhuma mensagem encontrada para este cliente.
+                  </Typography>
+                )}
+              </>
+            )}
+          </Box>
+        </>
+      ) : null}
+    </Container>
+  );
 }

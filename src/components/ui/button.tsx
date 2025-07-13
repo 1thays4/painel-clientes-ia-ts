@@ -1,33 +1,35 @@
-import { cn } from "../../lib/utils";
 import { ButtonHTMLAttributes, forwardRef } from "react";
+import { Button as MuiButton } from "@mui/material";
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: "default" | "outline" | "ghost" | "link";
-  size?: "default" | "sm" | "lg";
+  variant?: "default" | "outline" | "ghost" | "link" | "contained" | "outlined" | "text";
+  size?: "default" | "sm" | "lg" | "small" | "medium" | "large";
+  fullWidth?: boolean;
+  color?: "inherit" | "primary" | "secondary" | "success" | "error" | "info" | "warning";
 }
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant = "default", size = "default", ...props }, ref) => {
+  ({ className, variant = "contained", size = "medium", fullWidth = false, color = "primary", ...props }, ref) => {
+    // Mapear variantes personalizadas para variantes do Material UI
+    let muiVariant: "contained" | "outlined" | "text" = "contained";
+    if (variant === "outline" || variant === "outlined") muiVariant = "outlined";
+    if (variant === "ghost" || variant === "link" || variant === "text") muiVariant = "text";
+    
+    // Mapear tamanhos personalizados para tamanhos do Material UI
+    let muiSize: "small" | "medium" | "large" = "medium";
+    if (size === "sm" || size === "small") muiSize = "small";
+    if (size === "lg" || size === "large") muiSize = "large";
+    
     return (
-      <button
-        ref={ref}
-        className={cn(
-          "rounded-md transition-all",
-          // Base styles
-          "px-4 py-2",
-          // Variant styles
-          variant === "default" && "bg-blue-600 text-white hover:bg-blue-700",
-          variant === "outline" && "border border-gray-300 bg-transparent text-gray-800 hover:bg-gray-100",
-          variant === "ghost" && "bg-transparent text-gray-800 hover:bg-gray-100",
-          variant === "link" && "bg-transparent text-blue-600 hover:text-blue-800 p-0 underline",
-          // Size styles
-          size === "sm" && "px-2 py-1 text-sm",
-          size === "lg" && "px-6 py-3 text-lg",
-          className
-        )}
+      <MuiButton
+        variant={muiVariant}
+        size={muiSize}
+        fullWidth={fullWidth}
+        color={color}
         {...props}
       />
     );
   }
 );
+
 Button.displayName = "Button";

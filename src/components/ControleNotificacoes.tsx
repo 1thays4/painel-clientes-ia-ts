@@ -1,6 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Button } from './ui/button';
 import { notificacaoService } from '../services/notificacoes';
+import { 
+  Button, 
+  Box, 
+  Typography 
+} from '@mui/material';
 
 interface ControleNotificacoesProps {
   className?: string;
@@ -25,13 +29,20 @@ export default function ControleNotificacoes({ className = '' }: ControleNotific
   };
 
   return (
-    <div className={`flex items-center gap-2 ${className}`}>
+    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
       <Button
-        variant={notificacoesAtivadas ? "default" : "outline"}
-        size="sm"
+        variant={notificacoesAtivadas ? "contained" : "outlined"}
+        size="small"
         onClick={toggleNotificacoes}
         title={notificacoesAtivadas ? "Desativar notificações sonoras" : "Ativar notificações sonoras"}
-        className="flex items-center gap-1 px-2 py-1 h-8"
+        sx={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          gap: 0.5,
+          px: 1,
+          py: 0.5,
+          minWidth: 'auto'
+        }}
       >
         {notificacoesAtivadas ? (
           <>
@@ -39,7 +50,7 @@ export default function ControleNotificacoes({ className = '' }: ControleNotific
               <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
               <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
             </svg>
-            <span className="hidden sm:inline">Som ativado</span>
+            <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>Som ativado</Box>
           </>
         ) : (
           <>
@@ -50,10 +61,10 @@ export default function ControleNotificacoes({ className = '' }: ControleNotific
               <path d="M18 8a6 6 0 0 0-9.33-5"></path>
               <line x1="1" y1="1" x2="23" y2="23"></line>
             </svg>
-            <span className="hidden sm:inline">Som desativado</span>
+            <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>Som desativado</Box>
           </>
         )}
       </Button>
-    </div>
+    </Box>
   );
 }

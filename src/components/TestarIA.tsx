@@ -1,8 +1,7 @@
 import { useState } from "react";
-import { Button } from "./ui/button";
-import { Card } from "./ui/card";
 import { registrarMensagem } from "../services/mensagens";
 import { toast } from "react-toastify";
+import { Button, Card, CardContent, Typography, Box } from "@mui/material";
 
 interface TestarIAProps {
   clienteId: number;
@@ -32,18 +31,22 @@ export default function TestarIA({ clienteId, limite, onMensagemEnviada }: Testa
   };
 
   return (
-    <Card className="p-4 bg-gray-50">
-      <p className="text-sm mb-3">
-        Teste o assistente de IA no WhatsApp para ver como funciona. 
-        Cada teste consumirá uma mensagem do seu plano.
-      </p>
-      <Button 
-        onClick={handleTestar}
-        disabled={enviando}
-        className="w-full bg-green-600 hover:bg-green-700"
-      >
-        {enviando ? "Processando..." : "Testar IA no WhatsApp"}
-      </Button>
+    <Card variant="outlined" sx={{ bgcolor: '#f9f9f9' }}>
+      <CardContent>
+        <Typography variant="body2" sx={{ mb: 2 }}>
+          Teste o assistente de IA no WhatsApp para ver como funciona. 
+          Cada teste consumirá uma mensagem do seu plano.
+        </Typography>
+        <Button 
+          onClick={handleTestar}
+          disabled={enviando}
+          variant="contained" 
+          color="success"
+          fullWidth
+        >
+          {enviando ? "Processando..." : "Testar IA no WhatsApp"}
+        </Button>
+      </CardContent>
     </Card>
   );
 }

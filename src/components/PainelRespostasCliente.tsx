@@ -1,7 +1,18 @@
 import { supabase } from '../lib/supabase';
-import { Card, CardContent } from './ui/card';
-import { Button } from './ui/button';
 import { Mensagem } from '../services/cliente';
+import { 
+  Card, 
+  CardContent, 
+  Button, 
+  Typography, 
+  Box, 
+  Grid, 
+  TextField, 
+  Paper, 
+  Chip,
+  CircularProgress,
+  Divider
+} from '@mui/material';
 import ClienteSelector from './ClienteSelector';
 import ClienteFinalSelector from './ClienteFinalSelector';
 import MensagemGrupo from './MensagemGrupo';
@@ -19,7 +30,7 @@ import { buscarClienteFinalPorId } from '../services/cliente-final';
 interface PainelRespostasClienteProps {
   clienteId: string | number;
   mensagens: Mensagem[];
-  onAtualizarHistorico: (resetarPaginacao?: boolean) => void;
+  onAtualizarHistorico: (resetarPaginacao?: boolean, clienteFinalId?: string | number | null) => void;
   onCarregarMais?: () => void;
   totalMensagens?: number;
   isAdmin?: boolean;
@@ -142,7 +153,7 @@ export default function PainelRespostasCliente({
       toast.success('Resposta enviada com sucesso!');
       setResposta('');
       setMensagemSelecionada(null);
-      onAtualizarHistorico();
+      onAtualizarHistorico(true, clienteFinalSelecionado);
     } catch (error) {
       console.error('Erro:', error);
       toast.error('Ocorreu um erro ao enviar a resposta');
@@ -228,6 +239,7 @@ export default function PainelRespostasCliente({
     if (tipo === 'cliente_final') {
       // Se for um cliente final, definir como cliente final selecionado
       setClienteFinalSelecionado(novoClienteId);
+      console.log('Cliente final selecionado:', novoClienteId);
       // Manter o cliente principal atual
     } else {
       // Se for uma empresa ou null, atualizar o cliente selecionado
@@ -237,7 +249,8 @@ export default function PainelRespostasCliente({
     
     setMensagemSelecionada(null);
     setResposta('');
-    onAtualizarHistorico();
+    // Passar o ID do cliente final para a função onAtualizarHistorico
+    onAtualizarHistorico(true, tipo === 'cliente_final' ? novoClienteId : null);
   };
   
   // Função para lidar com a mudança de cliente final selecionado
@@ -245,196 +258,187 @@ export default function PainelRespostasCliente({
     setClienteFinalSelecionado(novoClienteFinalId);
     setMensagemSelecionada(null);
     setResposta('');
-    onAtualizarHistorico();
+    onAtualizarHistorico(true, novoClienteFinalId);
   };
 
   return (
-    <div className="space-y-4">
-      <div className="flex justify-between items-center mb-4">
-        <div className="flex items-center">
-          <h2 className="text-xl font-bold">
-            Histórico de Mensagens ({mensagens.length}{totalMensagens > 0 ? ` de ${totalMensagens}` : ''})
-          </h2>
-          <Button 
-            variant="ghost" 
-            onClick={() => onAtualizarHistorico(true)}
-            disabled={enviandoResposta}
-            className="ml-2 p-1 h-8"
-            title="Atualizar histórico"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
-            </svg>
-          </Button>
-        </div>
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+      <Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', mb: 2 }}>
         <ControleNotificacoes />
-      </div>
+      </Box>
       
       {isAdmin && (
-        <div className="mb-4">
-          {/* <h3 className="text-sm font-medium mb-2">Filtros:</h3> */}
+        <Box sx={{ mb: 3 }}>
           <ClienteSelector 
             onClienteSelecionado={handleClienteSelecionado}
             clienteSelecionado={clienteSelecionado}
             empresaId={clienteId} // Passar o ID da empresa atual
           />
-        </div>
+        </Box>
       )}
       
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <Grid container spacing={3}>
         {/* Lista de mensagens */}
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="font-medium">Mensagens</h3>
-              <div className="flex items-center gap-2 text-xs">
-                <span className="flex items-center gap-1">
-                  <span className="w-3 h-3 rounded-full bg-yellow-400"></span>
-                  Resposta manual
-                </span>
-                <span className="flex items-center gap-1">
-                  <span className="w-3 h-3 rounded-full bg-green-400"></span>
-                  Resposta automática
-                </span>
-              </div>
-            </div>
+        <Grid item xs={12} md={6}>
+          <Card>
+            <CardContent sx={{ pt: 3 }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                <Typography variant="subtitle1" sx={{ fontWeight: 'medium' }}>Mensagens</Typography>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Box sx={{ width: 12, height: 12, borderRadius: '50%', bgcolor: 'warning.main' }}></Box>
+                    <Typography variant="caption">Resposta manual</Typography>
+                  </Box>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Box sx={{ width: 12, height: 12, borderRadius: '50%', bgcolor: 'success.main' }}></Box>
+                    <Typography variant="caption">Resposta automática</Typography>
+                  </Box>
+                </Box>
+              </Box>
             
-            {mensagens.length === 0 ? (
-              <p className="text-gray-500 text-center py-4">Nenhuma mensagem encontrada</p>
-            ) : (
-              <div className="flex flex-col">
-                <div className="max-h-[500px] overflow-y-auto">
-                  <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
-                    <h4 className="font-medium text-blue-800 mb-2 flex items-center gap-2">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <circle cx="12" cy="12" r="10"></circle>
-                        <line x1="12" y1="16" x2="12" y2="12"></line>
-                        <line x1="12" y1="8" x2="12.01" y2="8"></line>
-                      </svg>
-                      Como usar o modo bot
-                    </h4>
-                    <p className="text-sm text-blue-700">
-                      Você pode ativar ou desativar o modo bot para cada contato usando o botão de toggle. 
-                      Quando o modo bot está desativado, as mensagens desse contato não serão respondidas automaticamente pela IA.
-                    </p>
-                  </div>
-                  <MensagemGrupo 
-                    mensagens={clienteFinalSelecionado 
-                      ? mensagens.filter(msg => msg.cliente_final_id === clienteFinalSelecionado)
-                      : mensagens
-                    }
-                    clienteId={clienteSelecionado}
-                    onMensagemSelecionada={setMensagemSelecionada}
-                    mensagemSelecionada={mensagemSelecionada}
-                    showBotToggle={true}
-                  />
-                </div>
-                
-                {/* Botão para carregar mais mensagens */}
-                {onCarregarMais && mensagens.length < totalMensagens && (
-                  <div className="mt-4 text-center">
-                    <Button 
-                      variant="outline" 
-                      onClick={onCarregarMais}
-                      disabled={carregandoMais}
-                      className="w-full"
-                    >
-                      {carregandoMais ? "Carregando..." : `Carregar mais (${mensagens.length} de ${totalMensagens})`}
-                    </Button>
-                  </div>
-                )}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+              {mensagens.length === 0 ? (
+                <Typography color="text.secondary" align="center" sx={{ py: 2 }}>Nenhuma mensagem encontrada</Typography>
+              ) : (
+                <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+                  <Box sx={{ maxHeight: 500, overflowY: 'auto' }}>
+                    <Paper variant="outlined" sx={{ mb: 2, p: 2, bgcolor: 'info.light', borderColor: 'info.main' }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <circle cx="12" cy="12" r="10"></circle>
+                          <line x1="12" y1="16" x2="12" y2="12"></line>
+                          <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                        </svg>
+                        <Typography variant="subtitle2" color="info.dark">Como usar o modo bot</Typography>
+                      </Box>
+                      <Typography variant="body2" color="info.dark">
+                        Você pode ativar ou desativar o modo bot para cada contato usando o botão de toggle. 
+                        Quando o modo bot está desativado, as mensagens desse contato não serão respondidas automaticamente pela IA.
+                      </Typography>
+                    </Paper>
+                    <MensagemGrupo 
+                      mensagens={mensagens}
+                      clienteId={clienteSelecionado}
+                      onMensagemSelecionada={setMensagemSelecionada}
+                      mensagemSelecionada={mensagemSelecionada}
+                      showBotToggle={true}
+                    />
+                  </Box>
+                  
+                  {/* Botão para carregar mais mensagens */}
+                  {onCarregarMais && mensagens.length < totalMensagens && (
+                    <Box sx={{ mt: 2, textAlign: 'center' }}>
+                      <Button 
+                        variant="outlined" 
+                        onClick={onCarregarMais}
+                        disabled={carregandoMais}
+                        fullWidth
+                        startIcon={carregandoMais ? <CircularProgress size={16} /> : null}
+                      >
+                        {carregandoMais ? "Carregando..." : `Carregar mais (${mensagens.length} de ${totalMensagens})`}
+                      </Button>
+                    </Box>
+                  )}
+                </Box>
+              )}
+            </CardContent>
+          </Card>
+        </Grid>
         
         {/* Área de resposta */}
-        <Card>
-          <CardContent className="pt-6">
-            <h3 className="font-medium mb-4">Responder ao Cliente</h3>
-            
-            {!mensagemSelecionada ? (
-              <p className="text-center py-8 text-gray-500">Selecione uma mensagem para responder</p>
-            ) : (
-              <div className="space-y-4">
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  {(() => {
-                    const msgSelecionada = mensagens.find(m => m.id === mensagemSelecionada);
-                    if (!msgSelecionada) return null;
-                    
-                    const numeroClienteFinal = getNumeroClienteFinal(msgSelecionada);
-                    
-                    return (
-                      <>
-                        <div className="mb-3 pb-2 border-b border-gray-200">
-                          {/* Informações do cliente final */}
-                          <div>
-                            <h4 className="font-medium text-green-600">
-                              {msgSelecionada.nome_cliente_final}
-                            </h4>
-                            {numeroClienteFinal && (
-                              <p className="text-sm text-gray-600">
-                                WhatsApp: {numeroClienteFinal}
-                              </p>
-                            )}
-                          </div>
-                        </div>
-                        <h4 className="font-medium mb-2">Mensagem:</h4>
-                        <FormattedText 
-                          text={msgSelecionada?.pergunta || 'Mensagem sem conteúdo'}
-                          type="received"
-                          className="mb-3"
-                        />
-                        
-                        {msgSelecionada?.resposta && (
-                          <div className="mt-4 text-sm">
-                            <h4 className="font-medium">Resposta da IA:</h4>
-                            <FormattedText 
-                              text={msgSelecionada.resposta}
-                              type="ai"
-                              className="mt-1"
-                            />
-                          </div>
-                        )}
-                      </>
-                    );
-                  })()}
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium mb-2">
-                    Sua resposta:
-                  </label>
-                  <textarea
-                    className="w-full border rounded-md p-2 min-h-[150px]"
-                    value={resposta}
-                    onChange={(e) => setResposta(e.target.value)}
-                    placeholder="Digite sua resposta aqui..."
-                  />
-                </div>
-                
-                <div className="flex justify-end gap-2">
-                  <Button 
-                    variant="outline" 
-                    onClick={() => {
-                      setMensagemSelecionada(null);
-                      setResposta('');
-                    }}
-                  >
-                    Cancelar
-                  </Button>
-                  <Button 
-                    onClick={enviarRespostaHumana}
-                    disabled={enviandoResposta || !resposta.trim()}
-                  >
-                    {enviandoResposta ? 'Enviando...' : 'Enviar Resposta'}
-                  </Button>
-                </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-    </div>
+        <Grid item xs={12} md={6}>
+          <Card>
+            <CardContent sx={{ pt: 3 }}>
+              <Typography variant="subtitle1" sx={{ fontWeight: 'medium', mb: 2 }}>Responder ao Cliente</Typography>
+              
+              {!mensagemSelecionada ? (
+                <Typography color="text.secondary" align="center" sx={{ py: 4 }}>Selecione uma mensagem para responder</Typography>
+              ) : (
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                  <Paper variant="outlined" sx={{ p: 2, bgcolor: '#f9f9f9' }}>
+                    {(() => {
+                      const msgSelecionada = mensagens.find(m => m.id === mensagemSelecionada);
+                      if (!msgSelecionada) return null;
+                      
+                      const numeroClienteFinal = getNumeroClienteFinal(msgSelecionada);
+                      
+                      return (
+                        <>
+                          <Box sx={{ mb: 2, pb: 1, borderBottom: 1, borderColor: 'divider' }}>
+                            {/* Informações do cliente final */}
+                            <Box>
+                              <Typography variant="subtitle2" color="success.main" sx={{ fontWeight: 'medium' }}>
+                                {msgSelecionada.nome_cliente_final}
+                              </Typography>
+                              {numeroClienteFinal && (
+                                <Typography variant="body2" color="text.secondary">
+                                  WhatsApp: {numeroClienteFinal}
+                                </Typography>
+                              )}
+                            </Box>
+                          </Box>
+                          <Typography variant="subtitle2" sx={{ mb: 1 }}>Mensagem:</Typography>
+                          <FormattedText 
+                            text={msgSelecionada?.pergunta || 'Mensagem sem conteúdo'}
+                            type="received"
+                            component="div"
+                          />
+                          
+                          {msgSelecionada?.resposta && (
+                            <Box sx={{ mt: 2 }}>
+                              <Typography variant="subtitle2" sx={{ mb: 1 }}>Resposta da IA:</Typography>
+                              <FormattedText 
+                                text={msgSelecionada.resposta}
+                                type="ai"
+                                component="div"
+                              />
+                            </Box>
+                          )}
+                        </>
+                      );
+                    })()}
+                  </Paper>
+                  
+                  <Box sx={{ mt: 2 }}>
+                    <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                      Sua resposta:
+                    </Typography>
+                    <TextField
+                      fullWidth
+                      multiline
+                      rows={6}
+                      value={resposta}
+                      onChange={(e) => setResposta(e.target.value)}
+                      placeholder="Digite sua resposta aqui..."
+                      variant="outlined"
+                    />
+                  </Box>
+                  
+                  <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1, mt: 2 }}>
+                    <Button 
+                      variant="outlined" 
+                      onClick={() => {
+                        setMensagemSelecionada(null);
+                        setResposta('');
+                      }}
+                    >
+                      Cancelar
+                    </Button>
+                    <Button 
+                      variant="contained"
+                      color="primary"
+                      onClick={enviarRespostaHumana}
+                      disabled={enviandoResposta || !resposta.trim()}
+                      startIcon={enviandoResposta ? <CircularProgress size={16} color="inherit" /> : null}
+                    >
+                      {enviandoResposta ? 'Enviando...' : 'Enviar Resposta'}
+                    </Button>
+                  </Box>
+                </Box>
+              )}
+            </CardContent>
+          </Card>
+        </Grid>
+      </Grid>
+    </Box>
   );
 }

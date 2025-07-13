@@ -4,6 +4,15 @@ import { formatarTelefone } from '../utils';
 import FormattedText from './FormattedText';
 import ModoBotToggle from './ModoBotToggle';
 import { supabase } from '../lib/supabase';
+import { 
+  Box, 
+  Typography, 
+  Paper, 
+  Divider, 
+  Chip, 
+  Button, 
+  Stack 
+} from '@mui/material';
 
 interface MensagemGrupoProps {
   mensagens: Mensagem[];
@@ -150,15 +159,15 @@ export default function MensagemGrupo({
   };
 
   return (
-    <div className="space-y-6">
+    <Stack spacing={3}>
       {Object.entries(mensagensPorCliente).map(([clienteKey, msgs]) => (
-        <div key={clienteKey} className="border-t pt-4">
+        <Box key={clienteKey} sx={{ pt: 2, borderTop: 1, borderColor: 'divider' }}>
           {/* Cabeçalho do grupo - mostra o cliente final */}
           {msgs[0] && (() => {
             const numeroFormatado = formatarTelefone(msgs[0].numero_destino ?? "");
             return (
-              <div className="flex justify-between items-center mb-2">
-                <h3 className="font-bold text-green-600">
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                <Typography variant="subtitle1" color="success.main" sx={{ fontWeight: 'bold' }}>
                   {msgs[0].nome_cliente_final && msgs[0].nome_cliente_final !== 'Usuário final' ? (
                     <>
                       {msgs[0].nome_cliente_final}
@@ -175,170 +184,207 @@ export default function MensagemGrupo({
                           'Não informado'}
                     </>
                   )}
-                </h3>
+                </Typography>
                 
                 {/* Toggle de modo bot */}
                 {showBotToggle && msgs[0].cliente_final_id && clientesFinaisInfo[msgs[0].cliente_final_id] && (
-                  <div className="flex items-center gap-2">
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                     {!clientesFinaisInfo[msgs[0].cliente_final_id].modo ? (
-                      <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full flex items-center gap-1">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <circle cx="12" cy="12" r="10"></circle>
-                          <line x1="12" y1="8" x2="12" y2="12"></line>
-                          <line x1="12" y1="16" x2="12.01" y2="16"></line>
-                        </svg>
-                        Resposta manual
-                      </span>
+                      <Chip 
+                        size="small"
+                        color="warning"
+                        label={<Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="12" y1="8" x2="12" y2="12"></line>
+                            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                          </svg>
+                          Resposta manual
+                        </Box>}
+                        variant="outlined"
+                      />
                     ) : (
-                      <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full flex items-center gap-1">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-                          <polyline points="22 4 12 14.01 9 11.01"></polyline>
-                        </svg>
-                        Bot ativo
-                      </span>
+                      <Chip 
+                        size="small"
+                        color="success"
+                        label={<Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                            <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                          </svg>
+                          Bot ativo
+                        </Box>}
+                        variant="outlined"
+                      />
                     )}
                     <ModoBotToggle
                       clienteFinalId={msgs[0].cliente_final_id}
                       modoBotAtivo={clientesFinaisInfo[msgs[0].cliente_final_id].modo}
                     />
-                  </div>
+                  </Box>
                 )}
-              </div>
+              </Box>
             );
           })()}
           
-          <div className="space-y-3">
+          <Stack spacing={2}>
             {msgs.map((msg) => (
-              <div 
+              <Paper 
                 key={msg.id}
-                className={`border p-4 rounded-lg cursor-pointer transition-colors ${
-                  mensagemSelecionada === msg.id ? 'bg-blue-50 border-blue-300' : 'hover:bg-gray-50'
-                } ${novasMensagens[msg.id] ? 'new-message-highlight' : ''}`}
+                variant="outlined"
+                sx={{
+                  p: 2, 
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                  bgcolor: mensagemSelecionada === msg.id ? 'primary.light' : 'background.paper',
+                  borderColor: mensagemSelecionada === msg.id ? 'primary.main' : 'divider',
+                  '&:hover': { bgcolor: mensagemSelecionada === msg.id ? 'primary.light' : 'action.hover' },
+                  ...(novasMensagens[msg.id] ? { boxShadow: '0 0 0 2px #4caf50' } : {})
+                }}
                 onClick={() => onMensagemSelecionada(msg.id)}
               >
-                <div className="flex flex-col gap-1 mb-2">
-                  <div className="flex justify-between items-start">
-                    <span className="font-medium">
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, mb: 2 }}>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                    <Typography variant="body1" sx={{ fontWeight: 'medium' }}>
                       {msg.pergunta ? (
                         msg.pergunta.length > 50 && expandedMessage !== msg.id.toString() ? (
                           <>
-                            <FormattedText text={msg.pergunta.substring(0, 50)} />
+                            <FormattedText text={msg.pergunta.substring(0, 50)} component="span" />
                             <span>...</span>
-                            <button 
-                              className="text-blue-500 ml-2 text-sm"
+                            <Button 
+                              variant="text" 
+                              color="primary" 
+                              size="small"
+                              sx={{ ml: 1, minWidth: 'auto', p: 0 }}
                               onClick={(e) => {
                                 e.stopPropagation();
                                 setExpandedMessage(msg.id.toString());
                               }}
                             >
                               Ver mais
-                            </button>
+                            </Button>
                           </>
                         ) : (
                           <>
-                            <FormattedText text={msg.pergunta} />
+                            <FormattedText text={msg.pergunta} component="span" />
                             {expandedMessage === msg.id.toString() && (
-                              <button 
-                                className="text-blue-500 ml-2 text-sm"
+                              <Button 
+                                variant="text" 
+                                color="primary" 
+                                size="small"
+                                sx={{ ml: 1, minWidth: 'auto', p: 0 }}
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   setExpandedMessage(null);
                                 }}
                               >
                                 Ver menos
-                              </button>
+                              </Button>
                             )}
                           </>
                         )
                       ) : (
                         "Mensagem recebida"
                       )}
-                    </span>
-                    <span className="text-xs text-gray-500">
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
                       {formatDate(msg.timestamp)}
-                    </span>
-                  </div>
-                </div>
+                    </Typography>
+                  </Box>
+                </Box>
                 
                 {msg.resposta && (
-                  <div className="mt-2 text-sm text-gray-700 bg-gray-50 p-2 rounded">
-                    <strong>Resposta IA:</strong> {
-                      msg.resposta.length > 100 && expandedMessage !== `${msg.id}-resp` ? (
+                  <Box sx={{ mt: 2, p: 1.5, bgcolor: 'grey.100', borderRadius: 1 }}>
+                    <Typography variant="body2" color="text.secondary">
+                      <Box component="span" sx={{ fontWeight: 'bold' }}>Resposta IA:</Box>{' '}
+                      {msg.resposta.length > 100 && expandedMessage !== `${msg.id}-resp` ? (
                         <>
-                          <FormattedText text={msg.resposta.substring(0, 100)} />
+                          <FormattedText text={msg.resposta.substring(0, 100)} component="span" />
                           <span>...</span>
-                          <button 
-                            className="text-blue-500 ml-2 text-sm"
+                          <Button 
+                            variant="text" 
+                            color="primary" 
+                            size="small"
+                            sx={{ ml: 1, minWidth: 'auto', p: 0 }}
                             onClick={(e) => {
                               e.stopPropagation();
                               setExpandedMessage(`${msg.id}-resp`);
                             }}
                           >
                             Ver mais
-                          </button>
+                          </Button>
                         </>
                       ) : (
                         <>
-                          <FormattedText text={msg.resposta} />
+                          <FormattedText text={msg.resposta} component="span" />
                           {expandedMessage === `${msg.id}-resp` && (
-                            <button 
-                              className="text-blue-500 ml-2 text-sm"
+                            <Button 
+                              variant="text" 
+                              color="primary" 
+                              size="small"
+                              sx={{ ml: 1, minWidth: 'auto', p: 0 }}
                               onClick={(e) => {
                                 e.stopPropagation();
                                 setExpandedMessage(null);
                               }}
                             >
                               Ver menos
-                            </button>
+                            </Button>
                           )}
                         </>
-                      )
-                    }
-                  </div>
+                      )}
+                    </Typography>
+                  </Box>
                 )}
                 
                 {msg.resposta_humana && (
-                  <div className="mt-2 text-sm text-green-700 bg-green-50 p-2 rounded">
-                    <strong>Resposta Humana:</strong> {
-                      msg.resposta_humana.length > 100 && expandedMessage !== `${msg.id}-human` ? (
+                  <Box sx={{ mt: 2, p: 1.5, bgcolor: 'success.light', borderRadius: 1 }}>
+                    <Typography variant="body2" color="success.dark">
+                      <Box component="span" sx={{ fontWeight: 'bold' }}>Resposta Humana:</Box>{' '}
+                      {msg.resposta_humana.length > 100 && expandedMessage !== `${msg.id}-human` ? (
                         <>
-                          <FormattedText text={msg.resposta_humana.substring(0, 100)} />
+                          <FormattedText text={msg.resposta_humana.substring(0, 100)} component="span" />
                           <span>...</span>
-                          <button 
-                            className="text-blue-500 ml-2 text-sm"
+                          <Button 
+                            variant="text" 
+                            color="primary" 
+                            size="small"
+                            sx={{ ml: 1, minWidth: 'auto', p: 0 }}
                             onClick={(e) => {
                               e.stopPropagation();
                               setExpandedMessage(`${msg.id}-human`);
                             }}
                           >
                             Ver mais
-                          </button>
+                          </Button>
                         </>
                       ) : (
                         <>
-                          <FormattedText text={msg.resposta_humana} />
+                          <FormattedText text={msg.resposta_humana} component="span" />
                           {expandedMessage === `${msg.id}-human` && (
-                            <button 
-                              className="text-blue-500 ml-2 text-sm"
+                            <Button 
+                              variant="text" 
+                              color="primary" 
+                              size="small"
+                              sx={{ ml: 1, minWidth: 'auto', p: 0 }}
                               onClick={(e) => {
                                 e.stopPropagation();
                                 setExpandedMessage(null);
                               }}
                             >
                               Ver menos
-                            </button>
+                            </Button>
                           )}
                         </>
-                      )
-                    }
-                  </div>
+                      )}
+                    </Typography>
+                  </Box>
                 )}
-              </div>
+              </Paper>
             ))}
-          </div>
-        </div>
+          </Stack>
+        </Box>
       ))}
-    </div>
+    </Stack>
   );
 }

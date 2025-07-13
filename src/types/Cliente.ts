@@ -2,6 +2,7 @@
  * Interface para o cliente
  */
 export interface Cliente {
+  modo_bot: boolean;
   id: string | number;
   nome: string;
   plano: string;
@@ -14,4 +15,5 @@ export interface Cliente {
   token_publico?: string;
   user_id?: string;
   senha_acesso?: string;
+  modo: string;
 }
