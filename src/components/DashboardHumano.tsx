@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
-import { Link } from 'react-router-dom';
+import Link from 'next/link';
 import { Button } from './ui/button';
 import { Card, CardContent } from './ui/card';
 import { ToastContainer, toast } from 'react-toastify';
@@ -93,7 +93,7 @@ export default function DashboardHumano() {
               Você tem acesso a todos os clientes cadastrados no sistema.
             </p>
             <div className="flex gap-2">
-              <Link to="/painel">
+              <Link href="/painel" passHref>
                 <Button variant="outline">
                   Voltar ao Painel Principal
                 </Button>

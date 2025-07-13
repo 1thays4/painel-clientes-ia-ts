@@ -2,6 +2,7 @@ import { supabase } from '../lib/supabase';
 import { config } from '../config';
 import { setupAuthHeaders } from '../lib/authHeaders';
 import { Cliente } from '../types/Cliente';
+import api from './api';
 
 // Interface Cliente importada de ../types/Cliente
 
@@ -109,16 +110,7 @@ export async function buscarClientePorToken(token: string): Promise<Cliente | nu
       
       if (errorCriacao) {
         console.error("Erro ao criar cliente automático:", errorCriacao);
-        // Fallback para cliente de demonstração se não conseguir criar
-       /*  return {
-          id: "demo-" + Date.now(),
-          nome: "Cliente Demonstração",
-          plano: "essencial",
-          data_cadastro: new Date().toISOString(),
-          mensagens_limite: config.planos.essencial.limite,
-          mensagens_usadas: 0,
-          token_publico: token
-        }; */
+        return null;
       }
       
       console.log("Cliente criado automaticamente:", clienteCriado);
@@ -136,6 +128,18 @@ export async function buscarClientePorToken(token: string): Promise<Cliente | nu
     return cliente;
   } catch (error) {
     console.error("Erro ao buscar cliente:", error);
+    return null;
+  }
+}
+
+// Buscar cliente pelo número de WhatsApp
+export async function buscarClientePorWhatsApp(whatsapp: string): Promise<Cliente | null> {
+  try {
+    // Usar a nova API route para buscar cliente por WhatsApp
+    const response = await api.get(`/cliente/whatsapp?whatsapp=${whatsapp}`);
+    return response.data;
+  } catch (error) {
+    console.error("Erro ao buscar cliente por WhatsApp:", error);
     return null;
   }
 }
@@ -169,7 +173,7 @@ export async function atualizarCliente(
 }
 
 // Buscar histórico de mensagens do cliente
-export async function buscarHistoricoMensagens(this: any, clienteId: string | number | null, limite: number = 200, offset: number = 0): Promise<Mensagem[]> {
+export async function buscarHistoricoMensagens(clienteId: string | number | null, limite: number = 200, offset: number = 0): Promise<Mensagem[]> {
   // Configurar o token do cliente nos cabeçalhos
   setupAuthHeaders();
   try {
@@ -251,8 +255,6 @@ export async function buscarHistoricoMensagens(this: any, clienteId: string | nu
       const clienteFinaisIds = Array.from(new Set(data
         .map((msg: { cliente_final_id: any; }) => msg.cliente_final_id)
         .filter(Boolean)));
-
-    
       
       // Buscar informações dos clientes finais
       clientesFinaisData = await buscarClientesFinais(); 
@@ -268,7 +270,6 @@ export async function buscarHistoricoMensagens(this: any, clienteId: string | nu
       
       // Verificar se há dados
       console.log(`Encontrados ${clientesFinaisData.length} clientes finais`);
-
       
       // Formatar os dados para corresponder à interface Mensagem
       const mensagensFormatadas = data.map((msg: { 
@@ -411,7 +412,6 @@ export async function buscarClientesFinais(): Promise<any[]> {
       
       if (altError) {
         console.error('Erro ao buscar cliente_final:', altError);
-
         
         // Tentar criar a tabela se ela não existir
         if (altError.code === '42P01') { // Tabela não existe

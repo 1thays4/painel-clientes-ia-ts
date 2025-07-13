@@ -28,7 +28,7 @@ import {
   Logout,
   AccountCircle
 } from '@mui/icons-material';
-import { useNavigate } from 'react-router-dom';
+import { useRouter } from 'next/router';
 import { useAuth } from '../../contexts/AuthContext';
 
 interface MuiLayoutProps {
@@ -43,7 +43,7 @@ const MuiLayout: React.FC<MuiLayoutProps> = ({ children, title }) => {
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const [drawerOpen, setDrawerOpen] = useState(!isMobile);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-  const navigate = useNavigate();
+  const router = useRouter();
   const { signOut, user } = useAuth();
 
   const handleDrawerToggle = () => {
@@ -60,11 +60,12 @@ const MuiLayout: React.FC<MuiLayoutProps> = ({ children, title }) => {
 
   const handleLogout = async () => {
     await signOut();
-    navigate('/login');
+    sessionStorage.removeItem('lastRedirect');
+    router.push('/login');
   };
 
   const menuItems = [
-    { text: 'Dashboard', icon: <Dashboard />, path: '/' },
+    { text: 'Dashboard', icon: <Dashboard />, path: '/painel' },
     { text: 'Atendimento Humano', icon: <People />, path: '/atendimento-humano' },
     { text: 'Diagnóstico', icon: <Message />, path: '/diagnostico' },
   ];
@@ -82,7 +83,7 @@ const MuiLayout: React.FC<MuiLayoutProps> = ({ children, title }) => {
           <ListItem 
             key={item.text} 
             button={true as any}
-            onClick={() => navigate(item.path)}
+            onClick={() => router.push(item.path)}
             sx={{
               '&:hover': {
                 backgroundColor: 'rgba(25, 118, 210, 0.08)',

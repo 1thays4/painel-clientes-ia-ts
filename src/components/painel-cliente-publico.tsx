@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { useRouter } from "next/router";
 import { Card, CardContent } from "./ui/card";
 import TestarIA from "./TestarIA";
 import { contarMensagensMes } from "../services/mensagens";
@@ -19,7 +19,8 @@ interface Cliente {
 }
 
 export default function PainelClientePublico() {
-  const { token } = useParams<{ token: string }>();
+  const router = useRouter();
+  const { token } = router.query;
   const [cliente, setCliente] = useState<Cliente | null>(null);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState<string | null>(null);

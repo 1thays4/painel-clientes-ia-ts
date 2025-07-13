@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { useRouter } from 'next/router';
 import { supabase } from '../lib/supabase';
 
 type User = any;
@@ -21,6 +22,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
+  const router = useRouter();
+  const [initialized, setInitialized] = useState(false);
 
   useEffect(() => {
     // Verificar sessão atual
@@ -31,16 +34,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (error) {
           console.error('Erro ao obter sessão:', error);
           setLoading(false);
+          setInitialized(true);
           return;
         }
         
         setSession(session);
         
         if (session?.user) {
+          console.log('Usuário autenticado:', session.user);
           setUser(session.user);
-          // Simplificando: todos os usuários são considerados admin por enquanto
-          setIsAdmin(true);
-        } else {
+          const isAdminUser = session.user.email?.endsWith('@gmail.com');
+          setIsAdmin(!!isAdminUser);
+          } else {
+          console.log('Nenhum usuário autenticado');
           setUser(null);
           setIsAdmin(false);
         }
@@ -48,6 +54,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         console.error('Erro ao verificar sessão:', error);
       } finally {
         setLoading(false);
+        setInitialized(true);
       }
     };
 
@@ -55,16 +62,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     // Configurar listener para mudanças de autenticação
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event: any, session: any) => {
+      async (event: string, session: { user: { email: string; }; }) => {
+        console.log('Auth state changed:', event, session?.user?.email);
+        
         setSession(session);
         
         if (session?.user) {
           setUser(session.user);
-          // Simplificando: todos os usuários são considerados admin por enquanto
-          setIsAdmin(true);
+          // Exemplo: admin se email termina com @seudominio.com
+          const isAdminUser = session.user.email?.endsWith('@gmail.com');
+          setIsAdmin(!!isAdminUser);
+          
         } else {
           setUser(null);
           setIsAdmin(false);
+          
+          // Redirecionar para login se não estiver autenticado
+          if (event === 'SIGNED_OUT' && router.pathname !== '/login') {
+            console.log('Redirecionando para login após logout');
+            router.push('/login');
+          }
         }
         
         setLoading(false);
@@ -74,16 +91,46 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => {
       subscription.unsubscribe();
     };
-  }, []);
+  }, [router.pathname]);
+
+  // Efeito para redirecionar com base no estado de autenticação
+  useEffect(() => {
+  if (!initialized || loading) return;
+
+  const publicPages = [
+    '/login', '/auth/callback', '/login-alternativo', '/login-simples',
+    '/login-direto', '/login-basico', '/teste-auth'
+  ];
+  const isPublicPage = publicPages.includes(router.pathname);
+
+  if (!user && !isPublicPage) {
+    if (router.pathname !== '/login') router.replace('/login');
+    return;
+  }
+
+  if (user && isPublicPage && router.pathname !== '/auth/callback') {
+    const isAdminUser = user.email?.endsWith('@gmail.com');
+    const destino = isAdminUser ? '/painel' : '/';
+    console.log('Redirecionando:', { email: user.email, isAdminUser, destino, pathname: router.pathname });
+    if (router.pathname !== destino) {
+      router.replace(destino);
+    }
+  }
+}, [user, loading, initialized, router.pathname]);
 
   const signIn = async (email: string, password: string) => {
     try {
+      console.log('Tentando login com:', email);
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       
       if (!error && data.user) {
+        console.log('Login bem-sucedido:', data.user.email);
         setUser(data.user);
         setSession(data.session);
-        setIsAdmin(true); // Simplificando: todos os usuários são considerados admin
+        const isAdminUser = data.user.email?.endsWith('@gmail.com');
+        setIsAdmin(!!isAdminUser);
+      } else {
+        console.error('Erro no login:', error);
       }
       
       return { error };
@@ -95,22 +142,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signInWithMagicLink = async (email: string) => {
     try {
+      let redirectTo = '';
+      if (typeof window !== 'undefined') {
+        redirectTo = `${window.location.origin}/auth/callback`;
+      }
+      
+      console.log('Enviando link mágico para:', email);
       const { error } = await supabase.auth.signInWithOtp({
         email,
         options: {
-          emailRedirectTo: window.location.origin,
+          emailRedirectTo: redirectTo,
         }
       });
       
+      if (error) {
+        console.error('Erro ao enviar link mágico:', error);
+      } else {
+        console.log('Link mágico enviado com sucesso');
+      }
+      
       return { error };
     } catch (error) {
-      console.error('Erro ao enviar magic link:', error);
+      console.error('Erro ao enviar link mágico:', error);
       return { error: error as any };
     }
   };
 
   const signOut = async () => {
     try {
+      console.log('Fazendo logout');
       await supabase.auth.signOut();
       setUser(null);
       setSession(null);

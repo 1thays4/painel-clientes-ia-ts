@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useRouter } from "next/router";
 import { ToastContainer, toast } from "react-toastify";
 import { supabase } from "../lib/supabase";
 import { saveClientToken, logAccess } from "../lib/tokenManager";
@@ -22,11 +22,11 @@ import {
 import { Lock } from '@mui/icons-material';
 
 export default function ClienteLogin() {
-  const { token } = useParams<{ token: string }>();
+  const router = useRouter();
+  const { token } = router.query;
   const [senha, setSenha] = useState("");
   const [loading, setLoading] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
-  const navigate = useNavigate();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -77,7 +77,7 @@ export default function ClienteLogin() {
       }
       
       // Redirecionar para o painel do cliente
-      navigate(`/cliente/${token}`);
+      router.push(`/cliente/${token}`);
       
     } catch (error) {
       console.error("Erro ao fazer login:", error);

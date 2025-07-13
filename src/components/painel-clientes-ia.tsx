@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
-import { Link } from 'react-router-dom';
+import Link from 'next/link';
 import GerenciarSenhaCliente from './GerenciarSenhaCliente';
 import { ToastContainer, toast } from 'react-toastify';
 import AdicionarCliente from './AdicionarCliente';
@@ -51,6 +51,7 @@ interface Cliente {
 }
 
 export default function PainelClientesIA() {
+  console.log('Renderizando PainelClientesIA');
   const [clientes, setClientes] = useState<Cliente[]>([]);
   const [carregando, setCarregando] = useState(true);
   const [mostrarFormulario, setMostrarFormulario] = useState(false);
@@ -265,15 +266,15 @@ export default function PainelClientesIA() {
                       </Box>
                       <Divider sx={{ my: 2 }} />
                       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                        <Button 
-                          variant="contained" 
-                          component={Link} 
-                          to={`/cliente-login/${cliente.token_publico || cliente.id}`}
-                          startIcon={<VisibilityIcon />}
-                          fullWidth
-                        >
-                          Ver Painel
-                        </Button>
+                        <Link href={`/cliente-login/${cliente.token_publico || cliente.id}`} passHref>
+                          <Button 
+                            variant="contained" 
+                            startIcon={<VisibilityIcon />}
+                            fullWidth
+                          >
+                            Ver Painel
+                          </Button>
+                        </Link>
                         <Button 
                           variant="outlined" 
                           startIcon={<ContentCopyIcon />}

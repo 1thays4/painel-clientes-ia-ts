@@ -3,7 +3,7 @@ import { Card, CardContent } from "./ui/card";
 import { Input } from "./ui/input";
 import { Button } from "./ui/button";
 import { ToastContainer, toast } from "react-toastify";
-import { useNavigate } from "react-router-dom";
+import { useRouter } from "next/router";
 import { supabase } from "../lib/supabase";
 import { criarCliente } from "../services/cliente";
 import "react-toastify/dist/ReactToastify.css";
@@ -14,7 +14,7 @@ export default function Registro() {
   const [password, setPassword] = useState("");
   const [whatsapp, setWhatsapp] = useState("");
   const [loading, setLoading] = useState(false);
-  const navigate = useNavigate();
+  const router = useRouter();
 
   const handleRegistro = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -68,7 +68,7 @@ export default function Registro() {
       
       // 4. Redirecionar para login após um breve delay
       setTimeout(() => {
-        navigate("/login");
+        router.push("/login");
       }, 2000);
       
     } catch (error) {
@@ -139,7 +139,7 @@ export default function Registro() {
                 className="text-blue-600 hover:underline"
                 onClick={(e) => {
                   e.preventDefault();
-                  navigate("/login");
+                  router.push("/login");
                 }}
               >
                 Faça login

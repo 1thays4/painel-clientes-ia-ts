@@ -183,7 +183,7 @@ export default function StatusModoBotCliente({ clienteId }: StatusModoBotCliente
               </div>
               <ModoBotToggle 
                 clienteFinalId={cliente.id}
-                modoBotAtivo={cliente.modo}
+                modoBotAtivo={cliente.modo === false ? false : true}
                 onToggle={(novoEstado) => handleToggle(cliente.id, novoEstado)}
               />
             </div>

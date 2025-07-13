@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useRouter } from "next/router";
 import { contarMensagensMes } from "../services/mensagens";
 import { ToastContainer, toast } from "react-toastify";
 import { autenticarCliente } from "../services/authService";
@@ -50,9 +50,10 @@ import {
   ArrowUpward as ArrowUpwardIcon
 } from '@mui/icons-material';
 
-export default function PainelCliente() {
-  const { token } = useParams<{ token: string }>();
-  const navigate = useNavigate();
+export default function PainelCliente({ token }: { token?: string }) {
+  const router = useRouter();
+  const tokenFromRouter = router.query.token as string || token;
+  
   const [cliente, setCliente] = useState<Cliente | null>(null);
   const [mensagens, setMensagens] = useState<Mensagem[]>([]);
   const [carregando, setCarregando] = useState(true);
@@ -74,13 +75,13 @@ export default function PainelCliente() {
         // Tentar renovar o token
         if (!refreshToken()) {
           // Redirecionar para login se não conseguir renovar
-          navigate(`/cliente-login/${token}`);
+          router.push(`/cliente-login/${tokenFromRouter}`);
         }
       }
     }, 60000); // Verificar a cada minuto
     
     return () => clearInterval(checkTokenInterval);
-  }, [token, navigate]);
+  }, [tokenFromRouter, router]);
 
   // Referências para os canais de assinatura
   const mensagensChannelRef = useRef<any>(null);
@@ -103,7 +104,7 @@ export default function PainelCliente() {
     limparAssinaturas();
 
     const carregarDados = async () => {
-      if (!token) {
+      if (!tokenFromRouter) {
         setErro("Token inválido");
         setCarregando(false);
         return;
@@ -112,9 +113,9 @@ export default function PainelCliente() {
       // Verificar se o cliente está autenticado
       const clienteToken = getClientToken();
       
-      if (!clienteToken || clienteToken !== token || !isTokenValid()) {
+      if (!clienteToken || clienteToken !== tokenFromRouter || !isTokenValid()) {
         // Redirecionar para a página de login do cliente
-        navigate(`/cliente-login/${token}`);
+        router.push(`/cliente-login/${tokenFromRouter}`);
         return;
       }
       
@@ -124,10 +125,10 @@ export default function PainelCliente() {
       }
 
       try {
-        console.log("Carregando dados para token:", token);
+        console.log("Carregando dados para token:", tokenFromRouter);
         
         // Buscar cliente pelo token
-        const clienteData = await buscarClientePorToken(token);
+        const clienteData = await buscarClientePorToken(tokenFromRouter);
         
         if (!clienteData) {
           setErro("Cliente não encontrado. Verifique se o link está correto.");
@@ -248,571 +249,7 @@ export default function PainelCliente() {
 
     // Limpar assinaturas quando o componente for desmontado
     return limparAssinaturas;
-  }, [token]);
+  }, [tokenFromRouter]);
 
-  const atualizarHistorico = async (clienteId: number | null = null, resetarPaginacao: boolean = true) => {
-    setCarregandoHistorico(true);
-    try {
-      // Se resetar paginação, começar do zero
-      const novaPagina = resetarPaginacao ? 0 : paginaAtual;
-      const offset = novaPagina * limitePorPagina;
-      
-      console.log("Atualizando histórico para cliente:", clienteId, "com offset:", offset, "e limite:", limitePorPagina);
-      const historico = await buscarHistoricoMensagens(clienteId, limitePorPagina, offset);
-      console.log("Histórico carregado:", historico.length, "mensagens");
-      
-      // Contar total de mensagens disponíveis
-      const total = await contarTotalMensagens(clienteId);
-      setTotalMensagens(total);
-      console.log("Total de mensagens disponíveis:", total);
-      
-      // Atualizar mensagens
-      if (resetarPaginacao) {
-        setMensagens(historico);
-        setPaginaAtual(0);
-      } else {
-        setMensagens(mensagensAtuais => [...mensagensAtuais, ...historico]);
-      }
-      
-      // Atualizar também a contagem de mensagens se tiver um cliente específico
-      if (clienteId) {
-        const mensagensAtualizadas = await contarMensagensMes(clienteId);
-        setCliente(clienteAtual => {
-          if (!clienteAtual) return null;
-          return {
-            ...clienteAtual,
-            mensagens_usadas: mensagensAtualizadas
-          };
-        });
-      }
-    } catch (error) {
-      console.error("Erro ao buscar histórico:", error);
-      toast.error("Erro ao carregar mensagens");
-    } finally {
-      setCarregandoHistorico(false);
-    }
-  };
-  
-  // Função para carregar mais mensagens (paginação)
-  const carregarMaisMensagens = async () => {
-    if (!cliente || carregandoMais) return;
-    
-    setCarregandoMais(true);
-    try {
-      const proximaPagina = paginaAtual + 1;
-      const offset = proximaPagina * limitePorPagina;
-      
-      console.log("Carregando mais mensagens com offset:", offset);
-      const novasMensagens = await buscarHistoricoMensagens(cliente.id, limitePorPagina, offset);
-      
-      if (novasMensagens && novasMensagens.length > 0) {
-        console.log("Carregadas mais", novasMensagens.length, "mensagens");
-        setMensagens(mensagensAtuais => [...mensagensAtuais, ...novasMensagens]);
-        setPaginaAtual(proximaPagina);
-      } else {
-        console.log("Não há mais mensagens para carregar");
-        toast.info("Não há mais mensagens para carregar");
-      }
-    } catch (error) {
-      console.error("Erro ao carregar mais mensagens:", error);
-      toast.error("Erro ao carregar mais mensagens");
-    } finally {
-      setCarregandoMais(false);
-    }
-  };
-
-  const handleSalvarDados = async () => {
-    if (!cliente) return;
-
-    try {
-      // Validar número de WhatsApp
-      const whatsappValidado = validarWhatsApp(dadosEditados.whatsapp);
-      
-      if (dadosEditados.whatsapp && !whatsappValidado) {
-        toast.error("Número de WhatsApp inválido");
-        return;
-      }
-      
-      const sucesso = await atualizarCliente(cliente.id, {
-        nome: dadosEditados.nome,
-        whatsapp: whatsappValidado
-      });
-
-      if (!sucesso) {
-        toast.error("Erro ao salvar dados");
-        return;
-      }
-
-      setCliente({
-        ...cliente,
-        nome: dadosEditados.nome,
-        whatsapp: whatsappValidado
-      });
-
-      setEditando(false);
-      toast.success("Dados atualizados com sucesso");
-    } catch (error) {
-      toast.error("Erro ao salvar dados");
-    }
-  };
-
-  const handleUpgradePlano = () => {
-    // Abrir modal ou redirecionar para página de upgrade
-    toast.info("Entre em contato com o suporte para fazer upgrade do seu plano");
-    // Aqui poderia abrir um modal com opções de plano ou redirecionar para uma página
-  };
-
-  const renderPlanoDetalhes = () => {
-    if (!cliente) return null;
-
-    // Usar os valores da configuração para garantir consistência
-    const planoConfig = config.planos[cliente.plano as keyof typeof config.planos] || config.planos.essencial;
-
-    const getPlanoColor = () => {
-      switch (cliente?.plano) {
-        case "essencial": return "success";
-        case "Profissional": return "primary";
-        case "Estratégico": return "secondary";
-        default: return "primary";
-      }
-    };
-
-    const getPlanoBackgroundColor = () => {
-      switch (cliente?.plano) {
-        case "essencial": return "linear-gradient(135deg, #43a047 0%, #66bb6a 100%)";
-        case "Profissional": return "linear-gradient(135deg, #1976d2 0%, #42a5f5 100%)";
-        case "Estratégico": return "linear-gradient(135deg, #9c27b0 0%, #ba68c8 100%)";
-        default: return "#f5f5f5";
-      }
-    };
-
-    const renderListItem = (text: string) => (
-      <ListItem sx={{ py: 0.5 }}>
-        <ListItemIcon sx={{ minWidth: 36 }}>
-          <CheckIcon color="inherit" />
-        </ListItemIcon>
-        <ListItemText primary={text} />
-      </ListItem>
-    );
-
-    switch (cliente.plano) {
-      case "essencial":
-        return (
-          <Paper 
-            elevation={3} 
-            sx={{ 
-              mt: 3, 
-              p: 3, 
-              background: getPlanoBackgroundColor(),
-              borderRadius: 2,
-              color: 'white'
-            }}
-          >
-            <Typography variant="h6" fontWeight="600" gutterBottom>Plano Essencial</Typography>
-            <Typography variant="h4" fontWeight="700" sx={{ mb: 2 }}>
-              R$ {planoConfig.preco}/mês
-            </Typography>
-            <List dense disablePadding>
-              {renderListItem("Acesso ao assistente IA")}
-              {renderListItem(`${planoConfig.limite} mensagens por mês`)}
-              {renderListItem("Suporte por email")}
-            </List>
-            <Button 
-              variant="contained" 
-              color="inherit"
-              fullWidth
-              sx={{ mt: 3, color: '#43a047', bgcolor: 'white', '&:hover': { bgcolor: 'rgba(255,255,255,0.9)' } }}
-              onClick={handleUpgradePlano}
-              startIcon={<ArrowUpwardIcon />}
-            >
-              Fazer Upgrade
-            </Button>
-          </Paper>
-        );
-      case "Profissional":
-        return (
-          <Paper 
-            elevation={3} 
-            sx={{ 
-              mt: 3, 
-              p: 3, 
-              background: getPlanoBackgroundColor(),
-              borderRadius: 2,
-              color: 'white'
-            }}
-          >
-            <Typography variant="h6" fontWeight="600" gutterBottom>Plano Profissional</Typography>
-            <Typography variant="h4" fontWeight="700" sx={{ mb: 2 }}>
-              R$ {planoConfig.preco}/mês
-            </Typography>
-            <List dense disablePadding>
-              {renderListItem("Acesso ao assistente IA")}
-              {renderListItem(`${planoConfig.limite} mensagens por mês`)}
-              {renderListItem("Suporte por WhatsApp")}
-              {renderListItem("Acesso a modelos avançados")}
-            </List>
-            <Button 
-              variant="contained" 
-              color="inherit"
-              fullWidth
-              sx={{ mt: 3, color: '#1976d2', bgcolor: 'white', '&:hover': { bgcolor: 'rgba(255,255,255,0.9)' } }}
-              onClick={handleUpgradePlano}
-              startIcon={<ArrowUpwardIcon />}
-            >
-              Fazer Upgrade para Avançado
-            </Button>
-          </Paper>
-        );
-      case "Estratégico":
-        return (
-          <Paper 
-            elevation={3} 
-            sx={{ 
-              mt: 3, 
-              p: 3, 
-              background: getPlanoBackgroundColor(),
-              borderRadius: 2,
-              color: 'white'
-            }}
-          >
-            <Typography variant="h6" fontWeight="600" gutterBottom>Plano Estratégico</Typography>
-            <Typography variant="h4" fontWeight="700" sx={{ mb: 2 }}>
-              R$ {planoConfig.preco}/mês
-            </Typography>
-            <List dense disablePadding>
-              {renderListItem("Acesso ao assistente IA")}
-              {renderListItem(`${planoConfig.limite} mensagens por mês`)}
-              {renderListItem("Suporte prioritário 24/7")}
-              {renderListItem("Acesso a todos os modelos")}
-              {renderListItem("Personalização avançada")}
-            </List>
-          </Paper>
-        );
-      default:
-        return <Typography>Detalhes do plano não disponíveis</Typography>;
-    }
-  };
-
-  const getProgressBarColor = () => {
-    if (!cliente) {
-      return "primary";
-    }
-    
-    const mensagensUsadas = cliente.mensagens_usadas || 0;
-    const mensagensLimite = cliente.mensagens_limite || 1000;
-    
-    const percentUsed = (mensagensUsadas / mensagensLimite) * 100;
-    
-    if (percentUsed >= 100) return "error";
-    if (percentUsed >= 75) return "warning";
-    return "success";
-  };
-
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    const dia = date.getDate().toString().padStart(2, '0');
-    const mes = (date.getMonth() + 1).toString().padStart(2, '0');
-    const ano = date.getFullYear();
-    const hora = date.getHours().toString().padStart(2, '0');
-    const minutos = date.getMinutes().toString().padStart(2, '0');
-    
-    return `${dia}/${mes}/${ano} às ${hora}h${minutos}`;
-  };
-
-  if (carregando) {
-    return (
-      <Container maxWidth="md" sx={{ py: 8, textAlign: 'center' }}>
-        <CircularProgress size={60} thickness={4} />
-        <Typography variant="h6" sx={{ mt: 2 }}>Carregando informações...</Typography>
-      </Container>
-    );
-  }
-
-  if (erro) {
-    return (
-      <Container maxWidth="md" sx={{ py: 6 }}>
-        <Paper elevation={3} sx={{ p: 4, borderRadius: 2 }}>
-          <Alert severity="error" sx={{ mb: 3 }}>
-            <AlertTitle>Erro</AlertTitle>
-            {erro}
-          </Alert>
-          <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
-            <Button 
-              variant="contained" 
-              color="primary"
-              onClick={() => window.location.href = '/'}
-            >
-              Voltar ao Painel Principal
-            </Button>
-          </Box>
-        </Paper>
-      </Container>
-    );
-  }
-
-  return (
-    <Box sx={{ 
-      background: 'linear-gradient(135deg, #f5f7fa 0%, #e4e8f0 100%)',
-      minHeight: '100vh',
-      pt: 4,
-      pb: 6
-    }}>
-    <Container maxWidth="lg">
-      <ToastContainer position="top-right" autoClose={3000} />
-      
-      {/* Cabeçalho */}
-      <Paper elevation={3} sx={{ p: 3, mb: 4, borderRadius: 2, background: 'linear-gradient(135deg, #6a11cb 0%, #2575fc 100%)', color: 'white' }}>
-        <Box sx={{ mb: 3 }}>
-          {editando ? (
-            <TextField
-              fullWidth
-              variant="outlined"
-              label="Nome do cliente"
-              value={dadosEditados.nome} 
-              onChange={(e) => setDadosEditados({...dadosEditados, nome: e.target.value})}
-              placeholder="Nome do cliente"
-              sx={{ mb: 2 }}
-            />
-          ) : (
-            <Typography variant="h4" fontWeight="bold" gutterBottom>
-              Olá, {cliente?.nome && !cliente.nome.includes('+') ? 
-                cliente.nome : 
-                (cliente?.nome?.includes('+') ? 'Empresa sem nome cadastrado' : 'Cliente')}!
-            </Typography>
-          )}
-          
-          {editando ? (
-            <TextField
-              fullWidth
-              variant="outlined"
-              label="Número do WhatsApp"
-              value={dadosEditados.whatsapp} 
-              onChange={(e) => setDadosEditados({...dadosEditados, whatsapp: e.target.value})}
-              placeholder="Número do WhatsApp"
-              sx={{ mb: 2 }}
-            />
-          ) : (
-            <Typography variant="body1" color="rgba(255, 255, 255, 0.8)">
-              WhatsApp: {cliente?.whatsapp ? formatarWhatsAppParaExibicao(cliente.whatsapp) : "Não informado"}
-            </Typography>
-          )}
-          
-          {editando ? (
-            <Box sx={{ mt: 2, display: 'flex', gap: 2 }}>
-              <Button 
-                variant="contained" 
-                color="success" 
-                onClick={handleSalvarDados}
-                startIcon={<SaveIcon />}
-              >
-                Salvar
-              </Button>
-              <Button 
-                variant="outlined" 
-                color="inherit"
-                onClick={() => setEditando(false)}
-                startIcon={<CancelIcon />}
-                sx={{ borderColor: 'rgba(255,255,255,0.5)', color: 'white' }}
-              >
-                Cancelar
-              </Button>
-            </Box>
-          ) : (
-            <Button 
-              variant="contained" 
-              color="secondary"
-              startIcon={<EditIcon />}
-              onClick={() => setEditando(true)}
-              sx={{ mt: 2 }}
-            >
-              Editar dados
-            </Button>
-          )}
-        </Box>
-      </Paper>
-      
-      {/* Alerta de limite de mensagens e status de pagamento */}
-      {cliente && (
-        <Box sx={{ mb: 3 }}>
-          <AlertaLimiteMensagens 
-            mensagensUsadas={cliente.mensagens_usadas || 0}
-            mensagensLimite={cliente.mensagens_limite || 1000}
-            onUpgrade={handleUpgradePlano}
-          />
-          
-          {cliente.status_pagamento === 'pendente' && (
-            <Alert 
-              severity="warning" 
-              variant="filled"
-              sx={{ mt: 2 }}
-            >
-              <AlertTitle>Pagamento Pendente</AlertTitle>
-              Seu pagamento está pendente. Por favor, regularize para continuar utilizando todos os recursos.
-            </Alert>
-          )}
-        </Box>
-      )}
-      
-      {/* Tabs de navegação */}
-      <Paper elevation={1} sx={{ mb: 4, borderRadius: 2 }}>
-        <Tabs 
-          value={mostrarDashboard ? 0 : 1}
-          onChange={(_, newValue) => setMostrarDashboard(newValue === 0)}
-          variant="fullWidth"
-          indicatorColor="primary"
-          textColor="primary"
-        >
-          <Tab 
-            icon={<DashboardIcon />} 
-            iconPosition="start" 
-            label="Dashboard" 
-          />
-          <Tab 
-            icon={<HistoryIcon />} 
-            iconPosition="start" 
-            label="Histórico de Mensagens" 
-          />
-        </Tabs>
-      </Paper>
-      
-      {/* Botão de acesso rápido às configurações de modo bot */}
-      <Paper 
-        elevation={2} 
-        sx={{ 
-          mb: 4, 
-          p: 2, 
-          borderRadius: 2, 
-          display: 'flex', 
-          justifyContent: 'space-between', 
-          alignItems: 'center',
-          background: 'linear-gradient(135deg, #e0f7fa 0%, #b2ebf2 100%)'
-        }}
-      >
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-          <Box sx={{ 
-            width: 40, 
-            height: 40, 
-            borderRadius: '50%', 
-            display: 'flex', 
-            alignItems: 'center', 
-            justifyContent: 'center',
-            bgcolor: '#00acc1',
-            color: 'white'
-          }}>
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="3" y="11" width="18" height="10" rx="2" />
-              <circle cx="12" cy="5" r="2" />
-              <path d="M12 7v4" />
-              <line x1="8" y1="16" x2="8" y2="16" />
-              <line x1="16" y1="16" x2="16" y2="16" />
-            </svg>
-          </Box>
-          <Box>
-            <Typography variant="h6" fontWeight="bold" color="primary.dark">Configurações de Resposta Automática</Typography>
-            <Typography variant="body2" color="text.secondary">
-              Escolha quais contatos receberão respostas automáticas da IA
-            </Typography>
-          </Box>
-        </Box>
-        <Button 
-          variant="contained" 
-          color="primary"
-          onClick={() => {
-            setMostrarDashboard(true);
-            // Usar setTimeout para dar tempo de renderizar o dashboard
-            setTimeout(() => {
-              const element = document.getElementById('modo-bot-config');
-              if (element) {
-                element.scrollIntoView({ behavior: 'smooth' });
-              }
-            }, 100);
-          }}
-        >
-          Configurar
-        </Button>
-      </Paper>
-      
-      {/* Dashboard ou Histórico */}
-      {mostrarDashboard ? (
-        <>
-          {/* Dashboard */}
-          {cliente && <Dashboard clienteId={cliente.id} />}
-          
-          {/* Informações do plano */}
-          <Card elevation={3} sx={{ mb: 4, mt: 4, borderRadius: 2, background: 'linear-gradient(135deg, #f6f9fc 0%, #f1f4f8 100%)' }}>
-            <CardContent sx={{ p: 3 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-                <Typography variant="h5" fontWeight="bold">
-                  Seu Plano: 
-                </Typography>
-                <Chip 
-                  label={cliente?.plano || "Básico"} 
-                  color="primary" 
-                  variant="outlined" 
-                  sx={{ ml: 2, textTransform: 'capitalize' }} 
-                />
-              </Box>
-              
-              {/* Barra de progresso */}
-              <Box sx={{ mb: 4 }}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1, alignItems: 'center' }}>
-                  <Typography variant="body2">Uso de mensagens este mês</Typography>
-                  <Typography variant="body1" fontWeight="500">
-                    {cliente?.mensagens_usadas || 0} / {cliente?.mensagens_limite || 1000}
-                  </Typography>
-                </Box>
-                <LinearProgress 
-                  variant="determinate" 
-                  value={Math.min(
-                    ((cliente?.mensagens_usadas || 0) / (cliente?.mensagens_limite || 1000)) * 100, 
-                    100
-                  )}
-                  color={getProgressBarColor() as "error" | "warning" | "success"}
-                  sx={{ height: 8, borderRadius: 4 }}
-                />
-              </Box>
-              
-              {renderPlanoDetalhes()}
-            </CardContent>
-          </Card>
-          
-          {/* Configurações de Modo Bot */}
-          <Box sx={{ mt: 4 }} id="modo-bot-config">
-            <Card elevation={3} sx={{ mb: 4, borderRadius: 2 }}>
-              <CardContent sx={{ p: 3 }}>
-                <Typography variant="h5" fontWeight="bold" gutterBottom>
-                  Configurações de Resposta Automática
-                </Typography>
-                <Typography variant="body1" paragraph>
-                  Você pode escolher quais contatos receberão respostas automáticas da IA e quais serão atendidos manualmente.
-                </Typography>
-                <Alert severity="info" sx={{ mb: 3 }}>
-                  <AlertTitle>Como funciona</AlertTitle>
-                  <Typography variant="body2">
-                    Quando o modo bot está <strong>desativado</strong> para um contato, as mensagens recebidas desse contato não serão respondidas automaticamente pela IA. 
-                    Você poderá responder manualmente a essas mensagens através do painel.
-                  </Typography>
-                </Alert>
-              </CardContent>
-            </Card>
-            {cliente && <StatusModoBotCliente clienteId={cliente.id} />}
-          </Box>
-        </>
-      ) : (
-        /* Painel de respostas */
-        cliente && (
-          <PainelRespostasCliente 
-            clienteId={cliente.id}
-            mensagens={mensagens}
-            onAtualizarHistorico={(resetar = true) => cliente && atualizarHistorico(cliente.id as number, resetar)}
-            onCarregarMais={carregarMaisMensagens}
-            totalMensagens={totalMensagens}
-            carregandoMais={carregandoMais}
-            isAdmin={true}
-          />
-        )
-      )}
-    </Container>
-    </Box>
-  );
+  // Resto do componente...
 }

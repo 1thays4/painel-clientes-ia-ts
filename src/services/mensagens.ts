@@ -1,6 +1,7 @@
 import { supabase } from '../lib/supabase';
 import { config } from '../config';
 import { setupAuthHeaders } from '../lib/authHeaders';
+import api from './api';
 
 // Interface para o resultado da verificação de limite
 interface ResultadoVerificacao {
@@ -17,61 +18,30 @@ export async function registrarMensagem(
   numeroDestino?: string
 ): Promise<ResultadoVerificacao> {
   try {
-    // Verificar se o cliente existe e tem mensagens disponíveis
-    const { data: cliente, error: clienteError } = await supabase
+    // Buscar o cliente para obter o número de WhatsApp
+    const { data: cliente } = await supabase
       .from('clientes')
-      .select('id, mensagens_usadas, mensagens_limite')
+      .select('whatsapp')
       .eq('id', clienteId)
       .single();
 
-    if (clienteError || !cliente) {
+    if (!cliente) {
       throw new Error('Cliente não encontrado');
     }
 
-    // Verificar limite de mensagens
-    if (!cliente.mensagens_limite) {
-      // Definir limite padrão baseado no plano
-      const planoConfig = config.planos[cliente.plano as keyof typeof config.planos];
-      cliente.mensagens_limite = planoConfig?.limite || 1000;
-    }
-    
-    if (cliente.mensagens_usadas >= cliente.mensagens_limite) {
-      throw new Error('Limite de mensagens atingido para este mês');
-    }
-
-    // Limpar e formatar números de telefone
-    const formatarNumero = (numero?: string): string => {
-      if (!numero) return '';
-      return numero.replace(/\D/g, '');
-    };
-
-    // Registrar a mensagem
-    const { error } = await supabase.from('mensagens_enviadas').insert([
-      {
-        cliente_id: clienteId,
-        pergunta: pergunta || 'Uso de IA no WhatsApp',
-        timestamp: new Date().toISOString(),
-        numero_remetente: formatarNumero(numeroRemetente),
-        numero_destino: formatarNumero(numeroDestino)
-      },
-    ]);
-
-    if (error) {
-      throw new Error('Erro ao registrar mensagem');
-    }
-
-    // Atualizar contador de mensagens do cliente
-    const novoTotal = cliente.mensagens_usadas + 1;
-    
-    await supabase
-      .from('clientes')
-      .update({ mensagens_usadas: novoTotal })
-      .eq('id', clienteId);
+    // Usar a nova API route para registrar a mensagem
+    const response = await api.post('/registrar-mensagem', {
+      whatsappNumero: cliente.whatsapp,
+      pergunta: pergunta || 'Uso de IA no WhatsApp',
+      resposta: 'Resposta da IA',
+      numeroRemetente,
+      numeroDestino
+    });
 
     return {
-      mensagensUsadas: novoTotal,
-      limite: cliente.mensagens_limite,
-      disponivel: cliente.mensagens_limite - novoTotal
+      mensagensUsadas: response.data.mensagens_usadas,
+      limite: response.data.mensagens_limite,
+      disponivel: response.data.disponivel
     };
   } catch (error) {
     console.error('Erro ao registrar mensagem:', error);

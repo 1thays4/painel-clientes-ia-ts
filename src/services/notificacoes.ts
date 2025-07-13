@@ -1,16 +1,11 @@
 // Serviço de notificações sonoras
 export class NotificacaoService {
   private static instance: NotificacaoService;
-  private audioContext: AudioContext | null = null;
+  private audioContext: any = null;
   private notificacoesAtivadas: boolean = true;
 
   private constructor() {
-    // Tentar criar o AudioContext quando necessário (para evitar problemas com políticas de autoplay)
-    try {
-      this.audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-    } catch (e) {
-      console.error('Erro ao criar AudioContext:', e);
-    }
+    // Não inicializar o AudioContext no construtor para evitar erros no SSR
   }
 
   public static getInstance(): NotificacaoService {
@@ -20,13 +15,26 @@ export class NotificacaoService {
     return NotificacaoService.instance;
   }
 
+  // Inicializar o AudioContext no lado do cliente
+  private initAudioContext(): void {
+    if (typeof window !== 'undefined' && !this.audioContext) {
+      try {
+        this.audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+      } catch (e) {
+        console.error('Erro ao criar AudioContext:', e);
+      }
+    }
+  }
+
   // Tocar som de notificação
   public tocarNotificacao(): void {
-    if (!this.notificacoesAtivadas) return;
+    if (!this.notificacoesAtivadas || typeof window === 'undefined') return;
+    
+    this.initAudioContext();
     
     try {
       // Usar a função global de geração de som se disponível
-      if (window && (window as any).generateNotificationSound) {
+      if ((window as any).generateNotificationSound) {
         (window as any).generateNotificationSound();
         return;
       }
@@ -71,5 +79,18 @@ export class NotificacaoService {
   }
 }
 
-// Exportar uma instância única do serviço
-export const notificacaoService = NotificacaoService.getInstance();
+// Criar a instância apenas no lado do cliente
+let notificacaoService: NotificacaoService;
+
+if (typeof window !== 'undefined') {
+  notificacaoService = NotificacaoService.getInstance();
+} else {
+  // Stub para SSR
+  notificacaoService = {
+    tocarNotificacao: () => {},
+    toggleNotificacoes: (ativar?: boolean) => !!ativar,
+    isNotificacoesAtivadas: () => true
+  } as NotificacaoService;
+}
+
+export { notificacaoService };

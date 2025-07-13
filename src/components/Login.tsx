@@ -1,8 +1,7 @@
 import { SetStateAction, useState } from "react";
-import { useAuth } from "../contexts/AuthContext";
+import { supabase } from '../lib/supabase';
 import { ToastContainer, toast } from "react-toastify";
-import { useNavigate } from "react-router-dom";
-import { isAuthorizedEmail } from "../utils/emailValidator";
+import { useRouter } from "next/router";
 import "react-toastify/dist/ReactToastify.css";
 
 // Material UI imports
@@ -20,6 +19,7 @@ import {
   CircularProgress
 } from "@mui/material";
 import { Email, Lock, Send } from "@mui/icons-material";
+import { useAuth } from "../contexts/AuthContext";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -27,8 +27,9 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [magicLinkSent, setMagicLinkSent] = useState(false);
   const [loginMethod, setLoginMethod] = useState<"password" | "magic">("password");
-  const { signIn, signInWithMagicLink } = useAuth();
-  const navigate = useNavigate();
+  const { signIn } = useAuth()
+  // Usando Supabase diretamente em vez do AuthContext
+  //const router = useRouter();
 
   const handlePasswordLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -39,22 +40,24 @@ export default function Login() {
     }
     
     setLoading(true);
-    
-    try {
+   try {
+      console.log('Tentando login com AuthContext');
       const { error } = await signIn(email, password);
-      
+
       if (error) {
-        toast.error("Falha no login: " + error.message);
+        console.error('Erro de login:', error);
+        toast.error("Falha no login: " + (error.message || 'Credenciais inválidas'));
       } else {
-        // Login bem-sucedido, redirecionar para o painel
-        navigate("/");
+        toast.success("Login realizado com sucesso!");
+        // NÃO faça redirecionamento manual aqui!
       }
-    } catch (error) {
-      toast.error("Ocorreu um erro durante o login");
-      console.error(error);
+    } catch (error: any) {
+      console.error('Erro durante o login:', error);
+      toast.error("Ocorreu um erro durante o login: " + (error?.message || 'Erro desconhecido'));
     } finally {
       setLoading(false);
-    }
+    } 
+ 
   };
 
   const handleMagicLinkLogin = async (e: React.FormEvent) => {
@@ -65,26 +68,35 @@ export default function Login() {
       return;
     }
     
-    // Verificar se o email está autorizado
-    if (!isAuthorizedEmail(email)) {
-      toast.error("Este email não está autorizado a usar o link mágico");
-      return;
-    }
-    
     setLoading(true);
     
     try {
-      const { error } = await signInWithMagicLink(email);
+      console.log('Tentando enviar magic link direto com Supabase');
+      
+      // Determinar a URL de redirecionamento
+      let redirectTo = '';
+      if (typeof window !== 'undefined') {
+        redirectTo = `${window.location.origin}/auth/callback`;
+      }
+      
+      // Enviar magic link direto com supabase
+      const { error } = await supabase.auth.signInWithOtp({
+        email,
+        options: {
+          emailRedirectTo: redirectTo,
+        }
+      });
       
       if (error) {
-        toast.error("Falha ao enviar link mágico: " + error.message);
+        console.error('Erro ao enviar magic link:', error);
+        toast.error("Falha ao enviar link de acesso: " + error.message);
       } else {
         setMagicLinkSent(true);
         toast.success("Link de acesso enviado para seu e-mail!");
       }
-    } catch (error) {
+    } catch (error: any) {
+      console.error('Erro ao enviar magic link:', error);
       toast.error("Ocorreu um erro ao enviar o link de acesso");
-      console.error(error);
     } finally {
       setLoading(false);
     }
@@ -129,6 +141,7 @@ export default function Login() {
                     value={email}
                     onChange={(e: { target: { value: SetStateAction<string>; }; }) => setEmail(e.target.value)}
                     required
+                    inputProps={{ autoComplete: "email" }}
                   />
                   <TextField
                     type="password"
@@ -138,6 +151,7 @@ export default function Login() {
                     value={password}
                     onChange={(e: { target: { value: SetStateAction<string>; }; }) => setPassword(e.target.value)}
                     required
+                    inputProps={{ autoComplete: "current-password" }}
                   />
                   <Button 
                     type="submit" 
@@ -151,6 +165,8 @@ export default function Login() {
                   >
                     {loading ? "Entrando..." : "Entrar"}
                   </Button>
+                  
+
                 </Box>
               ) : (
                 <Box>
@@ -192,9 +208,6 @@ export default function Login() {
                       </Button>
                       <Typography variant="body2" color="text.secondary" align="center" sx={{ mt: 2 }}>
                         Enviaremos um link para seu e-mail que permitirá acesso imediato à sua conta.
-                      </Typography>
-                      <Typography variant="caption" color="error" align="center" sx={{ mt: 1, display: 'block' }}>
-                        Nota: Apenas emails autorizados podem utilizar este recurso.
                       </Typography>
                     </Box>
                   )}

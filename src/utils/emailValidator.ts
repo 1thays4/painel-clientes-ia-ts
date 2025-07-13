@@ -2,6 +2,9 @@
 const AUTHORIZED_DOMAINS = [
   'empresa.com',
   'cliente.com',
+  'gmail.com',  // Adicionado para testes
+  'hotmail.com', // Adicionado para testes
+  'outlook.com', // Adicionado para testes
   // Adicione outros domínios autorizados aqui
 ];
 
@@ -9,7 +12,8 @@ const AUTHORIZED_DOMAINS = [
 const AUTHORIZED_EMAILS = [
   'admin@example.com',
   'suporte@example.com',
-  'thayscosta66@gmail.com'
+  'thayscosta66@gmail.com',
+  'test@test.com', // Adicionado para testes
   // Adicione outros emails autorizados aqui
 ];
 
@@ -19,6 +23,11 @@ const AUTHORIZED_EMAILS = [
  * @returns true se o email estiver autorizado, false caso contrário
  */
 export const isAuthorizedEmail = (email: string): boolean => {
+  // Durante o desenvolvimento, permitir qualquer email
+  if (process.env.NODE_ENV === 'development') {
+    return true;
+  }
+  
   if (!email) return false;
   
   // Verificar se o email está na lista de emails autorizados
