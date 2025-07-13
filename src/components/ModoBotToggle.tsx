@@ -13,16 +13,24 @@ interface ModoBotToggleProps {
   modoBotAtivo: boolean;
   onToggle?: (novoEstado: boolean) => void;
   className?: string;
+  onClick?: (e: React.MouseEvent) => void;
 }
 
 export default function ModoBotToggle({ 
   clienteFinalId, 
-  modoBotAtivo = true, 
+  modoBotAtivo, // Sem valor padrão, usar o valor exato do banco de dados
   onToggle,
-  className = ''
+  className = '',
+  onClick
 }: ModoBotToggleProps) {
+  // Inicializar com o valor da prop, sem valor padrão
   const [ativo, setAtivo] = useState(modoBotAtivo);
   const [atualizando, setAtualizando] = useState(false);
+  
+  // Atualizar o estado local quando a prop mudar
+  React.useEffect(() => {
+    setAtivo(modoBotAtivo);
+  }, [modoBotAtivo]);
 
   const toggleModoBot = async () => {
     if (!clienteFinalId) return;
@@ -57,7 +65,7 @@ export default function ModoBotToggle({
   };
 
   return (
-    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+    <Box sx={{ display: 'flex', alignItems: 'center' }} onClick={onClick}>
       <Switch
         checked={ativo}
         onChange={toggleModoBot}

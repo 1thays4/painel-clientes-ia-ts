@@ -1,17 +1,11 @@
 import { supabase } from '../lib/supabase';
 import { Mensagem } from '../services/cliente';
 import { 
-  Card, 
-  CardContent, 
   Button, 
   Typography, 
   Box, 
-  Grid, 
   TextField, 
-  Paper, 
-  Chip,
-  CircularProgress,
-  Divider
+  CircularProgress
 } from '@mui/material';
 import ClienteSelector from './ClienteSelector';
 import ClienteFinalSelector from './ClienteFinalSelector';
@@ -201,7 +195,7 @@ export default function PainelRespostasCliente({
         const clienteFinal = await buscarClienteFinalPorId(id);
         if (clienteFinal) {
           infoMap[id] = {
-            modoBotAtivo: clienteFinal.modo !== false // true por padrão se não estiver definido
+            modoBotAtivo: clienteFinal.modo === true // Usar o valor exato do banco de dados
           };
         }
       }
@@ -262,183 +256,256 @@ export default function PainelRespostasCliente({
   };
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-      <Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', mb: 2 }}>
-        <ControleNotificacoes />
-      </Box>
-      
+    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
       {isAdmin && (
-        <Box sx={{ mb: 3 }}>
+        <Box sx={{ p: 2, borderBottom: '1px solid #e0e0e0', bgcolor: '#f5f5f5' }}>
           <ClienteSelector 
             onClienteSelecionado={handleClienteSelecionado}
             clienteSelecionado={clienteSelecionado}
-            empresaId={clienteId} // Passar o ID da empresa atual
+            empresaId={clienteId}
           />
         </Box>
       )}
       
-      <Grid container spacing={3}>
-        {/* Lista de mensagens */}
-        <Grid item xs={12} md={6}>
-          <Card>
-            <CardContent sx={{ pt: 3 }}>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                <Typography variant="subtitle1" sx={{ fontWeight: 'medium' }}>Mensagens</Typography>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <Box sx={{ width: 12, height: 12, borderRadius: '50%', bgcolor: 'warning.main' }}></Box>
-                    <Typography variant="caption">Resposta manual</Typography>
-                  </Box>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <Box sx={{ width: 12, height: 12, borderRadius: '50%', bgcolor: 'success.main' }}></Box>
-                    <Typography variant="caption">Resposta automática</Typography>
-                  </Box>
-                </Box>
+      {/* Layout estilo WhatsApp */}
+      <Box sx={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
+        {/* Lista de contatos (lado esquerdo) */}
+        <Box sx={{ width: 300, borderRight: '1px solid #e0e0e0', display: 'flex', flexDirection: 'column', bgcolor: 'white' }}>
+          <Box sx={{ p: 2, borderBottom: '1px solid #e0e0e0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Typography variant="subtitle1" fontWeight="medium">Conversas</Typography>
+            <ControleNotificacoes />
+          </Box>
+          
+          <Box sx={{ 
+            flex: 1, 
+            overflowY: 'auto',
+            overflowX: 'hidden',
+            height: '400px',
+            maxHeight: '400px',
+            '&::-webkit-scrollbar': {
+              width: '8px',
+            },
+            '&::-webkit-scrollbar-track': {
+              background: 'rgba(0,0,0,0.05)',
+            },
+            '&::-webkit-scrollbar-thumb': {
+              background: 'rgba(0,0,0,0.2)',
+              borderRadius: '4px',
+            },
+            '&::-webkit-scrollbar-thumb:hover': {
+              background: 'rgba(0,0,0,0.3)',
+            },
+            scrollbarWidth: 'thin',
+            scrollbarColor: 'rgba(0,0,0,0.2) rgba(0,0,0,0.05)'
+          }}>
+            {mensagens.length === 0 ? (
+              <Box sx={{ p: 3, textAlign: 'center', color: 'text.secondary' }}>
+                <Typography>Nenhuma conversa encontrada</Typography>
               </Box>
+            ) : (
+              <MensagemGrupo 
+                mensagens={mensagens}
+                clienteId={clienteSelecionado}
+                onMensagemSelecionada={setMensagemSelecionada}
+                mensagemSelecionada={mensagemSelecionada}
+                showBotToggle={true}
+              />
+            )}
             
-              {mensagens.length === 0 ? (
-                <Typography color="text.secondary" align="center" sx={{ py: 2 }}>Nenhuma mensagem encontrada</Typography>
-              ) : (
-                <Box sx={{ display: 'flex', flexDirection: 'column' }}>
-                  <Box sx={{ maxHeight: 500, overflowY: 'auto' }}>
-                    <Paper variant="outlined" sx={{ mb: 2, p: 2, bgcolor: 'info.light', borderColor: 'info.main' }}>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <circle cx="12" cy="12" r="10"></circle>
-                          <line x1="12" y1="16" x2="12" y2="12"></line>
-                          <line x1="12" y1="8" x2="12.01" y2="8"></line>
-                        </svg>
-                        <Typography variant="subtitle2" color="info.dark">Como usar o modo bot</Typography>
-                      </Box>
-                      <Typography variant="body2" color="info.dark">
-                        Você pode ativar ou desativar o modo bot para cada contato usando o botão de toggle. 
-                        Quando o modo bot está desativado, as mensagens desse contato não serão respondidas automaticamente pela IA.
-                      </Typography>
-                    </Paper>
-                    <MensagemGrupo 
-                      mensagens={mensagens}
-                      clienteId={clienteSelecionado}
-                      onMensagemSelecionada={setMensagemSelecionada}
-                      mensagemSelecionada={mensagemSelecionada}
-                      showBotToggle={true}
-                    />
-                  </Box>
-                  
-                  {/* Botão para carregar mais mensagens */}
-                  {onCarregarMais && mensagens.length < totalMensagens && (
-                    <Box sx={{ mt: 2, textAlign: 'center' }}>
-                      <Button 
-                        variant="outlined" 
-                        onClick={onCarregarMais}
-                        disabled={carregandoMais}
-                        fullWidth
-                        startIcon={carregandoMais ? <CircularProgress size={16} /> : null}
-                      >
-                        {carregandoMais ? "Carregando..." : `Carregar mais (${mensagens.length} de ${totalMensagens})`}
-                      </Button>
-                    </Box>
-                  )}
-                </Box>
-              )}
-            </CardContent>
-          </Card>
-        </Grid>
+            {/* Botão para carregar mais mensagens */}
+            {onCarregarMais && mensagens.length < totalMensagens && (
+              <Box sx={{ p: 2 }}>
+                <Button 
+                  variant="text" 
+                  onClick={onCarregarMais}
+                  disabled={carregandoMais}
+                  fullWidth
+                  size="small"
+                  startIcon={carregandoMais ? <CircularProgress size={16} /> : null}
+                >
+                  {carregandoMais ? "Carregando..." : `Carregar mais mensagens`}
+                </Button>
+              </Box>
+            )}
+          </Box>
+        </Box>
         
-        {/* Área de resposta */}
-        <Grid item xs={12} md={6}>
-          <Card>
-            <CardContent sx={{ pt: 3 }}>
-              <Typography variant="subtitle1" sx={{ fontWeight: 'medium', mb: 2 }}>Responder ao Cliente</Typography>
+        {/* Área de conversa (lado direito) */}
+        <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', bgcolor: '#f5f5f5' }}>
+          {!mensagemSelecionada ? (
+            <Box sx={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', flexDirection: 'column', gap: 2, color: 'text.secondary' }}>
+              <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+              </svg>
+              <Typography variant="h6">Chat</Typography>
+              <Typography variant="body2" align="center" sx={{ maxWidth: 400 }}>
+                Selecione uma conversa para ver as mensagens e responder ao cliente.
+              </Typography>
+            </Box>
+          ) : (
+            <>
+              {/* Cabeçalho da conversa */}
+              <Box sx={{ p: 2, borderBottom: '1px solid #e0e0e0', bgcolor: 'white', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                {(() => {
+                  const msgSelecionada = mensagens.find(m => m.id === mensagemSelecionada);
+                  if (!msgSelecionada) return null;
+                  
+                  return (
+                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                      <Box sx={{ width: 40, height: 40, borderRadius: '50%', bgcolor: '#f0f0f0', display: 'flex', justifyContent: 'center', alignItems: 'center', mr: 2 }}>
+                        <Typography variant="h6" color="primary">{msgSelecionada.nome_cliente_final?.charAt(0) || '?'}</Typography>
+                      </Box>
+                      <Box>
+                        <Typography variant="subtitle1">{msgSelecionada.nome_cliente_final}</Typography>
+                        <Typography variant="caption" color="text.secondary">{getNumeroClienteFinal(msgSelecionada)}</Typography>
+                      </Box>
+                    </Box>
+                  );
+                })()}
+                
+                <Button 
+                  variant="outlined" 
+                  size="small"
+                  onClick={() => setMensagemSelecionada(null)}
+                >
+                  Voltar
+                </Button>
+              </Box>
               
-              {!mensagemSelecionada ? (
-                <Typography color="text.secondary" align="center" sx={{ py: 4 }}>Selecione uma mensagem para responder</Typography>
-              ) : (
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-                  <Paper variant="outlined" sx={{ p: 2, bgcolor: '#f9f9f9' }}>
-                    {(() => {
-                      const msgSelecionada = mensagens.find(m => m.id === mensagemSelecionada);
-                      if (!msgSelecionada) return null;
-                      
-                      const numeroClienteFinal = getNumeroClienteFinal(msgSelecionada);
-                      
-                      return (
-                        <>
-                          <Box sx={{ mb: 2, pb: 1, borderBottom: 1, borderColor: 'divider' }}>
-                            {/* Informações do cliente final */}
-                            <Box>
-                              <Typography variant="subtitle2" color="success.main" sx={{ fontWeight: 'medium' }}>
-                                {msgSelecionada.nome_cliente_final}
-                              </Typography>
-                              {numeroClienteFinal && (
-                                <Typography variant="body2" color="text.secondary">
-                                  WhatsApp: {numeroClienteFinal}
+              {/* Área de mensagens - Todas as mensagens do cliente */}
+              <Box sx={{ 
+                flex: 1, 
+                p: 2, 
+                height: '400px', 
+                maxHeight: '400px',
+                overflowY: 'auto', 
+                overflowX: 'hidden',
+                '&::-webkit-scrollbar': {
+                  width: '8px',
+                },
+                '&::-webkit-scrollbar-track': {
+                  background: 'rgba(0,0,0,0.05)',
+                },
+                '&::-webkit-scrollbar-thumb': {
+                  background: 'rgba(0,0,0,0.2)',
+                  borderRadius: '4px',
+                },
+                '&::-webkit-scrollbar-thumb:hover': {
+                  background: 'rgba(0,0,0,0.3)',
+                },
+                scrollbarWidth: 'thin',
+                scrollbarColor: 'rgba(0,0,0,0.2) rgba(0,0,0,0.05)'
+              }}>
+                {(() => {
+                  // Encontrar todas as mensagens do mesmo cliente final
+                  const msgSelecionada = mensagens.find(m => m.id === mensagemSelecionada);
+                  if (!msgSelecionada) return null;
+                  
+                  // Filtrar todas as mensagens do mesmo cliente final
+                  const clienteFinalId = msgSelecionada.cliente_final_id;
+                  const todasMensagensDoCliente = mensagens
+                    .filter(m => m.cliente_final_id === clienteFinalId)
+                    .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+                  
+                  // Agrupar mensagens por data
+                  const mensagensPorData: Record<string, Mensagem[]> = {};
+                  todasMensagensDoCliente.forEach(msg => {
+                    const data = new Date(msg.timestamp).toLocaleDateString();
+                    if (!mensagensPorData[data]) {
+                      mensagensPorData[data] = [];
+                    }
+                    mensagensPorData[data].push(msg);
+                  });
+                  
+                  return (
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, paddingBottom: '20px' }}>
+                      {Object.entries(mensagensPorData).map(([data, msgs]) => (
+                        <Box key={data} sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                          {/* Data da mensagem */}
+                          <Box sx={{ alignSelf: 'center', mb: 1 }}>
+                            <Typography variant="caption" sx={{ bgcolor: 'rgba(225, 245, 254, 0.92)', px: 2, py: 0.5, borderRadius: 4 }}>
+                              {data}
+                            </Typography>
+                          </Box>
+                          
+                          {msgs.map(msg => (
+                            <Box key={msg.id} sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                              {/* Mensagem do cliente */}
+                              <Box sx={{ alignSelf: 'flex-start', maxWidth: '70%', bgcolor: 'white', p: 2, borderRadius: 2, boxShadow: '0 1px 2px rgba(0,0,0,0.1)' }}>
+                                <Typography variant="body1" sx={{ wordBreak: 'break-word' }}>{msg?.pergunta || 'Mensagem sem conteúdo'}</Typography>
+                                <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', textAlign: 'right', mt: 1 }}>
+                                  {new Date(msg.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                                 </Typography>
+                              </Box>
+                              
+                              {/* Resposta da IA */}
+                              {msg?.resposta && (
+                                <Box sx={{ alignSelf: 'flex-end', maxWidth: '70%', bgcolor: '#e3f2fd', p: 2, borderRadius: 2, boxShadow: '0 1px 2px rgba(0,0,0,0.1)' }}>
+                                  <Typography variant="body2" sx={{ fontWeight: 'medium', color: 'primary.main', mb: 1 }}>Resposta Automática</Typography>
+                                  <Typography variant="body1" sx={{ wordBreak: 'break-word' }}>{msg.resposta}</Typography>
+                                  <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', textAlign: 'right', mt: 1 }}>
+                                    {new Date(msg.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                                  </Typography>
+                                </Box>
+                              )}
+                              
+                              {/* Resposta humana */}
+                              {msg?.resposta_humana && (
+                                <Box sx={{ alignSelf: 'flex-end', maxWidth: '70%', bgcolor: '#e8f5e9', p: 2, borderRadius: 2, boxShadow: '0 1px 2px rgba(0,0,0,0.1)' }}>
+                                  <Typography variant="body2" sx={{ fontWeight: 'medium', color: 'success.main', mb: 1 }}>Sua Resposta</Typography>
+                                  <Typography variant="body1" sx={{ wordBreak: 'break-word' }}>{msg.resposta_humana}</Typography>
+                                  <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', textAlign: 'right', mt: 1 }}>
+                                    {new Date(msg.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                                  </Typography>
+                                </Box>
                               )}
                             </Box>
-                          </Box>
-                          <Typography variant="subtitle2" sx={{ mb: 1 }}>Mensagem:</Typography>
-                          <FormattedText 
-                            text={msgSelecionada?.pergunta || 'Mensagem sem conteúdo'}
-                            type="received"
-                            component="div"
-                          />
-                          
-                          {msgSelecionada?.resposta && (
-                            <Box sx={{ mt: 2 }}>
-                              <Typography variant="subtitle2" sx={{ mb: 1 }}>Resposta da IA:</Typography>
-                              <FormattedText 
-                                text={msgSelecionada.resposta}
-                                type="ai"
-                                component="div"
-                              />
-                            </Box>
-                          )}
-                        </>
-                      );
-                    })()}
-                  </Paper>
-                  
-                  <Box sx={{ mt: 2 }}>
-                    <Typography variant="subtitle2" sx={{ mb: 1 }}>
-                      Sua resposta:
-                    </Typography>
-                    <TextField
-                      fullWidth
-                      multiline
-                      rows={6}
-                      value={resposta}
-                      onChange={(e) => setResposta(e.target.value)}
-                      placeholder="Digite sua resposta aqui..."
-                      variant="outlined"
-                    />
-                  </Box>
-                  
-                  <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1, mt: 2 }}>
-                    <Button 
-                      variant="outlined" 
-                      onClick={() => {
-                        setMensagemSelecionada(null);
-                        setResposta('');
-                      }}
-                    >
-                      Cancelar
-                    </Button>
-                    <Button 
-                      variant="contained"
-                      color="primary"
-                      onClick={enviarRespostaHumana}
-                      disabled={enviandoResposta || !resposta.trim()}
-                      startIcon={enviandoResposta ? <CircularProgress size={16} color="inherit" /> : null}
-                    >
-                      {enviandoResposta ? 'Enviando...' : 'Enviar Resposta'}
-                    </Button>
-                  </Box>
-                </Box>
-              )}
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
+                          ))}
+                        </Box>
+                      ))}
+                    </Box>
+                  );
+                })()}
+              </Box>
+              
+              {/* Área de digitação */}
+              <Box sx={{ p: 2, bgcolor: 'white', borderTop: '1px solid #e0e0e0', display: 'flex', alignItems: 'flex-start', gap: 1, height: '100px', minHeight: '100px' }}>
+                <TextField
+                  fullWidth
+                  multiline
+                  maxRows={4}
+                  value={resposta}
+                  onChange={(e) => setResposta(e.target.value)}
+                  placeholder="Digite sua resposta aqui..."
+                  variant="outlined"
+                  size="small"
+                  sx={{ 
+                    '& .MuiOutlinedInput-root': {
+                      borderRadius: 1,
+                    }
+                  }}
+                />
+                <Button 
+                  variant="contained" 
+                  color="primary"
+                  disabled={enviandoResposta || !resposta.trim()}
+                  onClick={enviarRespostaHumana}
+                  sx={{ 
+                    height: 40,
+                    borderRadius: 1
+                  }}
+                >
+                  {enviandoResposta ? (
+                    <CircularProgress size={20} color="inherit" />
+                  ) : (
+                    "Enviar"
+                  )}
+                </Button>
+              </Box>
+            </>
+          )}
+        </Box>
+      </Box>
     </Box>
   );
 }

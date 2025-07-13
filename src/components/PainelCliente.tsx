@@ -11,7 +11,7 @@ import { isTokenValid, getClientToken, logAccess, refreshToken } from "../lib/to
 import PainelRespostasCliente from "./PainelRespostasCliente";
 import Dashboard from "./Dashboard";
 // AlertaLimiteMensagens não é mais necessário, pois o alerta está integrado no card de plano
-import StatusModoBotCliente from "./StatusModoBotCliente";
+// StatusModoBotCliente removido pois não faz sentido nas informações do cliente
 import { formatarWhatsAppParaExibicao, validarWhatsApp } from "../lib/validacao";
 import { config } from "../config";
 import "react-toastify/dist/ReactToastify.css";
@@ -345,14 +345,24 @@ export default function PainelCliente({ token }: { token?: string }) {
       ) : cliente ? (
         <>
           <Box sx={{ mb: 4 }}>
-            <Typography variant="h4" component="h1" gutterBottom>
-              Painel do Cliente
-            </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+              <Typography variant="h4" component="h1" sx={{ fontWeight: 600, color: 'primary.main' }}>
+                Painel do Cliente
+              </Typography>
+              <Box sx={{ ml: 'auto', display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Chip 
+                  label={cliente.plano || "Básico"} 
+                  color="primary" 
+                  variant="outlined" 
+                  size="small"
+                />
+              </Box>
+            </Box>
             
-            <Paper sx={{ p: 3, mb: 3 }}>
-              <Grid container spacing={2}>
+            <Paper sx={{ p: 3, mb: 3, borderRadius: 2, boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
+              <Grid container spacing={3}>
                 <Grid item xs={12} md={6}>
-                  <Typography variant="h6" gutterBottom>
+                  <Typography variant="h6" gutterBottom sx={{ fontWeight: 600, color: 'text.primary', borderBottom: '2px solid', borderColor: 'primary.light', pb: 1, display: 'inline-block' }}>
                     Informações do Cliente
                   </Typography>
                   
@@ -382,7 +392,8 @@ export default function PainelCliente({ token }: { token?: string }) {
                         variant="outlined"
                         startIcon={<EditIcon />}
                         onClick={() => setEditando(true)}
-                        sx={{ mt: 2 }}
+                        sx={{ mt: 2, borderRadius: 2 }}
+                        color="primary"
                       >
                         Editar Dados
                       </Button>
@@ -410,12 +421,14 @@ export default function PainelCliente({ token }: { token?: string }) {
                           color="primary"
                           startIcon={<SaveIcon />}
                           onClick={salvarDadosEditados}
+                          sx={{ borderRadius: 2 }}
                         >
                           Salvar
                         </Button>
                         <Button
                           variant="outlined"
                           startIcon={<CancelIcon />}
+                          sx={{ borderRadius: 2 }}
                           onClick={() => {
                             setEditando(false);
                             setDadosEditados({
@@ -432,36 +445,76 @@ export default function PainelCliente({ token }: { token?: string }) {
                 </Grid>
                 
                 <Grid item xs={12} md={6}>
-                  <Typography variant="h6" gutterBottom>
-                    Status do Bot
+                  <Typography variant="h6" gutterBottom sx={{ fontWeight: 600, color: 'text.primary', borderBottom: '2px solid', borderColor: 'primary.light', pb: 1, display: 'inline-block' }}>
+                    Resumo de Uso
                   </Typography>
                   
-                  {cliente.modo_bot !== undefined && (
-                    <StatusModoBotCliente 
-                      clienteId={cliente.id} 
-                      modoBotAtivo={cliente.modo_bot} 
-                    />
-                  )}
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                    <Box>
+                      <Typography variant="body2" color="text.secondary">Plano Atual</Typography>
+                      <Typography variant="body1" fontWeight="medium">{cliente.plano || "Básico"}</Typography>
+                    </Box>
+                    
+                    <Box>
+                      <Typography variant="body2" color="text.secondary">Mensagens Utilizadas</Typography>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Typography variant="body1" fontWeight="medium">
+                          {cliente.mensagens_usadas || 0} de {cliente.mensagens_limite || 1000}
+                        </Typography>
+                        <LinearProgress 
+                          variant="determinate" 
+                          value={Math.min(((cliente.mensagens_usadas || 0) / (cliente.mensagens_limite || 1000)) * 100, 100)} 
+                          color={cliente.mensagens_usadas && cliente.mensagens_limite && cliente.mensagens_usadas >= cliente.mensagens_limite * 0.8 ? "warning" : "primary"}
+                          sx={{ width: 100, height: 8, borderRadius: 1 }}
+                        />
+                      </Box>
+                    </Box>
+                    
+                    <Box>
+                      <Typography variant="body2" color="text.secondary">Status da Conta</Typography>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Box 
+                          sx={{ 
+                            width: 10, 
+                            height: 10, 
+                            borderRadius: '50%', 
+                            bgcolor: cliente.status_pagamento === 'pendente' ? 'warning.main' : 'success.main' 
+                          }}
+                        />
+                        <Typography variant="body1">
+                          {cliente.status_pagamento === 'pendente' ? 'Pagamento Pendente' : 'Ativo'}
+                        </Typography>
+                      </Box>
+                    </Box>
+                  </Box>
                 </Grid>
               </Grid>
             </Paper>
             
-            <Box sx={{ mb: 2 }}>
-              <Tabs 
-                value={mostrarDashboard ? 0 : 1} 
-                onChange={(e, newValue) => setMostrarDashboard(newValue === 0)}
-              >
-                <Tab 
-                  icon={<DashboardIcon />} 
-                  label="Dashboard" 
-                  iconPosition="start" 
-                />
-                <Tab 
-                  icon={<HistoryIcon />} 
-                  label="Histórico de Mensagens" 
-                  iconPosition="start" 
-                />
-              </Tabs>
+            <Box sx={{ mb: 3 }}>
+              <Paper sx={{ borderRadius: 2, overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
+                <Tabs 
+                  value={mostrarDashboard ? 0 : 1} 
+                  onChange={(e, newValue) => setMostrarDashboard(newValue === 0)}
+                  variant="fullWidth"
+                  sx={{ 
+                    bgcolor: 'background.paper',
+                    '& .MuiTab-root': { py: 1.5 },
+                    '& .Mui-selected': { fontWeight: 'bold' }
+                  }}
+                >
+                  <Tab 
+                    icon={<DashboardIcon />} 
+                    label="Dashboard" 
+                    iconPosition="start" 
+                  />
+                  <Tab 
+                    icon={<HistoryIcon />} 
+                    label="Histórico de Mensagens" 
+                    iconPosition="start" 
+                  />
+                </Tabs>
+              </Paper>
             </Box>
             
             {/* Card de detalhes do plano foi movido para o Dashboard */}
@@ -470,25 +523,35 @@ export default function PainelCliente({ token }: { token?: string }) {
               <Dashboard cliente={cliente} clienteId={cliente.id} />
             ) : (
               <>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                  <Typography variant="h6" gutterBottom sx={{ mb: 0 }}>
-                    Histórico de Mensagens
-                    <Chip 
-                      label={`Total: ${totalMensagens}`} 
-                      size="small" 
-                      sx={{ ml: 2 }} 
-                    />
-                  </Typography>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
                   <Button 
-                    variant="text" 
-                    onClick={() => onAtualizarHistorico(true)}
+                    variant="contained" 
+                    color="primary"
+                    onClick={() => {
+                      const carregarHistorico = async () => {
+                        setCarregandoHistorico(true);
+                        try {
+                          setPaginaAtual(0);
+                          const historico = await buscarHistoricoMensagens(cliente.id, limitePorPagina, 0);
+                          setMensagens(historico || []);
+                        } catch (error) {
+                          console.error("Erro ao atualizar histórico:", error);
+                          toast.error("Erro ao atualizar histórico");
+                        } finally {
+                          setCarregandoHistorico(false);
+                        }
+                      };
+                      carregarHistorico();
+                    }}
                     disabled={carregandoHistorico}
-                    sx={{ minWidth: 'auto', p: 1 }}
+                    sx={{ borderRadius: 2, bgcolor: '#128C7E', '&:hover': { bgcolor: '#075E54' } }}
                     title="Atualizar histórico"
                   >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
-                    </svg>
+                    {carregandoHistorico ? (
+                      <CircularProgress size={24} color="inherit" />
+                    ) : (
+                      "Atualizar Conversas"
+                    )}
                   </Button>
                 </Box>
                 
@@ -533,6 +596,8 @@ export default function PainelCliente({ token }: { token?: string }) {
                           onClick={carregarMaisMensagens}
                           disabled={carregandoMais}
                           startIcon={carregandoMais ? <CircularProgress size={20} /> : <ArrowUpwardIcon />}
+                          sx={{ borderRadius: 2, px: 3 }}
+                          color="primary"
                         >
                           {carregandoMais ? 'Carregando...' : 'Carregar mais mensagens'}
                         </Button>

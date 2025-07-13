@@ -25,6 +25,11 @@ export async function buscarClienteFinalPorId(id: string | number): Promise<Clie
       return null;
     }
     
+    // Apenas logar o valor original sem modificar
+    if (data) {
+      console.log(`Cliente final ${id}: modo original = ${data.modo}`);
+    }
+    
     return data;
   } catch (error) {
     console.error('Erro:', error);
