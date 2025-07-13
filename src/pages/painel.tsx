@@ -1,6 +1,7 @@
  import { useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { CircularProgress, Box, Typography } from '@mui/material';
+import ProtectedRoute from '../components/ProtectedRoute';
 
 export default function PainelRedirect() {
   console.log("Renderizando Painel")
@@ -19,6 +20,7 @@ export default function PainelRedirect() {
   }, [router]);
 
   return (
+    <ProtectedRoute>
     <Box
       sx={{
         display: 'flex',
@@ -33,6 +35,7 @@ export default function PainelRedirect() {
         Carregando painel...
       </Typography>
     </Box>
+    </ProtectedRoute>
   );
 } 
 
