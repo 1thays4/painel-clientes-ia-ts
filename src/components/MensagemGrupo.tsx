@@ -64,7 +64,7 @@ export default function MensagemGrupo({
         const infoMap: Record<string | number, { id: string | number, nome: string, modo: boolean }> = {};
         data?.forEach((cliente: { id: string | number; nome: any; modo: string; }) => {
           // Usar o valor exato do banco de dados, sem valor padrão
-          const modoEfetivo = cliente.modo === "true";
+          const modoEfetivo = cliente.modo === "true" || cliente.modo === "encerrado" || cliente.modo === "em aberto";
           
           infoMap[cliente.id] = {
             id: cliente.id,
@@ -172,16 +172,16 @@ export default function MensagemGrupo({
               p: 2, 
               cursor: 'pointer',
               transition: 'all 0.2s',
-              bgcolor: mensagemSelecionada && msgs.some(m => m.id === mensagemSelecionada) ? 'primary.light' : 'background.paper',
-              borderColor: mensagemSelecionada && msgs.some(m => m.id === mensagemSelecionada) ? 'primary.main' : 'divider',
-              '&:hover': { bgcolor: mensagemSelecionada && msgs.some(m => m.id === mensagemSelecionada) ? 'primary.light' : 'action.hover' },
-              ...(msgs.some(m => novasMensagens[m.id]) ? { boxShadow: '0 0 0 2px #4caf50' } : {})
+              bgcolor: mensagemSelecionada && msgs.some(m => m.id === mensagemSelecionada) ? 'rgba(18, 140, 126, 0.1)' : 'background.paper',
+              borderColor: mensagemSelecionada && msgs.some(m => m.id === mensagemSelecionada) ? '#128C7E' : 'divider',
+              '&:hover': { bgcolor: mensagemSelecionada && msgs.some(m => m.id === mensagemSelecionada) ? 'rgba(18, 140, 126, 0.1)' : 'rgba(0, 0, 0, 0.04)' },
+              ...(msgs.some(m => novasMensagens[m.id]) ? { boxShadow: '0 0 0 2px #128C7E' } : {})
             }}
             onClick={() => onMensagemSelecionada(msgs[0].id)}
           >
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
               {/* Nome do contato */}
-              <Typography variant="subtitle2" sx={{ fontWeight: 'medium' }}>
+              <Typography variant="subtitle2" sx={{ fontWeight: 'medium', color: mensagemSelecionada && msgs.some(m => m.id === mensagemSelecionada) ? '#128C7E' : 'inherit' }}>
                 {msgs[0].nome_cliente_final || 'Cliente'}
               </Typography>
               

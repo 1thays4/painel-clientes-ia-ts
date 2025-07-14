@@ -15,6 +15,7 @@ import ControleNotificacoes from './ControleNotificacoes';
 import { config } from '../config';
 import axios from 'axios';
 import 'react-toastify/dist/ReactToastify.css';
+// CSS global removido - será adicionado em _app.js
 import { useEffect, useState, useRef } from 'react';
 import { toast } from 'react-toastify';
 import { formatarTelefone } from '../utils';
@@ -47,6 +48,7 @@ export default function PainelRespostasCliente({
   const [clienteFinalSelecionado, setClienteFinalSelecionado] = useState<string | number | null>(null);
   const [clientesFinaisInfo, setClientesFinaisInfo] = useState<Record<string | number, { modoBotAtivo: boolean }>>({});
   const mensagensAnteriorRef = useRef<Mensagem[]>([]);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Função para determinar o número do cliente final
   const getNumeroClienteFinal = (msg: Mensagem): string => {
@@ -227,6 +229,16 @@ export default function PainelRespostasCliente({
     // Atualizar referência de mensagens anteriores
     mensagensAnteriorRef.current = [...mensagens];
   }, [mensagens]);
+  
+  // Efeito para rolar para o final quando as mensagens mudarem
+  useEffect(() => {
+    if (mensagemSelecionada) {
+      const scrollContainer = document.querySelector('.mensagens-scroll-container');
+      if (scrollContainer) {
+        scrollContainer.scrollTop = scrollContainer.scrollHeight;
+      }
+    }
+  }, [mensagemSelecionada, mensagens.length]);
 
   // Função para lidar com a mudança de cliente selecionado
   const handleClienteSelecionado = (novoClienteId: string | number | null, tipo?: 'empresa' | 'cliente_final') => {
@@ -271,14 +283,14 @@ export default function PainelRespostasCliente({
       <Box sx={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
         {/* Lista de contatos (lado esquerdo) */}
         <Box sx={{ width: 300, borderRight: '1px solid #e0e0e0', display: 'flex', flexDirection: 'column', bgcolor: 'white' }}>
-          <Box sx={{ p: 2, borderBottom: '1px solid #e0e0e0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Box sx={{ p: 2, borderBottom: '1px solid #d1d7db', bgcolor: '#075E54', color: 'white', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <Typography variant="subtitle1" fontWeight="medium">Conversas</Typography>
             <ControleNotificacoes />
           </Box>
           
           <Box sx={{ 
             flex: 1, 
-            overflowY: 'auto',
+            overflowY: 'scroll',
             overflowX: 'hidden',
             height: '400px',
             maxHeight: '400px',
@@ -345,56 +357,61 @@ export default function PainelRespostasCliente({
           ) : (
             <>
               {/* Cabeçalho da conversa */}
-              <Box sx={{ p: 2, borderBottom: '1px solid #e0e0e0', bgcolor: 'white', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <Box sx={{ p: 2, borderBottom: '1px solid #d1d7db', bgcolor: '#075E54', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 {(() => {
                   const msgSelecionada = mensagens.find(m => m.id === mensagemSelecionada);
                   if (!msgSelecionada) return null;
                   
                   return (
                     <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                      <Box sx={{ width: 40, height: 40, borderRadius: '50%', bgcolor: '#f0f0f0', display: 'flex', justifyContent: 'center', alignItems: 'center', mr: 2 }}>
-                        <Typography variant="h6" color="primary">{msgSelecionada.nome_cliente_final?.charAt(0) || '?'}</Typography>
+                      <Box sx={{ width: 40, height: 40, borderRadius: '50%', bgcolor: '#128C7E', display: 'flex', justifyContent: 'center', alignItems: 'center', mr: 2 }}>
+                        <Typography variant="h6" color="white">{msgSelecionada.nome_cliente_final?.charAt(0) || '?'}</Typography>
                       </Box>
                       <Box>
                         <Typography variant="subtitle1">{msgSelecionada.nome_cliente_final}</Typography>
-                        <Typography variant="caption" color="text.secondary">{getNumeroClienteFinal(msgSelecionada)}</Typography>
+                        <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.8)' }}>{getNumeroClienteFinal(msgSelecionada)}</Typography>
                       </Box>
                     </Box>
                   );
                 })()}
                 
                 <Button 
-                  variant="outlined" 
+                  variant="text" 
                   size="small"
                   onClick={() => setMensagemSelecionada(null)}
+                  sx={{ color: 'white', '&:hover': { bgcolor: 'rgba(255,255,255,0.1)' } }}
                 >
                   Voltar
                 </Button>
               </Box>
               
               {/* Área de mensagens - Todas as mensagens do cliente */}
-              <Box sx={{ 
+              <Box className="mensagens-scroll-container" sx={{ 
                 flex: 1, 
                 p: 2, 
                 height: '400px', 
                 maxHeight: '400px',
-                overflowY: 'auto', 
+                overflowY: 'scroll', 
                 overflowX: 'hidden',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'flex-end',
+                bgcolor: '#f0f2f5', // Cor de fundo do WhatsApp
                 '&::-webkit-scrollbar': {
-                  width: '8px',
+                  width: '6px',
                 },
                 '&::-webkit-scrollbar-track': {
-                  background: 'rgba(0,0,0,0.05)',
+                  background: 'rgba(255,255,255,0.1)',
                 },
                 '&::-webkit-scrollbar-thumb': {
-                  background: 'rgba(0,0,0,0.2)',
-                  borderRadius: '4px',
+                  background: 'rgba(0,0,0,0.15)',
+                  borderRadius: '3px',
                 },
                 '&::-webkit-scrollbar-thumb:hover': {
-                  background: 'rgba(0,0,0,0.3)',
+                  background: 'rgba(0,0,0,0.25)',
                 },
                 scrollbarWidth: 'thin',
-                scrollbarColor: 'rgba(0,0,0,0.2) rgba(0,0,0,0.05)'
+                scrollbarColor: 'rgba(0,0,0,0.15) rgba(255,255,255,0.1)'
               }}>
                 {(() => {
                   // Encontrar todas as mensagens do mesmo cliente final
@@ -405,34 +422,88 @@ export default function PainelRespostasCliente({
                   const clienteFinalId = msgSelecionada.cliente_final_id;
                   const todasMensagensDoCliente = mensagens
                     .filter(m => m.cliente_final_id === clienteFinalId)
-                    .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+                    .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()); // Ordem cronológica (antigas primeiro)
                   
-                  // Agrupar mensagens por data
+                  // Agrupar mensagens por data no formato do WhatsApp
                   const mensagensPorData: Record<string, Mensagem[]> = {};
                   todasMensagensDoCliente.forEach(msg => {
-                    const data = new Date(msg.timestamp).toLocaleDateString();
-                    if (!mensagensPorData[data]) {
-                      mensagensPorData[data] = [];
+                    const msgDate = new Date(msg.timestamp);
+                    const hoje = new Date();
+                    const ontem = new Date(hoje); ontem.setDate(hoje.getDate() - 1);
+                    
+                    // Formatar a data no estilo WhatsApp
+                    let dataFormatada;
+                    if (msgDate.toDateString() === hoje.toDateString()) {
+                      dataFormatada = 'HOJE';
+                    } else if (msgDate.toDateString() === ontem.toDateString()) {
+                      dataFormatada = 'ONTEM';
+                    } else {
+                      // Para datas mais antigas, usar o formato dd/mm/yyyy
+                      dataFormatada = msgDate.toLocaleDateString();
                     }
-                    mensagensPorData[data].push(msg);
+                    
+                    if (!mensagensPorData[dataFormatada]) {
+                      mensagensPorData[dataFormatada] = [];
+                    }
+                    mensagensPorData[dataFormatada].push(msg);
                   });
                   
+                  // Ordenar as datas (mais antigas primeiro) com prioridade cronológica
+                  const datasOrdenadas = Object.keys(mensagensPorData).sort((a, b) => {
+                    if (a === 'HOJE') return 1; // HOJE vai para o final
+                    if (b === 'HOJE') return -1;
+                    if (a === 'ONTEM' && b !== 'HOJE') return 1; // ONTEM vai antes de HOJE
+                    if (b === 'ONTEM' && a !== 'HOJE') return -1;
+                    // Para outras datas, ordenar cronologicamente (antigas primeiro)
+                    return new Date(a).getTime() - new Date(b).getTime();
+                  });
+                  
+                  // Usar a referência para rolagem já definida no nível superior do componente
+                  
                   return (
-                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, paddingBottom: '20px' }}>
-                      {Object.entries(mensagensPorData).map(([data, msgs]) => (
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, paddingBottom: '20px', minHeight: '100%' }}>
+                      {datasOrdenadas.map(data => {
+                        const msgs = mensagensPorData[data];
+                        return (
                         <Box key={data} sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                          {/* Data da mensagem */}
-                          <Box sx={{ alignSelf: 'center', mb: 1 }}>
-                            <Typography variant="caption" sx={{ bgcolor: 'rgba(225, 245, 254, 0.92)', px: 2, py: 0.5, borderRadius: 4 }}>
-                              {data}
-                            </Typography>
+                          {/* Data da mensagem estilo WhatsApp */}
+                          <Box sx={{ alignSelf: 'center', mb: 2, mt: 2, position: 'relative', width: '100%', textAlign: 'center' }}>
+                            <Box sx={{ 
+                              position: 'relative', 
+                              '&::before': {
+                                content: '""',
+                                position: 'absolute',
+                                top: '50%',
+                                left: 0,
+                                right: 0,
+                                height: '1px',
+                                backgroundColor: 'rgba(0,0,0,0.1)',
+                                zIndex: 0
+                              }
+                            }}>
+                              <Typography variant="caption" sx={{ 
+                                display: 'inline-block',
+                                bgcolor: 'rgba(225, 245, 254, 0.92)', 
+                                px: 2, 
+                                py: 0.5, 
+                                borderRadius: 4,
+                                position: 'relative',
+                                zIndex: 1,
+                                boxShadow: '0 1px 0.5px rgba(0,0,0,0.13)',
+                                color: '#54656f',
+                                fontWeight: 500,
+                                fontSize: '0.75rem'
+                              }}>
+                                {data}
+                              </Typography>
+                            </Box>
                           </Box>
                           
                           {msgs.map(msg => (
                             <Box key={msg.id} sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                               {/* Mensagem do cliente */}
-                              <Box sx={{ alignSelf: 'flex-start', maxWidth: '70%', bgcolor: 'white', p: 2, borderRadius: 2, boxShadow: '0 1px 2px rgba(0,0,0,0.1)' }}>
-                                <Typography variant="body1" sx={{ wordBreak: 'break-word' }}>{msg?.pergunta || 'Mensagem sem conteúdo'}</Typography>
+                              <Box sx={{ alignSelf: 'flex-start', maxWidth: '70%', bgcolor: 'white', p: 2, borderRadius: '0.8rem', boxShadow: '0 1px 0.5px rgba(11,20,26,0.13)', overflowWrap: 'break-word' }}>
+                                <Typography variant="body1" sx={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{msg?.pergunta || 'Mensagem sem conteúdo'}</Typography>
                                 <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', textAlign: 'right', mt: 1 }}>
                                   {new Date(msg.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                                 </Typography>
@@ -440,9 +511,9 @@ export default function PainelRespostasCliente({
                               
                               {/* Resposta da IA */}
                               {msg?.resposta && (
-                                <Box sx={{ alignSelf: 'flex-end', maxWidth: '70%', bgcolor: '#e3f2fd', p: 2, borderRadius: 2, boxShadow: '0 1px 2px rgba(0,0,0,0.1)' }}>
-                                  <Typography variant="body2" sx={{ fontWeight: 'medium', color: 'primary.main', mb: 1 }}>Resposta Automática</Typography>
-                                  <Typography variant="body1" sx={{ wordBreak: 'break-word' }}>{msg.resposta}</Typography>
+                                <Box sx={{ alignSelf: 'flex-end', maxWidth: '70%', bgcolor: '#dcf8c6', p: 2, borderRadius: '0.8rem', boxShadow: '0 1px 0.5px rgba(11,20,26,0.13)', overflowWrap: 'break-word' }}>
+                                  <Typography variant="body2" sx={{ fontWeight: 'medium', color: '#128C7E', mb: 1, fontSize: '0.75rem' }}>Resposta Automática</Typography>
+                                  <Typography variant="body1" sx={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{msg.resposta}</Typography>
                                   <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', textAlign: 'right', mt: 1 }}>
                                     {new Date(msg.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                                   </Typography>
@@ -451,9 +522,9 @@ export default function PainelRespostasCliente({
                               
                               {/* Resposta humana */}
                               {msg?.resposta_humana && (
-                                <Box sx={{ alignSelf: 'flex-end', maxWidth: '70%', bgcolor: '#e8f5e9', p: 2, borderRadius: 2, boxShadow: '0 1px 2px rgba(0,0,0,0.1)' }}>
-                                  <Typography variant="body2" sx={{ fontWeight: 'medium', color: 'success.main', mb: 1 }}>Sua Resposta</Typography>
-                                  <Typography variant="body1" sx={{ wordBreak: 'break-word' }}>{msg.resposta_humana}</Typography>
+                                <Box sx={{ alignSelf: 'flex-end', maxWidth: '70%', bgcolor: '#dcf8c6', p: 2, borderRadius: '0.8rem', boxShadow: '0 1px 0.5px rgba(11,20,26,0.13)', overflowWrap: 'break-word' }}>
+                                  <Typography variant="body2" sx={{ fontWeight: 'medium', color: '#128C7E', mb: 1, fontSize: '0.75rem' }}>Sua Resposta</Typography>
+                                  <Typography variant="body1" sx={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{msg.resposta_humana}</Typography>
                                   <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', textAlign: 'right', mt: 1 }}>
                                     {new Date(msg.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                                   </Typography>
@@ -462,26 +533,34 @@ export default function PainelRespostasCliente({
                             </Box>
                           ))}
                         </Box>
-                      ))}
+                      );
+                      })}
+                      {/* Espaço extra no final para melhor visualização */}
+                      <div style={{ height: 20 }} />
                     </Box>
                   );
                 })()}
               </Box>
               
               {/* Área de digitação */}
-              <Box sx={{ p: 2, bgcolor: 'white', borderTop: '1px solid #e0e0e0', display: 'flex', alignItems: 'flex-start', gap: 1, height: '100px', minHeight: '100px' }}>
+              <Box sx={{ p: 1.5, bgcolor: '#f0f0f0', borderTop: '1px solid #d1d7db', display: 'flex', alignItems: 'flex-start', gap: 1, height: '100px', minHeight: '100px' }}>
                 <TextField
                   fullWidth
                   multiline
                   maxRows={4}
                   value={resposta}
                   onChange={(e) => setResposta(e.target.value)}
-                  placeholder="Digite sua resposta aqui..."
+
+                  InputProps={{
+                    sx: { whiteSpace: 'pre-wrap', overflowWrap: 'break-word' }
+                  }}
+                  placeholder="Digite uma mensagem"
                   variant="outlined"
                   size="small"
                   sx={{ 
                     '& .MuiOutlinedInput-root': {
-                      borderRadius: 1,
+                      borderRadius: '18px',
+                      backgroundColor: 'white'
                     }
                   }}
                 />
@@ -492,13 +571,22 @@ export default function PainelRespostasCliente({
                   onClick={enviarRespostaHumana}
                   sx={{ 
                     height: 40,
-                    borderRadius: 1
+                    width: 40,
+                    minWidth: 40,
+                    borderRadius: '50%',
+                    bgcolor: '#128C7E',
+                    '&:hover': {
+                      bgcolor: '#075E54'
+                    }
                   }}
                 >
                   {enviandoResposta ? (
                     <CircularProgress size={20} color="inherit" />
                   ) : (
-                    "Enviar"
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M22 2L11 13"></path>
+                      <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                    </svg>
                   )}
                 </Button>
               </Box>
