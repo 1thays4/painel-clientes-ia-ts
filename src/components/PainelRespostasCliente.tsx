@@ -5,7 +5,8 @@ import {
   Typography, 
   Box, 
   TextField, 
-  CircularProgress
+  CircularProgress,
+  useTheme
 } from '@mui/material';
 import ClienteSelector from './ClienteSelector';
 import ClienteFinalSelector from './ClienteFinalSelector';
@@ -41,6 +42,7 @@ export default function PainelRespostasCliente({
   isAdmin = false,
   carregandoMais = false
 }: PainelRespostasClienteProps) {
+  const theme = useTheme();
   const [resposta, setResposta] = useState('');
   const [enviandoResposta, setEnviandoResposta] = useState(false);
   const [mensagemSelecionada, setMensagemSelecionada] = useState<string | number | null>(null);
@@ -270,7 +272,7 @@ export default function PainelRespostasCliente({
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
       {isAdmin && (
-        <Box sx={{ p: 2, borderBottom: '1px solid #e0e0e0', bgcolor: '#f5f5f5' }}>
+        <Box sx={{ p: 2, borderBottom: `1px solid ${theme.palette.divider}`, bgcolor: theme.palette.background.default }}>
           <ClienteSelector 
             onClienteSelecionado={handleClienteSelecionado}
             clienteSelecionado={clienteSelecionado}
@@ -282,8 +284,8 @@ export default function PainelRespostasCliente({
       {/* Layout estilo WhatsApp */}
       <Box sx={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
         {/* Lista de contatos (lado esquerdo) */}
-        <Box sx={{ width: 300, borderRight: '1px solid #e0e0e0', display: 'flex', flexDirection: 'column', bgcolor: 'white' }}>
-          <Box sx={{ p: 2, borderBottom: '1px solid #d1d7db', bgcolor: '#075E54', color: 'white', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Box sx={{ width: 300, borderRight: `1px solid ${theme.palette.divider}`, display: 'flex', flexDirection: 'column', bgcolor: theme.palette.background.paper }}>
+          <Box sx={{ p: 2, borderBottom: `1px solid ${theme.palette.divider}`, bgcolor: theme.palette.primary.dark, color: theme.palette.primary.contrastText, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <Typography variant="subtitle1" fontWeight="medium">Conversas</Typography>
             <ControleNotificacoes />
           </Box>
@@ -343,7 +345,7 @@ export default function PainelRespostasCliente({
         </Box>
         
         {/* Área de conversa (lado direito) */}
-        <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', bgcolor: '#f5f5f5' }}>
+        <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', bgcolor: theme.palette.background.default }}>
           {!mensagemSelecionada ? (
             <Box sx={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', flexDirection: 'column', gap: 2, color: 'text.secondary' }}>
               <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round">
@@ -357,14 +359,14 @@ export default function PainelRespostasCliente({
           ) : (
             <>
               {/* Cabeçalho da conversa */}
-              <Box sx={{ p: 2, borderBottom: '1px solid #d1d7db', bgcolor: '#075E54', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <Box sx={{ p: 2, borderBottom: `1px solid ${theme.palette.divider}`, bgcolor: theme.palette.primary.dark, color: theme.palette.primary.contrastText, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 {(() => {
                   const msgSelecionada = mensagens.find(m => m.id === mensagemSelecionada);
                   if (!msgSelecionada) return null;
                   
                   return (
                     <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                      <Box sx={{ width: 40, height: 40, borderRadius: '50%', bgcolor: '#128C7E', display: 'flex', justifyContent: 'center', alignItems: 'center', mr: 2 }}>
+                      <Box sx={{ width: 40, height: 40, borderRadius: '50%', bgcolor: theme.palette.primary.main, display: 'flex', justifyContent: 'center', alignItems: 'center', mr: 2 }}>
                         <Typography variant="h6" color="white">{msgSelecionada.nome_cliente_final?.charAt(0) || '?'}</Typography>
                       </Box>
                       <Box>
@@ -396,7 +398,7 @@ export default function PainelRespostasCliente({
                 display: 'flex',
                 flexDirection: 'column',
                 justifyContent: 'flex-end',
-                bgcolor: '#f0f2f5', // Cor de fundo do WhatsApp
+                bgcolor: theme.palette.background.default,
                 '&::-webkit-scrollbar': {
                   width: '6px',
                 },
@@ -511,8 +513,8 @@ export default function PainelRespostasCliente({
                               
                               {/* Resposta da IA */}
                               {msg?.resposta && (
-                                <Box sx={{ alignSelf: 'flex-end', maxWidth: '70%', bgcolor: '#dcf8c6', p: 2, borderRadius: '0.8rem', boxShadow: '0 1px 0.5px rgba(11,20,26,0.13)', overflowWrap: 'break-word' }}>
-                                  <Typography variant="body2" sx={{ fontWeight: 'medium', color: '#128C7E', mb: 1, fontSize: '0.75rem' }}>Resposta Automática</Typography>
+                                <Box sx={{ alignSelf: 'flex-end', maxWidth: '70%', bgcolor: theme.custom.chatbot.botMessage, p: 2, borderRadius: '0.8rem', boxShadow: '0 1px 0.5px rgba(11,20,26,0.13)', overflowWrap: 'break-word' }}>
+                                  <Typography variant="body2" sx={{ fontWeight: 'medium', color: theme.palette.primary.main, mb: 1, fontSize: '0.75rem' }}>Resposta Automática</Typography>
                                   <Typography variant="body1" sx={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{msg.resposta}</Typography>
                                   <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', textAlign: 'right', mt: 1 }}>
                                     {new Date(msg.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
@@ -522,8 +524,8 @@ export default function PainelRespostasCliente({
                               
                               {/* Resposta humana */}
                               {msg?.resposta_humana && (
-                                <Box sx={{ alignSelf: 'flex-end', maxWidth: '70%', bgcolor: '#dcf8c6', p: 2, borderRadius: '0.8rem', boxShadow: '0 1px 0.5px rgba(11,20,26,0.13)', overflowWrap: 'break-word' }}>
-                                  <Typography variant="body2" sx={{ fontWeight: 'medium', color: '#128C7E', mb: 1, fontSize: '0.75rem' }}>Sua Resposta</Typography>
+                                <Box sx={{ alignSelf: 'flex-end', maxWidth: '70%', bgcolor: theme.custom.chatbot.botMessage, p: 2, borderRadius: '0.8rem', boxShadow: '0 1px 0.5px rgba(11,20,26,0.13)', overflowWrap: 'break-word' }}>
+                                  <Typography variant="body2" sx={{ fontWeight: 'medium', color: theme.palette.primary.main, mb: 1, fontSize: '0.75rem' }}>Sua Resposta</Typography>
                                   <Typography variant="body1" sx={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{msg.resposta_humana}</Typography>
                                   <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', textAlign: 'right', mt: 1 }}>
                                     {new Date(msg.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
@@ -543,7 +545,7 @@ export default function PainelRespostasCliente({
               </Box>
               
               {/* Área de digitação */}
-              <Box sx={{ p: 1.5, bgcolor: '#f0f0f0', borderTop: '1px solid #d1d7db', display: 'flex', alignItems: 'flex-start', gap: 1, height: '100px', minHeight: '100px' }}>
+              <Box sx={{ p: 1.5, bgcolor: theme.palette.background.default, borderTop: `1px solid ${theme.palette.divider}`, display: 'flex', alignItems: 'flex-start', gap: 1, height: '100px', minHeight: '100px' }}>
                 <TextField
                   fullWidth
                   multiline
@@ -574,9 +576,9 @@ export default function PainelRespostasCliente({
                     width: 40,
                     minWidth: 40,
                     borderRadius: '50%',
-                    bgcolor: '#128C7E',
+                    bgcolor: theme.palette.primary.main,
                     '&:hover': {
-                      bgcolor: '#075E54'
+                      bgcolor: theme.palette.primary.dark
                     }
                   }}
                 >

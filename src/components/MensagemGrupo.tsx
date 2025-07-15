@@ -10,7 +10,8 @@ import {
   Paper, 
   Divider, 
   Chip, 
-  Button
+  Button,
+  useTheme
 } from '@mui/material';
 
 interface MensagemGrupoProps {
@@ -28,6 +29,7 @@ export default function MensagemGrupo({
   mensagemSelecionada,
   showBotToggle = true
 }: MensagemGrupoProps) {
+  const theme = useTheme();
   const [expandedMessage, setExpandedMessage] = useState<string | null>(null);
   const [novasMensagens, setNovasMensagens] = useState<Record<string | number, boolean>>({});
   const mensagensAnterioresRef = useRef<string[]>([]);
@@ -164,7 +166,7 @@ export default function MensagemGrupo({
   // Renderizar a lista de contatos
   const renderContatos = () => {
     return Object.entries(mensagensPorCliente).map(([clienteKey, msgs]) => (
-      <div key={clienteKey} style={{ borderBottom: '1px solid #f0f0f0', paddingBottom: '8px' }}>
+      <div key={clienteKey} style={{ borderBottom: `1px solid ${theme.palette.divider}`, paddingBottom: '8px' }}>
         {msgs[0] && (
           <Paper 
             variant="outlined"
@@ -172,16 +174,16 @@ export default function MensagemGrupo({
               p: 2, 
               cursor: 'pointer',
               transition: 'all 0.2s',
-              bgcolor: mensagemSelecionada && msgs.some(m => m.id === mensagemSelecionada) ? 'rgba(18, 140, 126, 0.1)' : 'background.paper',
-              borderColor: mensagemSelecionada && msgs.some(m => m.id === mensagemSelecionada) ? '#128C7E' : 'divider',
-              '&:hover': { bgcolor: mensagemSelecionada && msgs.some(m => m.id === mensagemSelecionada) ? 'rgba(18, 140, 126, 0.1)' : 'rgba(0, 0, 0, 0.04)' },
-              ...(msgs.some(m => novasMensagens[m.id]) ? { boxShadow: '0 0 0 2px #128C7E' } : {})
+              bgcolor: mensagemSelecionada && msgs.some(m => m.id === mensagemSelecionada) ? `${theme.palette.primary.main}14` : theme.palette.background.paper,
+              borderColor: mensagemSelecionada && msgs.some(m => m.id === mensagemSelecionada) ? theme.palette.primary.main : theme.palette.divider,
+              '&:hover': { bgcolor: mensagemSelecionada && msgs.some(m => m.id === mensagemSelecionada) ? `${theme.palette.primary.main}14` : 'rgba(0, 0, 0, 0.04)' },
+              ...(msgs.some(m => novasMensagens[m.id]) ? { boxShadow: `0 0 0 2px ${theme.palette.primary.main}` } : {})
             }}
             onClick={() => onMensagemSelecionada(msgs[0].id)}
           >
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
               {/* Nome do contato */}
-              <Typography variant="subtitle2" sx={{ fontWeight: 'medium', color: mensagemSelecionada && msgs.some(m => m.id === mensagemSelecionada) ? '#128C7E' : 'inherit' }}>
+              <Typography variant="subtitle2" sx={{ fontWeight: 'medium', color: mensagemSelecionada && msgs.some(m => m.id === mensagemSelecionada) ? theme.palette.primary.main : 'inherit' }}>
                 {msgs[0].nome_cliente_final || 'Cliente'}
               </Typography>
               

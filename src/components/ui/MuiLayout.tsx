@@ -86,7 +86,7 @@ const MuiLayout: React.FC<MuiLayoutProps> = ({ children, title }) => {
             onClick={() => router.push(item.path)}
             sx={{
               '&:hover': {
-                backgroundColor: 'rgba(25, 118, 210, 0.08)',
+                backgroundColor: theme.palette.primary.light + '14', // 14 = 8% de opacidade em hex
               },
             }}
           >
@@ -104,7 +104,7 @@ const MuiLayout: React.FC<MuiLayoutProps> = ({ children, title }) => {
         position="fixed" 
         sx={{ 
           zIndex: (theme) => theme.zIndex.drawer + 1,
-          boxShadow: '0 2px 10px rgba(0,0,0,0.1)'
+          boxShadow: theme.shadows[2]
         }}
       >
         <Toolbar>

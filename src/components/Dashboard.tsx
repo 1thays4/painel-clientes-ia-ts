@@ -14,7 +14,8 @@ import {
   Divider, 
   Skeleton,
   Paper,
-  Alert
+  Alert,
+  useTheme
 } from '@mui/material';
 
 interface DashboardProps {
@@ -41,6 +42,7 @@ interface EstatisticasCliente {
 }
 
 const Dashboard: React.FC<DashboardProps> = ({ clienteId, isAdmin = false, cliente }) => {
+  const theme = useTheme();
   const [estatisticasGerais, setEstatisticasGerais] = useState<EstatisticasGerais>({
     totalMensagens: 0,
     mensagensHoje: 0,
@@ -446,7 +448,7 @@ const Dashboard: React.FC<DashboardProps> = ({ clienteId, isAdmin = false, clien
           <Typography variant="subtitle1" gutterBottom>Detalhes do Plano:</Typography>
           <Grid container spacing={2}>
             <Grid item xs={12} md={6}>
-              <Box sx={{ p: 2, bgcolor: '#f5f5f5', borderRadius: 1 }}>
+              <Box sx={{ p: 2, bgcolor: theme.palette.background.default, borderRadius: 1 }}>
                 <Typography variant="subtitle2" color="primary">Recursos Incluídos:</Typography>
                 <Box component="ul" sx={{ pl: 2, mt: 1 }}>
                   <Typography component="li" variant="body2">
@@ -462,7 +464,7 @@ const Dashboard: React.FC<DashboardProps> = ({ clienteId, isAdmin = false, clien
               </Box>
             </Grid>
             <Grid item xs={12} md={6}>
-              <Box sx={{ p: 2, bgcolor: '#f5f5f5', borderRadius: 1 }}>
+              <Box sx={{ p: 2, bgcolor: theme.palette.background.default, borderRadius: 1 }}>
                 <Typography variant="subtitle2" color="primary">Informações Adicionais:</Typography>
                 <Box component="ul" sx={{ pl: 2, mt: 1 }}>
                   <Typography component="li" variant="body2">

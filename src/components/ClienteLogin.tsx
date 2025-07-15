@@ -17,7 +17,8 @@ import {
   TextField,
   Button,
   CircularProgress,
-  Alert
+  Alert,
+  useTheme
 } from '@mui/material';
 import { Lock } from '@mui/icons-material';
 
@@ -27,6 +28,7 @@ export default function ClienteLogin() {
   const [senha, setSenha] = useState("");
   const [loading, setLoading] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
+  const theme = useTheme();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -88,7 +90,7 @@ export default function ClienteLogin() {
 
   return (
     <Box sx={{ 
-      background: 'linear-gradient(135deg, #f5f7fa 0%, #e4e8f0 100%)',
+      background: `linear-gradient(135deg, ${theme.palette.background.paper} 0%, ${theme.palette.background.default} 100%)`,
       minHeight: '100vh',
       display: 'flex',
       alignItems: 'center',
