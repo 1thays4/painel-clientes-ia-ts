@@ -38,7 +38,8 @@ import {
   CircularProgress,
   Alert,
   AlertTitle,
-  Chip
+  Chip,
+  useTheme
 } from '@mui/material';
 import {
   Edit as EditIcon,
@@ -51,6 +52,7 @@ import {
 } from '@mui/icons-material';
 
 export default function PainelCliente({ token }: { token?: string }) {
+  const theme = useTheme();
   const router = useRouter();
   const tokenFromRouter = router.query.token as string || token;
   
@@ -544,7 +546,7 @@ export default function PainelCliente({ token }: { token?: string }) {
                       carregarHistorico();
                     }}
                     disabled={carregandoHistorico}
-                    sx={{ borderRadius: 2, bgcolor: '#128C7E', '&:hover': { bgcolor: '#075E54' } }}
+                    sx={{ borderRadius: 2, bgcolor: theme.palette.primary.main, '&:hover': { bgcolor: theme.palette.primary.dark } }}
                     title="Atualizar histórico"
                   >
                     {carregandoHistorico ? (

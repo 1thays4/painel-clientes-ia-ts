@@ -1,8 +1,19 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
 import Link from "next/link";
+import { 
+  Box, 
+  Typography, 
+  Button, 
+  Container, 
+  Paper, 
+  CircularProgress,
+  Link as MuiLink,
+  useTheme 
+} from "@mui/material";
 
 export default function HomeSimples() {
+  const theme = useTheme();
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
@@ -42,86 +53,93 @@ export default function HomeSimples() {
 
   if (loading) {
     return (
-      <div style={{ 
+      <Box sx={{ 
         display: 'flex', 
         flexDirection: 'column',
         alignItems: 'center', 
         justifyContent: 'center', 
         minHeight: '100vh',
-        padding: '20px'
+        p: 3
       }}>
-        <h1>Carregando...</h1>
-      </div>
+        <CircularProgress size={40} />
+        <Typography variant="h5" sx={{ mt: 2 }}>Carregando...</Typography>
+      </Box>
     );
   }
 
   if (!user) {
     return (
-      <div style={{ 
+      <Container maxWidth="sm">
+        <Box sx={{ 
+          display: 'flex', 
+          flexDirection: 'column',
+          alignItems: 'center', 
+          justifyContent: 'center', 
+          minHeight: '100vh',
+          p: 3
+        }}>
+          <Paper sx={{ p: 4, width: '100%', textAlign: 'center', borderRadius: 2 }}>
+            <Typography variant="h4" component="h1" gutterBottom>
+              Você não está autenticado
+            </Typography>
+            <Typography variant="body1" paragraph>
+              Por favor, faça login para acessar esta página.
+            </Typography>
+            <Button 
+              variant="contained" 
+              color="primary" 
+              href="/login"
+              sx={{ mt: 2 }}
+            >
+              Ir para Login
+            </Button>
+          </Paper>
+        </Box>
+      </Container>
+    );
+  }
+
+  return (
+    <Container maxWidth="sm">
+      <Box sx={{ 
         display: 'flex', 
         flexDirection: 'column',
         alignItems: 'center', 
         justifyContent: 'center', 
         minHeight: '100vh',
-        padding: '20px'
+        p: 3
       }}>
-        <h1>Você não está autenticado</h1>
-        <p>Por favor, faça login para acessar esta página.</p>
-        <div style={{ marginTop: '20px' }}>
-          <a 
-          href="/login"
-          style={{ 
-            padding: '10px 20px',
-            backgroundColor: '#1976d2',
-            color: 'white',
-            textDecoration: 'none',
-            borderRadius: '4px'
-          }}
-        >
-          Ir para Login
-        </a>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div style={{ 
-      display: 'flex', 
-      flexDirection: 'column',
-      alignItems: 'center', 
-      justifyContent: 'center', 
-      minHeight: '100vh',
-      padding: '20px'
-    }}>
-      <h1>Página Inicial Simples</h1>
-      
-      <div style={{ marginTop: '20px', textAlign: 'center' }}>
-        <p><strong>Bem-vindo!</strong></p>
-        <p>Você está autenticado como: {user.email}</p>
-      </div>
-      
-      <div style={{ marginTop: '30px' }}>
-        <button 
-          onClick={handleLogout}
-          style={{ 
-            padding: '10px 20px',
-            backgroundColor: '#f44336',
-            color: 'white',
-            border: 'none',
-            borderRadius: '4px',
-            cursor: 'pointer'
-          }}
-        >
-          Sair
-        </button>
-      </div>
-      
-      <div style={{ marginTop: '30px' }}>
-        <a href="/" style={{ color: '#1976d2' }}>
-          Ir para a página inicial normal
-        </a>
-      </div>
-    </div>
+        <Paper sx={{ p: 4, width: '100%', textAlign: 'center', borderRadius: 2 }}>
+          <Typography variant="h4" component="h1" gutterBottom>
+            Página Inicial Simples
+          </Typography>
+          
+          <Box sx={{ mt: 3 }}>
+            <Typography variant="h6" gutterBottom>
+              Bem-vindo!
+            </Typography>
+            <Typography variant="body1">
+              Você está autenticado como: {user.email}
+            </Typography>
+          </Box>
+          
+          <Box sx={{ mt: 4 }}>
+            <Button 
+              variant="contained" 
+              color="error" 
+              onClick={handleLogout}
+            >
+              Sair
+            </Button>
+          </Box>
+          
+          <Box sx={{ mt: 3 }}>
+            <MuiLink href="/" underline="hover">
+              Ir para a página inicial normal
+            </MuiLink>
+          </Box>
+        </Paper>
+      </Box>
+    </Container>
   );
 }

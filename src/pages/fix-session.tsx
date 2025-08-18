@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
+import { Box, Typography, Button, Container, Paper, useTheme } from "@mui/material";
 
 export default function FixSession() {
+  const theme = useTheme();
   const [status, setStatus] = useState("Verificando sessão...");
   const [user, setUser] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
@@ -71,61 +73,66 @@ export default function FixSession() {
   }, []);
 
   return (
-    <div style={{ 
-      display: 'flex', 
-      flexDirection: 'column',
-      alignItems: 'center', 
-      justifyContent: 'center', 
-      minHeight: '100vh',
-      padding: '20px'
-    }}>
-      <h1>Verificação de Sessão</h1>
-      
-      <div style={{ marginTop: '20px', textAlign: 'center' }}>
-        <p><strong>Status:</strong> {status}</p>
+    <Container maxWidth="md">
+      <Box sx={{ 
+        display: 'flex', 
+        flexDirection: 'column',
+        alignItems: 'center', 
+        justifyContent: 'center', 
+        minHeight: '100vh',
+        padding: 3
+      }}>
+        <Typography variant="h4" component="h1" gutterBottom>
+          Verificação de Sessão
+        </Typography>
         
-        {error && (
-          <p style={{ color: 'red' }}><strong>Erro:</strong> {error}</p>
-        )}
-        
-        {user && (
-          <div style={{ marginTop: '20px', textAlign: 'left' }}>
-            <h2>Informações do Usuário:</h2>
-            <pre style={{ 
-              backgroundColor: '#f5f5f5', 
-              padding: '10px', 
-              borderRadius: '4px',
-              overflow: 'auto',
-              maxWidth: '100%'
-            }}>
-              {JSON.stringify(user, null, 2)}
-            </pre>
-          </div>
-        )}
-        
-        <div style={{ marginTop: '30px' }}>
-          <a href="/login" style={{ 
-            padding: '10px 20px',
-            backgroundColor: '#1976d2',
-            color: 'white',
-            textDecoration: 'none',
-            borderRadius: '4px',
-            marginRight: '10px'
-          }}>
-            Ir para Login
-          </a>
+        <Paper sx={{ p: 3, width: '100%', maxWidth: 600, textAlign: 'center' }}>
+          <Typography variant="body1" paragraph>
+            <strong>Status:</strong> {status}
+          </Typography>
           
-          <a href="/login-simples" style={{ 
-            padding: '10px 20px',
-            backgroundColor: '#4caf50',
-            color: 'white',
-            textDecoration: 'none',
-            borderRadius: '4px'
-          }}>
-            Login Simples
-          </a>
-        </div>
-      </div>
-    </div>
+          {error && (
+            <Typography variant="body1" color="error" paragraph>
+              <strong>Erro:</strong> {error}
+            </Typography>
+          )}
+          
+          {user && (
+            <Box sx={{ mt: 3, textAlign: 'left' }}>
+              <Typography variant="h6" gutterBottom>Informações do Usuário:</Typography>
+              <Box sx={{ 
+                bgcolor: theme.palette.background.default, 
+                p: 2, 
+                borderRadius: 1,
+                overflow: 'auto',
+                maxWidth: '100%'
+              }}>
+                <pre style={{ margin: 0 }}>
+                  {JSON.stringify(user, null, 2)}
+                </pre>
+              </Box>
+            </Box>
+          )}
+          
+          <Box sx={{ mt: 4, display: 'flex', justifyContent: 'center', gap: 2 }}>
+            <Button 
+              variant="contained" 
+              color="primary" 
+              href="/login"
+            >
+              Ir para Login
+            </Button>
+            
+            <Button 
+              variant="contained" 
+              color="success" 
+              href="/login-simples"
+            >
+              Login Simples
+            </Button>
+          </Box>
+        </Paper>
+      </Box>
+    </Container>
   );
 }

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { registrarMensagem } from "../services/mensagens";
 import { toast } from "react-toastify";
-import { Button, Card, CardContent, Typography, Box } from "@mui/material";
+import { Button, Card, CardContent, Typography, Box, useTheme } from "@mui/material";
 
 interface TestarIAProps {
   clienteId: number;
@@ -10,6 +10,7 @@ interface TestarIAProps {
 }
 
 export default function TestarIA({ clienteId, limite, onMensagemEnviada }: TestarIAProps) {
+  const theme = useTheme();
   const [enviando, setEnviando] = useState(false);
 
   const handleTestar = async () => {
@@ -31,7 +32,7 @@ export default function TestarIA({ clienteId, limite, onMensagemEnviada }: Testa
   };
 
   return (
-    <Card variant="outlined" sx={{ bgcolor: '#f9f9f9' }}>
+    <Card variant="outlined" sx={{ bgcolor: theme.palette.background.default }}>
       <CardContent>
         <Typography variant="body2" sx={{ mb: 2 }}>
           Teste o assistente de IA no WhatsApp para ver como funciona. 

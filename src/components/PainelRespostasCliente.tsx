@@ -492,7 +492,7 @@ export default function PainelRespostasCliente({
                                 position: 'relative',
                                 zIndex: 1,
                                 boxShadow: '0 1px 0.5px rgba(0,0,0,0.13)',
-                                color: '#54656f',
+                                color: theme.palette.text.secondary,
                                 fontWeight: 500,
                                 fontSize: '0.75rem'
                               }}>
