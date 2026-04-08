@@ -1,0 +1,107 @@
+{
+  "name": "Integração WhatsApp com IA",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "whatsapp-webhook",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "position": [
+        250,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "url": "=http://localhost:3001/api/n8n-webhook",
+        "options": {
+          "fullResponse": true
+        },
+        "method": "POST",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "body",
+              "value": "={{ $json }}"
+            }
+          ]
+        }
+      },
+      "name": "Consultar IA",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        470,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "authentication": "genericCredentialType",
+        "genericAuthType": "twilio",
+        "resource": "message",
+        "operation": "send",
+        "from": "whatsapp:+14155238886",
+        "to": "={{ $node[\"Webhook\"].json[\"From\"] }}",
+        "content": "={{ $node[\"Consultar IA\"].json[\"content\"] }}"
+      },
+      "name": "Twilio",
+      "type": "n8n-nodes-base.twilio",
+      "position": [
+        690,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ {success: true} }}",
+        "options": {}
+      },
+      "name": "Responder Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "position": [
+        910,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Consultar IA",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Consultar IA": {
+      "main": [
+        [
+          {
+            "node": "Twilio",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Twilio": {
+      "main": [
+        [
+          {
+            "node": "Responder Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}

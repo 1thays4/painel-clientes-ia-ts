@@ -1,0 +1,85 @@
+/* Estilos para mensagens no estilo WhatsApp */
+
+.whatsapp-message {
+  position: relative;
+  padding: 8px 12px;
+  border-radius: 8px;
+  max-width: 85%;
+  margin-bottom: 8px;
+  line-height: 1.5;
+  word-wrap: break-word;
+}
+
+.whatsapp-message-received {
+  background-color: #f0f0f0;
+  color: #303030;
+  border-top-left-radius: 0;
+  align-self: flex-start;
+}
+
+.whatsapp-message-sent {
+  background-color: #dcf8c6;
+  color: #303030;
+  border-top-right-radius: 0;
+  align-self: flex-end;
+}
+
+.whatsapp-message-ai {
+  background-color: #e3f2fd;
+  color: #0d47a1;
+  border-left: 4px solid #2196f3;
+  padding-left: 12px;
+}
+
+.whatsapp-message-human {
+  background-color: #e8f5e9;
+  color: #1b5e20;
+  border-left: 4px solid #4caf50;
+  padding-left: 12px;
+}
+
+.whatsapp-message-time {
+  font-size: 0.7rem;
+  color: #8c8c8c;
+  text-align: right;
+  margin-top: 4px;
+}
+
+/* Estilos para links dentro das mensagens */
+.whatsapp-message a {
+  color: #0000EE;
+  text-decoration: underline;
+}
+
+/* Estilos para listas */
+.whatsapp-message ul, 
+.whatsapp-message ol {
+  padding-left: 20px;
+  margin: 8px 0;
+}
+
+.whatsapp-message li {
+  margin-bottom: 4px;
+}
+
+/* Estilos para código */
+.whatsapp-message code {
+  font-family: monospace;
+  background-color: rgba(0, 0, 0, 0.05);
+  padding: 2px 4px;
+  border-radius: 3px;
+}
+
+/* Estilos para blocos de código */
+.whatsapp-message pre {
+  background-color: rgba(0, 0, 0, 0.05);
+  padding: 8px;
+  border-radius: 4px;
+  overflow-x: auto;
+  margin: 8px 0;
+}
+
+.whatsapp-message pre code {
+  background-color: transparent;
+  padding: 0;
+}

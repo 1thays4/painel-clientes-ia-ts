@@ -1,0 +1,22 @@
+{
+  "name": "painel-clientes-ia-server",
+  "version": "1.0.0",
+  "description": "API server for WhatsApp IA integration",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.49.9",
+    "dotenv": "^16.4.5",
+    "express": "^4.18.3",
+    "ts-node": "^10.9.2",
+    "typescript": "^4.4.4"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/node": "^20.11.30",
+    "nodemon": "^3.1.0"
+  }
+}
