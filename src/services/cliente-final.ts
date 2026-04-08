@@ -113,7 +113,7 @@ export const cadastrarClienteFinal = async (
   clienteId: string | number,
   nome: string,
   whatsapp: string,
-  modo: boolean = false,
+  modo = false,
 ): Promise<ClienteFinal | null> => {
   try {
     const { data, error } = await supabase

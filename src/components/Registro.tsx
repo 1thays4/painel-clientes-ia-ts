@@ -4,6 +4,7 @@ import { Input } from "./ui/input";
 import { Button } from "./ui/button";
 import { ToastContainer, toast } from "react-toastify";
 import { useRouter } from "next/router";
+import Link from "next/link";
 import { supabase } from "../lib/supabase";
 import { criarCliente } from "../services/cliente";
 import "react-toastify/dist/ReactToastify.css";
@@ -137,16 +138,12 @@ export default function Registro() {
             </Button>
             <p className="text-center text-sm">
               Já tem uma conta?{" "}
-              <a
+              <Link
                 href="/login"
                 className="text-blue-600 hover:underline"
-                onClick={(e) => {
-                  e.preventDefault();
-                  router.push("/login");
-                }}
               >
                 Faça login
-              </a>
+              </Link>
             </p>
           </form>
         </CardContent>
