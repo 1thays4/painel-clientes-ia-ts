@@ -35,7 +35,7 @@ export const supabase = createClient(supabaseUrl, supabaseKey);
 }); */
 
 // Verificar a conexão com o Supabase
-supabase.auth.onAuthStateChange((event, session) => {
+supabase.auth.onAuthStateChange((event: any, session: any) => {
   if (event === 'SIGNED_IN') {
     console.log('Conexão com Supabase estabelecida com sucesso');
   } else if (event === 'SIGNED_OUT') {

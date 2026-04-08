@@ -72,7 +72,7 @@ export async function consultarIA(mensagem: WhatsAppMessage): Promise<IAResponse
     const respostaIA = await chamarModeloIA(mensagem.Body);
     
     // Registrar o uso da IA no Supabase
-    const { error, data: mensagemInserida } = await supabase.from('mensagens_enviadas').insert([
+    const { error } = await supabase.from('mensagens_enviadas').insert([
       {
         cliente_id: cliente.id,
         conteudo: `WhatsApp: ${mensagem.Body.substring(0, 50)}${mensagem.Body.length > 50 ? '...' : ''}`,

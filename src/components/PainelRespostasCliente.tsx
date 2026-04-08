@@ -13,6 +13,7 @@ import ClienteFinalSelector from './ClienteFinalSelector';
 import MensagemGrupo from './MensagemGrupo';
 import FormattedText from './FormattedText';
 import ControleNotificacoes from './ControleNotificacoes';
+import CadastrarContato from './CadastrarContato';
 import { config } from '../config';
 import axios from 'axios';
 import 'react-toastify/dist/ReactToastify.css';
@@ -51,6 +52,7 @@ export default function PainelRespostasCliente({
   const [clientesFinaisInfo, setClientesFinaisInfo] = useState<Record<string | number, { modoBotAtivo: boolean }>>({});
   const mensagensAnteriorRef = useRef<Mensagem[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [mostrarCadastroContato, setMostrarCadastroContato] = useState(false);
 
   // Função para determinar o número do cliente final
   const getNumeroClienteFinal = (msg: Mensagem): string => {
@@ -287,7 +289,27 @@ export default function PainelRespostasCliente({
         <Box sx={{ width: 300, borderRight: `1px solid ${theme.palette.divider}`, display: 'flex', flexDirection: 'column', bgcolor: theme.palette.background.paper }}>
           <Box sx={{ p: 2, borderBottom: `1px solid ${theme.palette.divider}`, bgcolor: theme.palette.primary.dark, color: theme.palette.primary.contrastText, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <Typography variant="subtitle1" fontWeight="medium">Conversas</Typography>
-            <ControleNotificacoes />
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Button
+                size="small"
+                onClick={() => setMostrarCadastroContato(true)}
+                sx={{ 
+                  color: 'white', 
+                  minWidth: 'auto',
+                  p: 0.5,
+                  '&:hover': { bgcolor: 'rgba(255,255,255,0.1)' }
+                }}
+                title="Cadastrar novo contato"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="9" cy="7" r="4"></circle>
+                  <line x1="19" y1="8" x2="19" y2="14"></line>
+                  <line x1="22" y1="11" x2="16" y2="11"></line>
+                </svg>
+              </Button>
+              <ControleNotificacoes />
+            </Box>
           </Box>
           
           <Box sx={{ 
@@ -596,6 +618,14 @@ export default function PainelRespostasCliente({
           )}
         </Box>
       </Box>
+      
+      {/* Modal de cadastro de contato */}
+      <CadastrarContato
+        open={mostrarCadastroContato}
+        onClose={() => setMostrarCadastroContato(false)}
+        clienteId={clienteId}
+        onContatoCadastrado={() => onAtualizarHistorico(true)}
+      />
     </Box>
   );
 }

@@ -44,7 +44,7 @@ const ExemploComponente: React.FC = () => {
       </Button>
       
       <Card sx={{ 
-        backgroundColor: theme.palette.background.card, 
+        backgroundColor: theme.palette.background.paper, 
         p: 2 
       }}>
         <Typography>Conteúdo do card usando o tema</Typography>

@@ -10,5 +10,5 @@ export default function ClienteLoginPage() {
     return <div>Carregando...</div>;
   }
 
-  return <ClienteLogin token={token} />;
+  return <ClienteLogin />;
 }

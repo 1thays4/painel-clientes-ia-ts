@@ -1,7 +1,7 @@
 import { InputHTMLAttributes, forwardRef } from "react";
 import { TextField } from "@mui/material";
 
-export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
+export interface InputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'size' | 'color'> {
   fullWidth?: boolean;
   variant?: "outlined" | "filled" | "standard";
   size?: "small" | "medium";
@@ -21,7 +21,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
         label={label}
         error={error}
         helperText={helperText}
-        {...props}
+        inputProps={props}
       />
     );
   }

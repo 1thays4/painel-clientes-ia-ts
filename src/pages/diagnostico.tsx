@@ -1,7 +1,7 @@
 import React from 'react';
 import { useRouter } from 'next/router';
 import { useEffect } from 'react';
-import DiagnosticoPage from '../components/DiagnosticoPage';
+import DiagnosticoPage from './DiagnosticoPage';
 import { useAuth } from '../contexts/AuthContext';
 
 export default function Diagnostico() {

@@ -189,7 +189,7 @@ export default function MensagemGrupo({
               
               {/* Telefone */}
               <Typography variant="body2" color="text.secondary">
-                {formatarTelefone(msgs[0].numero_destino) || msgs[0].whatsapp_cliente_final || 'Sem telefone'}
+                {formatarTelefone(msgs[0].numero_destino || '') || msgs[0].whatsapp_cliente_final || 'Sem telefone'}
               </Typography>
               
               {/* Última mensagem e data */}

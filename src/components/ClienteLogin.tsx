@@ -42,10 +42,11 @@ export default function ClienteLogin() {
     
     try {
       // Verificar se o token é válido e a senha está correta
+      const tokenString = Array.isArray(token) ? token[0] : token || '';
       const { data, error } = await supabase
         .from('clientes')
         .select('id, senha_acesso')
-        .eq('token_publico', token)
+        .eq('token_publico', tokenString)
         .single();
       
       if (error || !data) {
@@ -62,7 +63,7 @@ export default function ClienteLogin() {
       }
       
       // Autenticar o cliente no Supabase
-      const autenticado = await autenticarCliente(token || '', data.id);
+      const autenticado = await autenticarCliente(tokenString, data.id);
       
       if (!autenticado) {
         toast.error("Falha na autenticação");
@@ -71,15 +72,15 @@ export default function ClienteLogin() {
       }
       
       // Armazenar o token de acesso com expiração
-      if (token) {
-        saveClientToken(token, data.id);
+      if (tokenString) {
+        saveClientToken(tokenString, data.id);
         
         // Registrar o login
         logAccess('login_success', data.id);
       }
       
       // Redirecionar para o painel do cliente
-      router.push(`/cliente/${token}`);
+      router.push(`/cliente/${tokenString}`);
       
     } catch (error) {
       console.error("Erro ao fazer login:", error);

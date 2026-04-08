@@ -14,15 +14,10 @@ const nextConfig = {
   env: {
     NEXT_PUBLIC_SUPABASE_URL: process.env.REACT_APP_SUPABASE_URL,
     NEXT_PUBLIC_SUPABASE_KEY: process.env.REACT_APP_SUPABASE_KEY,
+    NEXT_PUBLIC_API_TIMEOUT: '30000',
   },
-  // Aumentar o timeout para evitar erros de conexão
-  serverRuntimeConfig: {
-    timeout: 60000,
-  },
-  // Configurações públicas
-  publicRuntimeConfig: {
-    apiTimeout: 30000,
-  },
+  // Habilitar export estático (gera pasta `out` no build)
+  output: 'export',
 };
 
 module.exports = nextConfig;

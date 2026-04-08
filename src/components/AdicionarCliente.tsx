@@ -2,9 +2,9 @@ import { useState } from "react";
 import { Card, CardContent } from "./ui/card";
 import { Input } from "./ui/input";
 import { Button } from "./ui/button";
-import { ToastContainer, toast } from "react-toastify";
+import { toast } from "react-toastify";
 import { criarCliente } from "../services/cliente";
-import { validarWhatsApp, formatarWhatsAppParaExibicao } from "../lib/validacao";
+import { validarWhatsApp } from "../lib/validacao";
 import { config } from "../config";
 import "react-toastify/dist/ReactToastify.css";
 
