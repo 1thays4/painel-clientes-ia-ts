@@ -30,6 +30,7 @@ logs
 # Arquivos de IDE
 .idea/
 .vscode/
+.claude/
 *.swp
 *.swo
 
