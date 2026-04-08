@@ -8,7 +8,8 @@
       "Bash(npm run:*)",
       "Bash(ls src/pages/*.tsx)",
       "Bash(ls src/services/*.ts)",
-      "Bash(echo \"credenciais encontradas: $?\")"
+      "Bash(echo \"credenciais encontradas: $?\")",
+      "Bash(npm test:*)"
     ]
   }
 }

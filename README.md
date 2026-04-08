@@ -10,6 +10,17 @@ Sistema de gerenciamento de clientes para serviço de IA no WhatsApp com control
 - **Automação**: n8n + Twilio (WhatsApp Business API)
 - **IA**: OpenAI GPT-4
 
+## Screenshots
+
+<!-- Substitua pelos prints reais do seu projeto -->
+| Painel Admin | Painel do Cliente |
+|:---:|:---:|
+| ![Admin](docs/screenshots/admin.png) | ![Cliente](docs/screenshots/cliente.png) |
+
+| Atendimento Humano | Login |
+|:---:|:---:|
+| ![Atendimento](docs/screenshots/atendimento.png) | ![Login](docs/screenshots/login.png) |
+
 ## Funcionalidades
 
 - Painel administrativo com gestão de clientes e planos
@@ -31,7 +42,8 @@ src/
 ├── services/       # Lógica de acesso ao banco de dados
 ├── lib/            # Utilitários (auth, supabase, tokenManager)
 ├── server/         # Servidor Express separado (cron, routes)
-└── utils/          # Helpers (formatação, follow-up, diagnóstico)
+├── __tests__/      # Testes unitários (Jest)
+└── utils/          # Helpers (formatação, follow-up)
 supabase/           # Scripts SQL de migração
 workflows/          # Fluxos n8n exportados
 ```

@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "test": "jest"
   },
   "dependencies": {
     "@emotion/cache": "^11.14.0",
@@ -33,19 +34,30 @@
     "tw-animate-css": "^1.3.4"
   },
   "devDependencies": {
+    "@swc/core": "^1.15.24",
+    "@swc/jest": "^0.2.39",
     "@types/axios": "^0.14.4",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
+    "@types/jest": "^30.0.0",
     "@types/node": "^20.11.30",
     "@types/react": "^18.2.0",
     "@types/react-dom": "^18.2.0",
     "autoprefixer": "^10.4.19",
     "eslint": "^8.0.0",
     "eslint-config-next": "^14.0.0",
+    "jest": "^30.3.0",
     "postcss": "^8.4.38",
     "typescript": "~5.0.0"
   },
-  "keywords": ["nextjs", "typescript", "whatsapp", "ia", "supabase", "crm"],
+  "keywords": [
+    "nextjs",
+    "typescript",
+    "whatsapp",
+    "ia",
+    "supabase",
+    "crm"
+  ],
   "author": "Thays Vasconcelos",
   "license": "ISC"
 }
