@@ -13,6 +13,8 @@ yarn-debug.log
 # Arquivos de ambiente
 .env
 .env.local
+.env.production
+.env.development
 .env.development.local
 .env.test.local
 .env.production.local
@@ -36,3 +38,20 @@ logs
 .npm/
 .eslintcache
 node_modules
+
+# Páginas de debug/teste
+src/pages/fix-session.tsx
+src/pages/diagnostico.tsx
+src/pages/DiagnosticoPage.tsx
+src/pages/teste-auth.tsx
+src/pages/home-simples.tsx
+src/pages/login-simples.tsx
+src/pages/login-alternativo.tsx
+src/pages/login-direto.tsx
+
+# Serviços duplicados
+src/services/cliente-fix.ts
+src/services/cliente-fixed.ts
+
+# READMEs auxiliares (consolidados no README.md)
+README-*.md
