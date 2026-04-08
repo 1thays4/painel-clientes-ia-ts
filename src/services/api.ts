@@ -1,10 +1,11 @@
-import axios from 'axios';
+import axios from "axios";
 
 // Criar uma instância do axios com a URL base
 const api = axios.create({
-  baseURL: process.env.NODE_ENV === 'production' 
-    ? '/api' 
-    : 'http://localhost:3000/api'
+  baseURL:
+    process.env.NODE_ENV === "production"
+      ? "/api"
+      : "http://localhost:3000/api",
 });
 
 // Função para buscar cliente por WhatsApp
@@ -13,7 +14,7 @@ export async function buscarClientePorWhatsApp(whatsapp: string) {
     const response = await api.get(`/cliente/whatsapp?whatsapp=${whatsapp}`);
     return response.data;
   } catch (error) {
-    console.error('Erro ao buscar cliente por WhatsApp:', error);
+    console.error("Erro ao buscar cliente por WhatsApp:", error);
     throw error;
   }
 }
@@ -27,10 +28,10 @@ export async function registrarMensagem(dados: {
   numeroRemetente?: string;
 }) {
   try {
-    const response = await api.post('/registrar-mensagem', dados);
+    const response = await api.post("/registrar-mensagem", dados);
     return response.data;
   } catch (error) {
-    console.error('Erro ao registrar mensagem:', error);
+    console.error("Erro ao registrar mensagem:", error);
     throw error;
   }
 }
@@ -43,10 +44,10 @@ export async function processarWebhookWhatsApp(dados: {
   recipient?: string;
 }) {
   try {
-    const response = await api.post('/webhook/whatsapp', dados);
+    const response = await api.post("/webhook/whatsapp", dados);
     return response.data;
   } catch (error) {
-    console.error('Erro ao processar webhook do WhatsApp:', error);
+    console.error("Erro ao processar webhook do WhatsApp:", error);
     throw error;
   }
 }

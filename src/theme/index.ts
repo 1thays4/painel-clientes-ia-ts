@@ -1,46 +1,46 @@
-import { createTheme, ThemeOptions } from '@mui/material/styles';
-import { PaletteOptions } from '@mui/material/styles/createPalette';
+import { createTheme, ThemeOptions } from "@mui/material/styles";
+import { PaletteOptions } from "@mui/material/styles/createPalette";
 
 // Definindo as cores principais do sistema
 const colors = {
   // Cores primárias
   primary: {
-    main: '#1976d2',
-    light: '#42a5f5',
-    dark: '#1565c0',
-    contrastText: '#ffffff',
+    main: "#1976d2",
+    light: "#42a5f5",
+    dark: "#1565c0",
+    contrastText: "#ffffff",
   },
   // Cores secundárias
   secondary: {
-    main: '#f50057',
-    light: '#ff4081',
-    dark: '#c51162',
-    contrastText: '#ffffff',
+    main: "#f50057",
+    light: "#ff4081",
+    dark: "#c51162",
+    contrastText: "#ffffff",
   },
   // Cores de fundo
   background: {
-    default: '#f5f5f5',
-    paper: '#ffffff',
-    card: '#f5f5f5',
+    default: "#f5f5f5",
+    paper: "#ffffff",
+    card: "#f5f5f5",
   },
   // Cores de texto
   text: {
-    primary: '#333333',
-    secondary: '#757575',
+    primary: "#333333",
+    secondary: "#757575",
   },
   // Cores de status
   status: {
-    success: '#4caf50',
-    warning: '#ff9800',
-    error: '#f44336',
-    info: '#2196f3',
+    success: "#4caf50",
+    warning: "#ff9800",
+    error: "#f44336",
+    info: "#2196f3",
   },
   // Cores específicas para chatbot
   chatbot: {
-    userMessage: '#e3f2fd',
-    botMessage: '#f1f8e9',
-    timestamp: '#9e9e9e',
-    actionButton: '#bbdefb',
+    userMessage: "#e3f2fd",
+    botMessage: "#f1f8e9",
+    timestamp: "#9e9e9e",
+    actionButton: "#bbdefb",
   },
 };
 
@@ -79,7 +79,7 @@ const themeOptions: ThemeOptions = {
       fontWeight: 500,
     },
     button: {
-      textTransform: 'none',
+      textTransform: "none",
     },
   },
   components: {
@@ -94,7 +94,7 @@ const themeOptions: ThemeOptions = {
       styleOverrides: {
         root: {
           borderRadius: 12,
-          boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+          boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
         },
       },
     },
@@ -113,7 +113,7 @@ const themeOptions: ThemeOptions = {
 };
 
 // Declaração para estender o tema com propriedades customizadas
-declare module '@mui/material/styles' {
+declare module "@mui/material/styles" {
   interface Theme {
     custom: {
       chatbot: {
@@ -124,7 +124,7 @@ declare module '@mui/material/styles' {
       };
     };
   }
-  
+
   interface ThemeOptions {
     custom?: {
       chatbot?: {

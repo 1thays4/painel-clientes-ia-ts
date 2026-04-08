@@ -1,8 +1,8 @@
-import React from 'react';
-import { useRouter } from 'next/router';
-import { useEffect } from 'react';
-import DiagnosticoPage from './DiagnosticoPage';
-import { useAuth } from '../contexts/AuthContext';
+import React from "react";
+import { useRouter } from "next/router";
+import { useEffect } from "react";
+import DiagnosticoPage from "./DiagnosticoPage";
+import { useAuth } from "../contexts/AuthContext";
 
 export default function Diagnostico() {
   const { user, loading } = useAuth();
@@ -10,7 +10,7 @@ export default function Diagnostico() {
 
   useEffect(() => {
     if (!loading && !user) {
-      router.push('/login');
+      router.push("/login");
     }
   }, [user, loading, router]);
 

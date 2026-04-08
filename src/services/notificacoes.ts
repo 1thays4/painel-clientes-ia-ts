@@ -17,49 +17,57 @@ export class NotificacaoService {
 
   // Inicializar o AudioContext no lado do cliente
   private initAudioContext(): void {
-    if (typeof window !== 'undefined' && !this.audioContext) {
+    if (typeof window !== "undefined" && !this.audioContext) {
       try {
-        this.audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+        this.audioContext = new (
+          window.AudioContext || (window as any).webkitAudioContext
+        )();
       } catch (e) {
-        console.error('Erro ao criar AudioContext:', e);
+        console.error("Erro ao criar AudioContext:", e);
       }
     }
   }
 
   // Tocar som de notificação
   public tocarNotificacao(): void {
-    if (!this.notificacoesAtivadas || typeof window === 'undefined') return;
-    
+    if (!this.notificacoesAtivadas || typeof window === "undefined") return;
+
     this.initAudioContext();
-    
+
     try {
       // Usar a função global de geração de som se disponível
       if ((window as any).generateNotificationSound) {
         (window as any).generateNotificationSound();
         return;
       }
-      
+
       // Método alternativo se a função global não estiver disponível
       if (this.audioContext) {
         const oscillator = this.audioContext.createOscillator();
-        oscillator.type = 'sine';
-        
+        oscillator.type = "sine";
+
         // Criar um som de notificação simples
         oscillator.frequency.setValueAtTime(880, this.audioContext.currentTime);
-        oscillator.frequency.setValueAtTime(1318.51, this.audioContext.currentTime + 0.1);
-        
+        oscillator.frequency.setValueAtTime(
+          1318.51,
+          this.audioContext.currentTime + 0.1,
+        );
+
         const gainNode = this.audioContext.createGain();
         gainNode.gain.setValueAtTime(0.1, this.audioContext.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 0.3);
-        
+        gainNode.gain.exponentialRampToValueAtTime(
+          0.001,
+          this.audioContext.currentTime + 0.3,
+        );
+
         oscillator.connect(gainNode);
         gainNode.connect(this.audioContext.destination);
-        
+
         oscillator.start();
         oscillator.stop(this.audioContext.currentTime + 0.3);
       }
     } catch (error) {
-      console.error('Erro ao tocar notificação:', error);
+      console.error("Erro ao tocar notificação:", error);
     }
   }
 
@@ -82,14 +90,14 @@ export class NotificacaoService {
 // Criar a instância apenas no lado do cliente
 let notificacaoService: NotificacaoService;
 
-if (typeof window !== 'undefined') {
+if (typeof window !== "undefined") {
   notificacaoService = NotificacaoService.getInstance();
 } else {
   // Stub para SSR
   notificacaoService = {
     tocarNotificacao: () => {},
     toggleNotificacoes: (ativar?: boolean) => !!ativar,
-    isNotificacoesAtivadas: () => true
+    isNotificacoesAtivadas: () => true,
   } as NotificacaoService;
 }
 

@@ -1,7 +1,7 @@
-import { useEffect } from 'react';
-import { useRouter } from 'next/router';
-import { supabase } from '../../lib/supabase';
-import { CircularProgress, Box, Typography } from '@mui/material';
+import { useEffect } from "react";
+import { useRouter } from "next/router";
+import { supabase } from "../../lib/supabase";
+import { CircularProgress, Box, Typography } from "@mui/material";
 
 export default function AuthCallback() {
   const router = useRouter();
@@ -11,22 +11,22 @@ export default function AuthCallback() {
       try {
         // Processar o callback do magic link
         const { error } = await supabase.auth.getSession();
-        
+
         if (error) {
-          console.error('Erro ao processar callback de autenticação:', error);
+          console.error("Erro ao processar callback de autenticação:", error);
           // Redirecionar para a página de login em caso de erro
-          window.location.href = '/login';
+          window.location.href = "/login";
           return;
         }
-        
-        console.log('Autenticação bem-sucedida via magic link');
-        
+
+        console.log("Autenticação bem-sucedida via magic link");
+
         // Redirecionar para a página inicial após autenticação bem-sucedida
-        window.location.href = '/';
+        window.location.href = "/";
       } catch (error) {
-        console.error('Erro ao processar callback:', error);
+        console.error("Erro ao processar callback:", error);
         // Redirecionar para a página de login em caso de erro
-        window.location.href = '/login';
+        window.location.href = "/login";
       }
     };
 
@@ -35,14 +35,14 @@ export default function AuthCallback() {
   }, []);
 
   return (
-    <Box 
-      sx={{ 
-        display: 'flex', 
-        flexDirection: 'column',
-        alignItems: 'center', 
-        justifyContent: 'center', 
-        height: '100vh',
-        gap: 3
+    <Box
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        height: "100vh",
+        gap: 3,
       }}
     >
       <CircularProgress size={60} />

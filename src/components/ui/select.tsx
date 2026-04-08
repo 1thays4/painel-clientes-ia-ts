@@ -1,11 +1,11 @@
 import React from "react";
-import { 
-  FormControl, 
-  InputLabel, 
-  Select as MuiSelect, 
-  MenuItem, 
+import {
+  FormControl,
+  InputLabel,
+  Select as MuiSelect,
+  MenuItem,
   SelectChangeEvent,
-  FormHelperText
+  FormHelperText,
 } from "@mui/material";
 
 interface SelectProps {
@@ -20,29 +20,30 @@ interface SelectProps {
   variant?: "outlined" | "filled" | "standard";
 }
 
-export function Select({ 
-  value, 
-  onValueChange, 
-  label, 
-  fullWidth = true, 
-  error, 
-  helperText, 
+export function Select({
+  value,
+  onValueChange,
+  label,
+  fullWidth = true,
+  error,
+  helperText,
   children,
   size = "medium",
-  variant = "outlined"
+  variant = "outlined",
 }: SelectProps) {
   const handleChange = (event: SelectChangeEvent<string>) => {
     onValueChange(event.target.value);
   };
 
   return (
-    <FormControl fullWidth={fullWidth} error={error} size={size} variant={variant}>
+    <FormControl
+      fullWidth={fullWidth}
+      error={error}
+      size={size}
+      variant={variant}
+    >
       {label && <InputLabel>{label}</InputLabel>}
-      <MuiSelect
-        value={value}
-        onChange={handleChange}
-        label={label}
-      >
+      <MuiSelect value={value} onChange={handleChange} label={label}>
         {children}
       </MuiSelect>
       {helperText && <FormHelperText>{helperText}</FormHelperText>}

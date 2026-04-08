@@ -1,6 +1,6 @@
-import React, { ReactNode } from 'react';
-import Link from 'next/link';
-import { useRouter } from 'next/router';
+import React, { ReactNode } from "react";
+import Link from "next/link";
+import { useRouter } from "next/router";
 
 interface NavLinkProps {
   href: string;
@@ -9,12 +9,17 @@ interface NavLinkProps {
   activeClassName?: string;
 }
 
-export default function NavLink({ href, children, className = '', activeClassName = 'active' }: NavLinkProps) {
+export default function NavLink({
+  href,
+  children,
+  className = "",
+  activeClassName = "active",
+}: NavLinkProps) {
   const router = useRouter();
   const isActive = router.pathname === href;
-  
-  const combinedClassName = isActive 
-    ? `${className} ${activeClassName}`.trim() 
+
+  const combinedClassName = isActive
+    ? `${className} ${activeClassName}`.trim()
     : className;
 
   return (

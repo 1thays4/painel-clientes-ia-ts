@@ -22,7 +22,11 @@ export default function AdminRoute({ children }: AdminRouteProps) {
 
   // Mostra um indicador de carregamento enquanto verifica a autenticação
   if (loading) {
-    return <div className="flex justify-center items-center h-screen">Carregando...</div>;
+    return (
+      <div className="flex justify-center items-center h-screen">
+        Carregando...
+      </div>
+    );
   }
 
   // Não renderiza nada enquanto redireciona

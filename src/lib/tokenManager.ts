@@ -20,28 +20,28 @@ export function saveClientToken(token: string, clienteId: string): void {
   const now = Date.now();
   const expiresAt = now + TOKEN_DURATION * 60 * 1000;
   const refreshExpiresAt = now + REFRESH_DURATION * 60 * 1000;
-  
+
   const tokenData: TokenData = {
     token,
     clienteId,
     expiresAt,
-    refreshExpiresAt
+    refreshExpiresAt,
   };
-  
+
   // Salvar no sessionStorage
-  sessionStorage.setItem('clienteTokenData', JSON.stringify(tokenData));
-  
+  sessionStorage.setItem("clienteTokenData", JSON.stringify(tokenData));
+
   // Registrar o acesso
-  logAccess('token_created', clienteId);
+  logAccess("token_created", clienteId);
 }
 
 /**
  * Verifica se o token do cliente é válido
  */
 export function isTokenValid(): boolean {
-  const tokenDataStr = sessionStorage.getItem('clienteTokenData');
+  const tokenDataStr = sessionStorage.getItem("clienteTokenData");
   if (!tokenDataStr) return false;
-  
+
   try {
     const tokenData: TokenData = JSON.parse(tokenDataStr);
     return Date.now() < tokenData.expiresAt;
@@ -54,9 +54,9 @@ export function isTokenValid(): boolean {
  * Verifica se o token pode ser renovado
  */
 export function canRefreshToken(): boolean {
-  const tokenDataStr = sessionStorage.getItem('clienteTokenData');
+  const tokenDataStr = sessionStorage.getItem("clienteTokenData");
   if (!tokenDataStr) return false;
-  
+
   try {
     const tokenData: TokenData = JSON.parse(tokenDataStr);
     return Date.now() < tokenData.refreshExpiresAt;
@@ -70,23 +70,23 @@ export function canRefreshToken(): boolean {
  */
 export function refreshToken(): boolean {
   if (!canRefreshToken()) return false;
-  
-  const tokenDataStr = sessionStorage.getItem('clienteTokenData');
+
+  const tokenDataStr = sessionStorage.getItem("clienteTokenData");
   if (!tokenDataStr) return false;
-  
+
   try {
     const tokenData: TokenData = JSON.parse(tokenDataStr);
-    
+
     // Renovar o token
     const now = Date.now();
     tokenData.expiresAt = now + TOKEN_DURATION * 60 * 1000;
-    
+
     // Salvar o token renovado
-    sessionStorage.setItem('clienteTokenData', JSON.stringify(tokenData));
-    
+    sessionStorage.setItem("clienteTokenData", JSON.stringify(tokenData));
+
     // Registrar a renovação
-    logAccess('token_refreshed', tokenData.clienteId);
-    
+    logAccess("token_refreshed", tokenData.clienteId);
+
     return true;
   } catch (error) {
     return false;
@@ -104,10 +104,10 @@ export function getClientToken(): string | null {
       return null;
     }
   }
-  
-  const tokenDataStr = sessionStorage.getItem('clienteTokenData');
+
+  const tokenDataStr = sessionStorage.getItem("clienteTokenData");
   if (!tokenDataStr) return null;
-  
+
   try {
     const tokenData: TokenData = JSON.parse(tokenDataStr);
     return tokenData.token;
@@ -120,9 +120,9 @@ export function getClientToken(): string | null {
  * Obtém o ID do cliente
  */
 export function getClientId(): string | null {
-  const tokenDataStr = sessionStorage.getItem('clienteTokenData');
+  const tokenDataStr = sessionStorage.getItem("clienteTokenData");
   if (!tokenDataStr) return null;
-  
+
   try {
     const tokenData: TokenData = JSON.parse(tokenDataStr);
     return tokenData.clienteId;
@@ -135,17 +135,17 @@ export function getClientId(): string | null {
  * Limpa o token do cliente
  */
 export function clearClientToken(): void {
-  const tokenDataStr = sessionStorage.getItem('clienteTokenData');
+  const tokenDataStr = sessionStorage.getItem("clienteTokenData");
   if (tokenDataStr) {
     try {
       const tokenData: TokenData = JSON.parse(tokenDataStr);
-      logAccess('token_cleared', tokenData.clienteId);
+      logAccess("token_cleared", tokenData.clienteId);
     } catch (error) {
       // Ignorar erro
     }
   }
-  
-  sessionStorage.removeItem('clienteTokenData');
+
+  sessionStorage.removeItem("clienteTokenData");
 }
 
 /**
@@ -158,16 +158,16 @@ export function logAccess(action: string, clienteId: string): void {
     action,
     clienteId,
     userAgent: navigator.userAgent,
-    ip: 'client-side' // O IP real será capturado pelo servidor
+    ip: "client-side", // O IP real será capturado pelo servidor
   };
-  
+
   // Enviar para o servidor em segundo plano
   sendLogToServer(logEntry).catch(console.error);
-  
+
   // Também salvar localmente para debug
-  const logs = JSON.parse(localStorage.getItem('accessLogs') || '[]');
+  const logs = JSON.parse(localStorage.getItem("accessLogs") || "[]");
   logs.push(logEntry);
-  localStorage.setItem('accessLogs', JSON.stringify(logs.slice(-100))); // Manter apenas os últimos 100 logs
+  localStorage.setItem("accessLogs", JSON.stringify(logs.slice(-100))); // Manter apenas os últimos 100 logs
 }
 
 /**
@@ -175,19 +175,19 @@ export function logAccess(action: string, clienteId: string): void {
  */
 async function sendLogToServer(logEntry: any): Promise<void> {
   try {
-    const response = await fetch('/api/log-access', {
-      method: 'POST',
+    const response = await fetch("/api/log-access", {
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json'
+        "Content-Type": "application/json",
       },
       body: JSON.stringify(logEntry),
       // Não esperar pela resposta
-      keepalive: true
+      keepalive: true,
     });
-    
+
     // Não precisamos esperar pela resposta
   } catch (error) {
     // Ignorar erros de envio de log
-    console.error('Erro ao enviar log:', error);
+    console.error("Erro ao enviar log:", error);
   }
 }

@@ -1,8 +1,8 @@
-import React from 'react';
-import { useRouter } from 'next/router';
-import { useEffect } from 'react';
-import DashboardHumano from '../components/DashboardHumano';
-import { useAuth } from '../contexts/AuthContext';
+import React from "react";
+import { useRouter } from "next/router";
+import { useEffect } from "react";
+import DashboardHumano from "../components/DashboardHumano";
+import { useAuth } from "../contexts/AuthContext";
 
 export default function AtendimentoHumanoPage() {
   const { user, loading } = useAuth();
@@ -10,7 +10,7 @@ export default function AtendimentoHumanoPage() {
 
   useEffect(() => {
     if (!loading && !user) {
-      router.push('/login');
+      router.push("/login");
     }
   }, [user, loading, router]);
 

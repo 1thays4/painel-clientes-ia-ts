@@ -1,5 +1,5 @@
-import { supabase } from './supabase';
-import { getClientToken } from './tokenManager';
+import { supabase } from "./supabase";
+import { getClientToken } from "./tokenManager";
 
 /**
  * Configura os cabeçalhos de autenticação para as requisições ao Supabase
@@ -7,16 +7,16 @@ import { getClientToken } from './tokenManager';
  */
 export function setupAuthHeaders(): string | null {
   const clientToken = getClientToken();
-  
+
   if (clientToken) {
     // Configurar o token do cliente nos cabeçalhos
     supabase.headers = {
       ...supabase.headers,
-      'client-token': clientToken
+      "client-token": clientToken,
     };
-    
+
     return clientToken;
   }
-  
+
   return null;
 }

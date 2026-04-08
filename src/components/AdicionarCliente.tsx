@@ -8,7 +8,11 @@ import { validarWhatsApp } from "../lib/validacao";
 import { config } from "../config";
 import "react-toastify/dist/ReactToastify.css";
 
-export default function AdicionarCliente({ onClienteAdicionado }: { onClienteAdicionado: () => void }) {
+export default function AdicionarCliente({
+  onClienteAdicionado,
+}: {
+  onClienteAdicionado: () => void;
+}) {
   const [nome, setNome] = useState("");
   const [whatsapp, setWhatsapp] = useState("");
   const [plano, setPlano] = useState("essencial");
@@ -18,13 +22,13 @@ export default function AdicionarCliente({ onClienteAdicionado }: { onClienteAdi
   const handleWhatsappChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const valor = e.target.value;
     setWhatsapp(valor);
-    
+
     // Limpar erro quando o campo estiver vazio
     if (!valor) {
       setWhatsappError("");
       return;
     }
-    
+
     // Validar o número
     const numeroValidado = validarWhatsApp(valor);
     if (!numeroValidado && valor.length > 0) {
@@ -36,12 +40,12 @@ export default function AdicionarCliente({ onClienteAdicionado }: { onClienteAdi
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!nome) {
       toast.error("Nome é obrigatório");
       return;
     }
-    
+
     // Validar WhatsApp se foi informado
     if (whatsapp) {
       const numeroValidado = validarWhatsApp(whatsapp);
@@ -51,16 +55,16 @@ export default function AdicionarCliente({ onClienteAdicionado }: { onClienteAdi
         return;
       }
     }
-    
+
     setCarregando(true);
-    
+
     try {
       const novoCliente = await criarCliente({
         nome,
         plano,
-        whatsapp: whatsapp ? validarWhatsApp(whatsapp) : ""
+        whatsapp: whatsapp ? validarWhatsApp(whatsapp) : "",
       });
-      
+
       if (novoCliente) {
         toast.success("Cliente adicionado com sucesso!");
         setNome("");
@@ -85,7 +89,7 @@ export default function AdicionarCliente({ onClienteAdicionado }: { onClienteAdi
     <Card className="w-full">
       <CardContent className="pt-6">
         <h2 className="text-xl font-bold mb-4">Adicionar Novo Cliente</h2>
-        
+
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium mb-1">Nome*</label>
@@ -96,7 +100,7 @@ export default function AdicionarCliente({ onClienteAdicionado }: { onClienteAdi
               required
             />
           </div>
-          
+
           <div>
             <label className="block text-sm font-medium mb-1">WhatsApp</label>
             <Input
@@ -112,7 +116,7 @@ export default function AdicionarCliente({ onClienteAdicionado }: { onClienteAdi
               Formato: código do país + DDD + número (ex: 5511999999999)
             </p>
           </div>
-          
+
           <div>
             <label className="block text-sm font-medium mb-1">Plano</label>
             <select
@@ -120,14 +124,23 @@ export default function AdicionarCliente({ onClienteAdicionado }: { onClienteAdi
               onChange={(e) => setPlano(e.target.value)}
               className="w-full p-2 border rounded-md"
             >
-              <option value="essencial">Básico - {planos.essencial.limite} mensagens - R$ {planos.essencial.preco}/mês</option>
-              <option value="Profissional">Intermediário - {planos.Profissional.limite} mensagens - R$ {planos.Profissional.preco}/mês</option>
-              <option value="Estratégico">Avançado - {planos.Estratégico.limite} mensagens - R$ {planos.Estratégico.preco}/mês</option>
+              <option value="essencial">
+                Básico - {planos.essencial.limite} mensagens - R${" "}
+                {planos.essencial.preco}/mês
+              </option>
+              <option value="Profissional">
+                Intermediário - {planos.Profissional.limite} mensagens - R${" "}
+                {planos.Profissional.preco}/mês
+              </option>
+              <option value="Estratégico">
+                Avançado - {planos.Estratégico.limite} mensagens - R${" "}
+                {planos.Estratégico.preco}/mês
+              </option>
             </select>
           </div>
-          
-          <Button 
-            type="submit" 
+
+          <Button
+            type="submit"
             className="w-full bg-green-600 hover:bg-green-700"
             disabled={carregando}
           >

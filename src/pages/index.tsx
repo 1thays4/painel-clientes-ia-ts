@@ -1,8 +1,8 @@
-import React, { useEffect, useState } from 'react';
-import { useRouter } from 'next/router';
-import PainelClientesIA from '../components/painel-clientes-ia';
-import { useAuth } from '../contexts/AuthContext';
-import { CircularProgress, Box, Typography } from '@mui/material';
+import React, { useEffect, useState } from "react";
+import { useRouter } from "next/router";
+import PainelClientesIA from "../components/painel-clientes-ia";
+import { useAuth } from "../contexts/AuthContext";
+import { CircularProgress, Box, Typography } from "@mui/material";
 
 export default function Home() {
   const { user, loading } = useAuth();
@@ -14,7 +14,7 @@ export default function Home() {
     const timer = setTimeout(() => {
       setShowLoading(false);
     }, 3000);
-    
+
     return () => clearTimeout(timer);
   }, []);
 
@@ -23,11 +23,11 @@ export default function Home() {
     return (
       <Box
         sx={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          height: '100vh',
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          height: "100vh",
         }}
       >
         <CircularProgress size={60} />
@@ -43,11 +43,11 @@ export default function Home() {
     return (
       <Box
         sx={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          height: '100vh',
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          height: "100vh",
         }}
       >
         <Typography variant="h5" sx={{ mb: 2 }}>
@@ -62,6 +62,6 @@ export default function Home() {
   }
 
   // Se estiver autenticado, mostrar o painel
-  console.log('Página index.tsx - Estado de autenticação:', { user, loading });
+  console.log("Página index.tsx - Estado de autenticação:", { user, loading });
   return user ? <PainelClientesIA /> : null;
 }

@@ -18,14 +18,14 @@ export default function Registro() {
 
   const handleRegistro = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!nome || !email || !password) {
       toast.error("Por favor, preencha todos os campos obrigatórios");
       return;
     }
-    
+
     setLoading(true);
-    
+
     try {
       // 1. Criar o usuário no Supabase Auth
       const { data: authData, error: authError } = await supabase.auth.signUp({
@@ -34,43 +34,44 @@ export default function Registro() {
         options: {
           data: {
             nome,
-            whatsapp
-          }
-        }
+            whatsapp,
+          },
+        },
       });
-      
+
       if (authError) {
         toast.error("Erro ao criar conta: " + authError.message);
         setLoading(false);
         return;
       }
-      
+
       if (!authData.user) {
         toast.error("Erro ao criar conta: usuário não retornado");
         setLoading(false);
         return;
       }
-      
+
       // 2. Criar o cliente associado ao usuário
       const cliente = await criarCliente({
         nome,
-        whatsapp
+        whatsapp,
       });
-      
+
       if (!cliente) {
         toast.error("Conta criada, mas houve um erro ao configurar seu perfil");
         setLoading(false);
         return;
       }
-      
+
       // 3. Sucesso!
-      toast.success("Conta criada com sucesso! Verifique seu e-mail para confirmar o cadastro.");
-      
+      toast.success(
+        "Conta criada com sucesso! Verifique seu e-mail para confirmar o cadastro.",
+      );
+
       // 4. Redirecionar para login após um breve delay
       setTimeout(() => {
         router.push("/login");
       }, 2000);
-      
     } catch (error) {
       console.error("Erro no registro:", error);
       toast.error("Ocorreu um erro durante o registro");
@@ -117,7 +118,9 @@ export default function Registro() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">WhatsApp (opcional)</label>
+              <label className="block text-sm font-medium mb-1">
+                WhatsApp (opcional)
+              </label>
               <Input
                 type="tel"
                 placeholder="(00) 00000-0000"
@@ -125,8 +128,8 @@ export default function Registro() {
                 onChange={(e) => setWhatsapp(e.target.value)}
               />
             </div>
-            <Button 
-              type="submit" 
+            <Button
+              type="submit"
               className="w-full bg-blue-600 hover:bg-blue-700"
               disabled={loading}
             >
@@ -134,8 +137,8 @@ export default function Registro() {
             </Button>
             <p className="text-center text-sm">
               Já tem uma conta?{" "}
-              <a 
-                href="/login" 
+              <a
+                href="/login"
                 className="text-blue-600 hover:underline"
                 onClick={(e) => {
                   e.preventDefault();

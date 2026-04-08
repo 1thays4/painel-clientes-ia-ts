@@ -1,10 +1,10 @@
-import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
 
 // Middleware para proteção de rotas
 export function middleware(request: NextRequest) {
   return NextResponse.next();
- /*  // Exemplo de middleware para verificar autenticação
+  /*  // Exemplo de middleware para verificar autenticação
   // Você pode adaptar conforme necessário para seu sistema de autenticação
   
   const token = request.cookies.get('auth_token')?.value;
@@ -27,6 +27,6 @@ export function middleware(request: NextRequest) {
 // Configurar quais rotas o middleware deve ser executado
 export const config = {
   matcher: [
-    '/((?!api|_next/static|_next/image|favicon.ico|notification.js).*)',
+    "/((?!api|_next/static|_next/image|favicon.ico|notification.js).*)",
   ],
 };

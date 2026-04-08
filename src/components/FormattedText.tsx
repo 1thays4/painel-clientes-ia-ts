@@ -1,29 +1,29 @@
-import React from 'react';
-import { Box, Typography } from '@mui/material';
+import React from "react";
+import { Box, Typography } from "@mui/material";
 
 interface FormattedTextProps {
   text: string;
   className?: string;
-  type?: 'default' | 'ai' | 'human' | 'received' | 'sent';
+  type?: "default" | "ai" | "human" | "received" | "sent";
   component?: React.ElementType;
 }
 
 /**
  * Componente que formata texto com quebras de linha e espaçamento similar ao WhatsApp
  */
-export default function FormattedText({ 
-  text, 
-  className = '', 
-  type = 'default',
-  component = 'div'
+export default function FormattedText({
+  text,
+  className = "",
+  type = "default",
+  component = "div",
 }: FormattedTextProps) {
   // Função para processar o texto e adicionar quebras de linha
   const formatText = (text: string) => {
     // Dividir o texto em parágrafos
-    return text.split('\n').map((paragraph, index) => (
+    return text.split("\n").map((paragraph, index) => (
       <React.Fragment key={index}>
         {paragraph}
-        {index < text.split('\n').length - 1 && <br />}
+        {index < text.split("\n").length - 1 && <br />}
       </React.Fragment>
     ));
   };
@@ -31,16 +31,16 @@ export default function FormattedText({
   // Determinar a classe CSS com base no tipo
   const getTypeClass = () => {
     switch (type) {
-      case 'ai':
-        return 'whatsapp-message whatsapp-message-ai';
-      case 'human':
-        return 'whatsapp-message whatsapp-message-human';
-      case 'received':
-        return 'whatsapp-message whatsapp-message-received';
-      case 'sent':
-        return 'whatsapp-message whatsapp-message-sent';
+      case "ai":
+        return "whatsapp-message whatsapp-message-ai";
+      case "human":
+        return "whatsapp-message whatsapp-message-human";
+      case "received":
+        return "whatsapp-message whatsapp-message-received";
+      case "sent":
+        return "whatsapp-message whatsapp-message-sent";
       default:
-        return '';
+        return "";
     }
   };
 
@@ -48,10 +48,10 @@ export default function FormattedText({
     <Typography
       component={component}
       className={getTypeClass()}
-      sx={{ 
-        whiteSpace: 'pre-wrap', 
+      sx={{
+        whiteSpace: "pre-wrap",
         lineHeight: 1.5,
-        ...(className ? { className } : {})
+        ...(className ? { className } : {}),
       }}
       variant="body2"
     >

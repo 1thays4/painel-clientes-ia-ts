@@ -5,10 +5,12 @@
  */
 export function ajustarTimestampParaFusoBrasil(date?: Date): Date {
   const dataAtual = date || new Date();
-  
+
   // Criar uma string de data no formato ISO com o fuso horário de São Paulo
-  const dataString = dataAtual.toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' });
-  
+  const dataString = dataAtual.toLocaleString("en-US", {
+    timeZone: "America/Sao_Paulo",
+  });
+
   // Converter de volta para objeto Date
   return new Date(dataString);
 }
@@ -20,7 +22,7 @@ export function ajustarTimestampParaFusoBrasil(date?: Date): Date {
  */
 export function formatarTimestampComFuso(date?: Date): string {
   const dataAjustada = ajustarTimestampParaFusoBrasil(date);
-  
+
   // Formatar no padrão ISO com o offset de São Paulo (-03:00)
-  return dataAjustada.toISOString().replace('Z', '-03:00');
+  return dataAjustada.toISOString().replace("Z", "-03:00");
 }

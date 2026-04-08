@@ -3,11 +3,11 @@ export type User = {
   id: string;
   email?: string;
   user_metadata?: {
-    role?: 'admin' | 'user';
+    role?: "admin" | "user";
     name?: string;
   };
 };
 
 export type Session = any;
 
-export type UserRole = 'admin' | 'user';
+export type UserRole = "admin" | "user";

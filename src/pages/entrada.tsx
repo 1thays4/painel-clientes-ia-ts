@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react';
-import { supabase } from '../lib/supabase';
-import { Box, Button, Container, Typography, Paper } from '@mui/material';
-import Link from 'next/link';
+import { useEffect, useState } from "react";
+import { supabase } from "../lib/supabase";
+import { Box, Button, Container, Typography, Paper } from "@mui/material";
+import Link from "next/link";
 
 export default function Entrada() {
   const [user, setUser] = useState<any>(null);
@@ -16,7 +16,7 @@ export default function Entrada() {
           setUser(data.session.user);
         }
       } catch (error) {
-        console.error('Erro ao verificar autenticação:', error);
+        console.error("Erro ao verificar autenticação:", error);
       } finally {
         setLoading(false);
       }
@@ -27,7 +27,14 @@ export default function Entrada() {
 
   if (loading) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          height: "100vh",
+        }}
+      >
         <Typography>Carregando...</Typography>
       </Box>
     );
@@ -39,8 +46,8 @@ export default function Entrada() {
         <Typography variant="h4" component="h1" gutterBottom align="center">
           Painel de Clientes IA
         </Typography>
-        
-        <Box sx={{ mt: 4, textAlign: 'center' }}>
+
+        <Box sx={{ mt: 4, textAlign: "center" }}>
           {user ? (
             <>
               <Typography variant="body1" gutterBottom>
@@ -54,9 +61,9 @@ export default function Entrada() {
                 </Link>
               </Box>
               <Box sx={{ mt: 2 }}>
-                <Button 
-                  variant="outlined" 
-                  color="secondary" 
+                <Button
+                  variant="outlined"
+                  color="secondary"
                   fullWidth
                   onClick={async () => {
                     await supabase.auth.signOut();

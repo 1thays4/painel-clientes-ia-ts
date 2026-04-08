@@ -1,19 +1,19 @@
 // Lista de domínios de email autorizados
 const AUTHORIZED_DOMAINS = [
-  'empresa.com',
-  'cliente.com',
-  'gmail.com',  // Adicionado para testes
-  'hotmail.com', // Adicionado para testes
-  'outlook.com', // Adicionado para testes
+  "empresa.com",
+  "cliente.com",
+  "gmail.com", // Adicionado para testes
+  "hotmail.com", // Adicionado para testes
+  "outlook.com", // Adicionado para testes
   // Adicione outros domínios autorizados aqui
 ];
 
 // Lista de emails específicos autorizados
 const AUTHORIZED_EMAILS = [
-  'admin@example.com',
-  'suporte@example.com',
-  'thayscosta66@gmail.com',
-  'test@test.com', // Adicionado para testes
+  "admin@example.com",
+  "suporte@example.com",
+  "thayscosta66@gmail.com",
+  "test@test.com", // Adicionado para testes
   // Adicione outros emails autorizados aqui
 ];
 
@@ -24,22 +24,22 @@ const AUTHORIZED_EMAILS = [
  */
 export const isAuthorizedEmail = (email: string): boolean => {
   // Durante o desenvolvimento, permitir qualquer email
-  if (process.env.NODE_ENV === 'development') {
+  if (process.env.NODE_ENV === "development") {
     return true;
   }
-  
+
   if (!email) return false;
-  
+
   // Verificar se o email está na lista de emails autorizados
   if (AUTHORIZED_EMAILS.includes(email.toLowerCase())) {
     return true;
   }
-  
+
   // Verificar se o domínio do email está na lista de domínios autorizados
-  const domain = email.split('@')[1]?.toLowerCase();
+  const domain = email.split("@")[1]?.toLowerCase();
   if (domain && AUTHORIZED_DOMAINS.includes(domain)) {
     return true;
   }
-  
+
   return false;
 };

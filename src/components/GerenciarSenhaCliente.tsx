@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import { supabase } from '../lib/supabase';
-import { toast } from 'react-toastify';
+import React, { useState } from "react";
+import { supabase } from "../lib/supabase";
+import { toast } from "react-toastify";
 import {
   Dialog,
   DialogTitle,
@@ -10,9 +10,9 @@ import {
   Button,
   Typography,
   Box,
-  CircularProgress
-} from '@mui/material';
-import { Key as KeyIcon } from '@mui/icons-material';
+  CircularProgress,
+} from "@mui/material";
+import { Key as KeyIcon } from "@mui/icons-material";
 
 interface GerenciarSenhaClienteProps {
   clienteId: string;
@@ -20,43 +20,47 @@ interface GerenciarSenhaClienteProps {
   onClose: () => void;
 }
 
-export default function GerenciarSenhaCliente({ clienteId, open, onClose }: GerenciarSenhaClienteProps) {
-  const [senha, setSenha] = useState('');
-  const [confirmacaoSenha, setConfirmacaoSenha] = useState('');
+export default function GerenciarSenhaCliente({
+  clienteId,
+  open,
+  onClose,
+}: GerenciarSenhaClienteProps) {
+  const [senha, setSenha] = useState("");
+  const [confirmacaoSenha, setConfirmacaoSenha] = useState("");
   const [loading, setLoading] = useState(false);
-  const [erro, setErro] = useState('');
+  const [erro, setErro] = useState("");
 
   const handleSalvarSenha = async () => {
     // Validar senha
     if (!senha) {
-      setErro('A senha não pode estar vazia');
+      setErro("A senha não pode estar vazia");
       return;
     }
 
     if (senha !== confirmacaoSenha) {
-      setErro('As senhas não coincidem');
+      setErro("As senhas não coincidem");
       return;
     }
 
     setLoading(true);
-    setErro('');
+    setErro("");
 
     try {
       // Atualizar a senha do cliente
       const { error } = await supabase
-        .from('clientes')
+        .from("clientes")
         .update({ senha_acesso: senha })
-        .eq('id', clienteId);
+        .eq("id", clienteId);
 
       if (error) {
         throw error;
       }
 
-      toast.success('Senha atualizada com sucesso');
+      toast.success("Senha atualizada com sucesso");
       onClose();
     } catch (error) {
-      console.error('Erro ao atualizar senha:', error);
-      setErro('Ocorreu um erro ao atualizar a senha');
+      console.error("Erro ao atualizar senha:", error);
+      setErro("Ocorreu um erro ao atualizar a senha");
     } finally {
       setLoading(false);
     }
@@ -75,7 +79,8 @@ export default function GerenciarSenhaCliente({ clienteId, open, onClose }: Gere
       <DialogContent>
         <Box sx={{ mb: 2, mt: 1 }}>
           <Typography variant="body2" color="text.secondary" gutterBottom>
-            Esta senha será usada pelo cliente para acessar seu painel. Informe ao cliente esta senha.
+            Esta senha será usada pelo cliente para acessar seu painel. Informe
+            ao cliente esta senha.
           </Typography>
         </Box>
 
@@ -126,7 +131,7 @@ export default function GerenciarSenhaCliente({ clienteId, open, onClose }: Gere
           disabled={loading}
           startIcon={loading ? <CircularProgress size={20} /> : null}
         >
-          {loading ? 'Salvando...' : 'Salvar Senha'}
+          {loading ? "Salvando..." : "Salvar Senha"}
         </Button>
       </DialogActions>
     </Dialog>
