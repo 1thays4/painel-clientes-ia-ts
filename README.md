@@ -4,7 +4,7 @@ Sistema de gerenciamento de clientes para serviço de IA no WhatsApp com control
 
 ## Stack
 
-- **Frontend**: Next.js 14, TypeScript, Material UI, Tailwind CSS
+- **Frontend**: Next.js 15, TypeScript, Material UI, Tailwind CSS
 - **Backend**: Next.js API Routes + servidor Express separado
 - **Banco de dados**: Supabase (PostgreSQL)
 - **Automação**: n8n + Twilio (WhatsApp Business API)

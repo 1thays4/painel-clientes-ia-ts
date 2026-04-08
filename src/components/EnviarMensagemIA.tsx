@@ -10,17 +10,17 @@ import {
   useTheme,
 } from "@mui/material";
 
-interface TestarIAProps {
+interface EnviarMensagemIAProps {
   clienteId: number;
   limite: number;
   onMensagemEnviada: () => void;
 }
 
-export default function TestarIA({
+export default function EnviarMensagemIA({
   clienteId,
   limite,
   onMensagemEnviada,
-}: TestarIAProps) {
+}: EnviarMensagemIAProps) {
   const theme = useTheme();
   const [enviando, setEnviando] = useState(false);
 

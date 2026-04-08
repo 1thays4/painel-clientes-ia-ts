@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/router";
-import TestarIA from "./TestarIA";
+import EnviarMensagemIA from "./EnviarMensagemIA";
 import { contarMensagensMes } from "../services/mensagens";
 import { ToastContainer } from "react-toastify";
 import { supabase } from "../lib/supabase";
@@ -302,7 +302,7 @@ export default function PainelClientePublico() {
                   Assistente IA no WhatsApp
                 </Typography>
                 {cliente && (
-                  <TestarIA
+                  <EnviarMensagemIA
                     clienteId={cliente.id}
                     limite={cliente.mensagens_limite || 100}
                     onMensagemEnviada={atualizarContagemMensagens}

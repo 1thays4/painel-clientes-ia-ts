@@ -45,7 +45,7 @@
     "postcss": "^8.4.38",
     "typescript": "~5.0.0"
   },
-  "keywords": [],
-  "author": "",
+  "keywords": ["nextjs", "typescript", "whatsapp", "ia", "supabase", "crm"],
+  "author": "Thays Vasconcelos",
   "license": "ISC"
 }
