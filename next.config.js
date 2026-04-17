@@ -1,5 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  output: 'export',  // Exportar como estático para Cloudflare Pages
   reactStrictMode: true,
   eslint: {
     ignoreDuringBuilds: true,
