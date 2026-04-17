@@ -7,6 +7,8 @@ import {
   TextField,
   CircularProgress,
   useTheme,
+  Alert,
+  AlertTitle,
 } from "@mui/material";
 import ClienteSelector from "./ClienteSelector";
 import ClienteFinalSelector from "./ClienteFinalSelector";
@@ -16,6 +18,7 @@ import ControleNotificacoes from "./ControleNotificacoes";
 import CadastrarContato from "./CadastrarContato";
 import { config } from "../config";
 import axios from "axios";
+import { anonymizeName, anonymizePhone, isDemoMode } from "../utils/anonymize";
 import "react-toastify/dist/ReactToastify.css";
 // CSS global removido - será adicionado em _app.js
 import { useEffect, useState, useRef } from "react";
@@ -70,17 +73,17 @@ export default function PainelRespostasCliente({
     // Prioridade 1: numero_destino se não for igual ao whatsapp_cliente
     if (msg.numero_destino && msg.numero_destino !== msg.whatsapp_cliente) {
       const numeroFormatado = formatarTelefone(msg.numero_destino);
-      return numeroFormatado;
+      return isDemoMode() ? anonymizePhone(numeroFormatado) : numeroFormatado;
     }
 
     // Prioridade 2: numero_remetente se não for igual ao whatsapp_cliente
     if (msg.numero_remetente && msg.numero_remetente !== msg.whatsapp_cliente) {
-      return msg.numero_remetente;
+      return isDemoMode() ? anonymizePhone(msg.numero_remetente) : msg.numero_remetente;
     }
 
     // Prioridade 3: whatsapp_cliente_final
     if (msg.whatsapp_cliente_final) {
-      return msg.whatsapp_cliente_final;
+      return isDemoMode() ? anonymizePhone(msg.whatsapp_cliente_final) : msg.whatsapp_cliente_final;
     }
 
     return "";
@@ -516,12 +519,22 @@ export default function PainelRespostasCliente({
                         }}
                       >
                         <Typography variant="h6" color="white">
-                          {msgSelecionada.nome_cliente_final?.charAt(0) || "?"}
+                          {isDemoMode()
+                            ? anonymizeName(
+                                msgSelecionada.nome_cliente_final || "?",
+                                "person",
+                              ).charAt(0)
+                            : msgSelecionada.nome_cliente_final?.charAt(0) || "?"}
                         </Typography>
                       </Box>
                       <Box>
                         <Typography variant="subtitle1">
-                          {msgSelecionada.nome_cliente_final}
+                          {isDemoMode()
+                            ? anonymizeName(
+                                msgSelecionada.nome_cliente_final,
+                                "person",
+                              )
+                            : msgSelecionada.nome_cliente_final}
                         </Typography>
                         <Typography
                           variant="caption"

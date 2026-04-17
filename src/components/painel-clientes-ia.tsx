@@ -8,6 +8,7 @@ import AdicionarCliente from "./AdicionarCliente";
 import Dashboard from "./Dashboard";
 import { formatarWhatsAppParaExibicao } from "../lib/validacao";
 import { verificarLimiteMensagens } from "../lib/validacao";
+import { anonymizeName, anonymizePhone, isDemoMode } from "../utils/anonymize";
 import "react-toastify/dist/ReactToastify.css";
 
 // Material UI imports
@@ -277,8 +278,17 @@ export default function PainelClientesIA() {
                     sx={{ height: "100%", borderRadius: 2, overflow: "hidden" }}
                   >
                     <CardContent sx={{ pt: 3, pb: 3 }}>
+                      {isDemoMode() && (
+                        <Alert severity="info" sx={{ mb: 2, py: 1 }}>
+                          <AlertTitle sx={{ fontSize: "0.8rem" }}>
+                            🔐 MODO DEMO - Dados Anonimizados
+                          </AlertTitle>
+                        </Alert>
+                      )}
                       <Typography variant="h6" fontWeight="bold" gutterBottom>
-                        {cliente.nome}
+                        {isDemoMode()
+                          ? anonymizeName(cliente.nome, "company")
+                          : cliente.nome}
                       </Typography>
                       <Box
                         sx={{ display: "flex", alignItems: "center", mb: 1 }}
@@ -302,11 +312,15 @@ export default function PainelClientesIA() {
                         <Typography variant="body2" sx={{ mb: 0.5 }}>
                           WhatsApp:{" "}
                           {cliente.whatsapp
-                            ? formatarWhatsAppParaExibicao(cliente.whatsapp)
+                            ? formatarWhatsAppParaExibicao(
+                                isDemoMode()
+                                  ? anonymizePhone(cliente.whatsapp)
+                                  : cliente.whatsapp,
+                              )
                             : "Não informado"}
                         </Typography>
                         <Typography variant="body2">
-                          Email: {cliente.email || "Não informado"}
+                          Email: {isDemoMode() ? "contato@empresatest.com.br" : cliente.email || "Não informado"}
                         </Typography>
                         {renderStatusMensagens(cliente)}
                       </Box>

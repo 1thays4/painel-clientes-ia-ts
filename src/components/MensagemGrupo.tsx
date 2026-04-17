@@ -4,6 +4,7 @@ import { formatarTelefone } from "../utils";
 import FormattedText from "./FormattedText";
 import ModoBotToggle from "./ModoBotToggle";
 import { supabase } from "../lib/supabase";
+import { anonymizeName, anonymizePhone, isDemoMode } from "../utils/anonymize";
 import {
   Box,
   Typography,
@@ -233,14 +234,25 @@ export default function MensagemGrupo({
                       : "inherit",
                 }}
               >
-                {msgs[0].nome_cliente_final || "Cliente"}
+                {isDemoMode()
+                  ? anonymizeName(
+                      msgs[0].nome_cliente_final || "Cliente",
+                      "person",
+                    )
+                  : msgs[0].nome_cliente_final || "Cliente"}
               </Typography>
 
               {/* Telefone */}
               <Typography variant="body2" color="text.secondary">
-                {formatarTelefone(msgs[0].numero_destino || "") ||
-                  msgs[0].whatsapp_cliente_final ||
-                  "Sem telefone"}
+                {isDemoMode()
+                  ? anonymizePhone(
+                      formatarTelefone(msgs[0].numero_destino || "") ||
+                        msgs[0].whatsapp_cliente_final ||
+                        "Sem telefone",
+                    )
+                  : formatarTelefone(msgs[0].numero_destino || "") ||
+                    msgs[0].whatsapp_cliente_final ||
+                    "Sem telefone"}
               </Typography>
 
               {/* Última mensagem e data */}
