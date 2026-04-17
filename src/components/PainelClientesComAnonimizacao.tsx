@@ -244,9 +244,9 @@ export function PainelClientesComSupabase() {
         //   .from('clientes')
         //   .select('*');
         
-        const data = []; // Substitua com dados reais
+        const data: Cliente[] = []; // Substitua com dados reais
         
-        if (isDemoMode() && data) {
+        if (isDemoMode() && data.length > 0) {
           // Anonimizar dados antes de armazenar no estado
           const anonimizados = data.map((cliente) => ({
             ...cliente,

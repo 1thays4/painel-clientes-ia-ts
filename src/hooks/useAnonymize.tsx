@@ -9,6 +9,8 @@
  * const telefonSeguro = anonimizar.phone('5511999999999');
  */
 
+import React from 'react';
+
 import {
   anonymizeName,
   anonymizePhone,
@@ -17,7 +19,7 @@ import {
   anonymizeCliente,
   anonymizeMensagem,
   isDemoMode,
-} from './anonymize';
+} from '../utils/anonymize';
 
 interface AnonymizeUtils {
   /** Anonimiza um nome de cliente/empresa */
@@ -285,5 +287,3 @@ export function useAnonymizeState<T>(
 
 // Para usar, adicione este import no topo do arquivo:
 // export { useAnonymize, AnonymizeWrapper, withAnonymize, useAnonymizeEffect, useFetchAndAnonymize, useAnonymizeState };
-
-import React from 'react';
