@@ -68,7 +68,7 @@ export default function CadastrarContato({
           cliente_id: clienteId,
           nome: nome.trim(),
           whatsapp: whatsappFormatado,
-          modo: false, // Iniciar no modo manual
+          modo: true, // Iniciar no modo automático
         })
         .select()
         .single();
@@ -85,7 +85,7 @@ export default function CadastrarContato({
         .insert({
           cliente_id: clienteId,
           cliente_final_id: clienteFinal.id,
-          pergunta: "Conversa iniciada no modo manual",
+          pergunta: "Conversa iniciada no modo automático",
           timestamp: new Date().toISOString(),
         });
 
